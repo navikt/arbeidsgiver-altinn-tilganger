@@ -40,6 +40,12 @@ fun Application.configureRouting() {
         get("/webjars") {
             call.respondText("<script src='/webjars/jquery/jquery.js'></script>", ContentType.Text.Html)
         }
+        get("/internal/isalive") {
+            call.respondText("I'm alive")
+        }
+        get("/internal/isready") {
+            call.respondText("I'm ready")
+        }
         get<Articles> { article ->
             // Get all articles ...
             call.respond("List of articles sorted starting from ${article.sort}")
