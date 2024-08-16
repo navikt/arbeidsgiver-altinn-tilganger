@@ -4,7 +4,6 @@ import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import io.github.smiley4.ktorswaggerui.SwaggerUI
 import io.ktor.http.*
-import io.ktor.resources.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -18,14 +17,11 @@ import io.ktor.server.plugins.compression.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.defaultheaders.*
 import io.ktor.server.request.*
-import io.ktor.server.resources.*
-import io.ktor.server.resources.Resources
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import kotlinx.serialization.Serializable
-import no.nav.fager.plugins.*
 import org.slf4j.event.Level
 
 fun main() {
@@ -79,7 +75,6 @@ fun Application.module() {
             callId.isNotEmpty()
         }
     }
-    install(Resources)
 
     val appMicrometerRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
 
@@ -122,12 +117,6 @@ fun Application.module() {
         get("/internal/isready") {
             call.respondText("I'm ready")
         }
-
-        /* eksempel på typesafe route */
-        get<Articles> { article ->
-            // Get all articles ...
-            call.respond<String>("List of articles sorted starting from ${article.sort}")
-        }
     }
 
 }
@@ -137,7 +126,3 @@ data class AltinnOrganisasjon(
     val navn: String,
     val antallAnsatt: Int
 )
-
-@Serializable
-@Resource("/articles")
-class Articles(val sort: String? = "new")
