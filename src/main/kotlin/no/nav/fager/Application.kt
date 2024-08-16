@@ -44,9 +44,10 @@ fun Application.ktorConfig() {
         // header("image", "")
         header("X-Engine", "Ktor") // will send this header with each response
     }
+
     // Please read the jwt property from the config file if you are using EngineMain
-    val jwtAudience = "jwt-audience"
-    val jwtDomain = "https://jwt-provider-domain/"
+    val jwtAudience = System.getenv("TOKEN_X_CLIENT_ID")
+    val issuer = System.getenv("TOKEN_X_ISSUER")
     val jwtRealm = "ktor sample app"
     val jwtSecret = "secret"
     authentication {
@@ -56,7 +57,7 @@ fun Application.ktorConfig() {
                 JWT
                     .require(Algorithm.HMAC256(jwtSecret))
                     .withAudience(jwtAudience)
-                    .withIssuer(jwtDomain)
+                    .withIssuer(issuer)
                     .build()
             )
             validate { credential ->
