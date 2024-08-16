@@ -13,7 +13,7 @@ class ApplicationTest {
             ktorConfig()
         }
         client.get("/internal/isalive").apply {
-            assertEquals(HttpStatusCode.OK, status)
+            assertEquals(HttpStatusCode.BadGateway, status)
             assertEquals("I'm alive", bodyAsText())
         }
     }
