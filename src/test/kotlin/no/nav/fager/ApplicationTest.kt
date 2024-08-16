@@ -13,9 +13,9 @@ class ApplicationTest {
         application {
             configureRouting()
         }
-        client.get("/").apply {
+        client.get("/internal/isalive").apply {
             assertEquals(HttpStatusCode.OK, status)
-            assertEquals("Hello World!", bodyAsText())
+            assertEquals("I'm alive", bodyAsText())
         }
     }
 }
