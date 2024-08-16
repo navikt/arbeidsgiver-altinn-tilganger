@@ -1,0 +1,41 @@
+apiVersion: nais.io/v1alpha1
+kind: Application
+metadata:
+  name: arbeidsgiver-altinn-tilganger
+  namespace: fager
+  labels:
+    team: fager
+spec:
+  image: {{{ image }}}
+  liveness:
+    path: /internal/isalive
+  readiness:
+    path: /internal/isready
+  prometheus:
+    enabled: true
+    path: /internal/prometheus
+  resources:
+    requests:
+      cpu: 400m
+      memory: 512Mi
+    limits:
+      cpu: 5000m # https://home.robusta.dev/blog/stop-using-cpu-limits/
+      memory: 1024Mi
+  env:
+    - name: JAVA_OPTS
+      value: "-XX:+UseParallelGC -XX:MaxRAMPercentage=75.0 -XX:ActiveProcessorCount=2"
+  tokenx:
+    enabled: true
+  azure:
+    application:
+      enabled: true
+  accessPolicy:
+    inbound:
+      rules:
+        - application: min-side-arbeidsgiver-api
+        - application: notifikasjon-produsent-api
+        - application: permitteringsskjema-api
+          namespace: permittering-og-nedbemanning
+    outbound:
+      external:
+        - host: tt02.altinn.no
