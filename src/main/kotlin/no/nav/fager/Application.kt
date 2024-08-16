@@ -131,7 +131,7 @@ fun Application.module() {
     }
 
 }
-
+@Serializable
 data class AltinnOrganisasjon(
     val organisasjonsnummer: String,
     val navn: String,
