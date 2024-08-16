@@ -27,11 +27,6 @@
             <artifactId>ktor-server-core-jvm</artifactId>
             <version>${ktor_version}</version>
         </dependency>
-        <dependency>
-            <groupId>io.ktor</groupId>
-            <artifactId>ktor-server-openapi-jvm</artifactId>
-            <version>${ktor_version}</version>
-        </dependency>
 
         <dependency>
             <groupId>io.ktor</groupId>
