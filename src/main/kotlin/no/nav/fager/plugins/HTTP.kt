@@ -21,6 +21,8 @@ fun Application.configureHTTP() {
         }
     }
     install(DefaultHeaders) {
+        // header("commit", "1234")
+        // header("image", "")
         header("X-Engine", "Ktor") // will send this header with each response
     }
 }
