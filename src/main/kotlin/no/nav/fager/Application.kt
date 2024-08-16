@@ -25,11 +25,11 @@ import kotlinx.serialization.Serializable
 import org.slf4j.event.Level
 
 fun main() {
-    embeddedServer(CIO, port = 8080, host = "0.0.0.0", module = Application::module)
+    embeddedServer(CIO, port = 8080, host = "0.0.0.0", module = Application::ktorConfig)
         .start(wait = true)
 }
 
-fun Application.module() {
+fun Application.ktorConfig() {
     install(Compression) {
         gzip {
             priority = 1.0
