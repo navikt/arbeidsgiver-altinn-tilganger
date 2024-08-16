@@ -1,7 +1,6 @@
 package no.nav.fager
 
-import com.auth0.jwt.JWT
-import com.auth0.jwt.algorithms.Algorithm
+import com.auth0.jwk.JwkProviderBuilder
 import io.github.smiley4.ktorswaggerui.SwaggerUI
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
@@ -23,6 +22,8 @@ import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import kotlinx.serialization.Serializable
 import org.slf4j.event.Level
+import java.net.URL
+import java.util.concurrent.TimeUnit
 
 fun main() {
     embeddedServer(CIO, port = 8080, host = "0.0.0.0", module = Application::ktorConfig)
@@ -45,23 +46,24 @@ fun Application.ktorConfig() {
         header("X-Engine", "Ktor") // will send this header with each response
     }
 
-    // Please read the jwt property from the config file if you are using EngineMain
-    val jwtAudience = System.getenv("TOKEN_X_CLIENT_ID")
-    val issuer = System.getenv("TOKEN_X_ISSUER")
-    val jwtRealm = "ktor sample app"
-    val jwtSecret = "secret"
     authentication {
         jwt {
-            realm = jwtRealm
-            verifier(
-                JWT
-                    .require(Algorithm.HMAC256(jwtSecret))
-                    .withAudience(jwtAudience)
-                    .withIssuer(issuer)
-                    .build()
-            )
+            val jwtAudience = System.getenv("TOKEN_X_CLIENT_ID")
+            val issuer = System.getenv("TOKEN_X_ISSUER")
+            val jwkProvider = JwkProviderBuilder(URL(System.getenv("TOKEN_X_JWKS_URI")))
+                .cached(10, 24, TimeUnit.HOURS)
+                .rateLimited(10, 1, TimeUnit.MINUTES)
+                .build()
+
+            verifier(jwkProvider, issuer) {
+                withIssuer(issuer)
+                withAudience(jwtAudience)
+                withClaim("acr", "idporten-loa-high")
+                withClaimPresence("pid")
+            }
+
             validate { credential ->
-                if (credential.payload.audience.contains(jwtAudience)) JWTPrincipal(credential.payload) else null
+                InloggetBrukerPrincipal(fnr = credential.getClaim("pid", String::class)!!)
             }
         }
     }
@@ -121,9 +123,14 @@ fun Application.ktorConfig() {
     }
 
 }
+
 @Serializable
 data class AltinnOrganisasjon(
     val organisasjonsnummer: String,
     val navn: String,
     val antallAnsatt: Int
 )
+
+class InloggetBrukerPrincipal(
+    val fnr: String
+) : Principal
