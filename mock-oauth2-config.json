@@ -1,0 +1,47 @@
+{
+  "interactiveLogin": false,
+  "tokenCallbacks": [
+    {
+      "issuerId": "tokenx",
+      "tokenExpiry": 120,
+      "requestMappings": [
+        {
+          "requestParam": "scope",
+          "match": "11111111111",
+          "claims": {
+            "pid": "11111111111",
+            "sub": "some-sub1",
+            "aud": [
+              "local:fager:arbeidsgiver-altinn-tilganger"
+            ],
+            "acr": "idporten-loa-high"
+          }
+        },
+        {
+          "requestParam": "scope",
+          "match": "22222222222",
+          "claims": {
+            "pid": "22222222222",
+            "sub": "some-sub2",
+            "aud": [
+              "local:fager:arbeidsgiver-altinn-tilganger"
+            ],
+            "acr": "idporten-loa-high"
+          }
+        },
+        {
+          "requestParam": "scope",
+          "match": "33333333333",
+          "claims": {
+            "pid": "33333333333",
+            "sub": "some-sub2",
+            "aud": [
+              "local:fager:arbeidsgiver-altinn-tilganger"
+            ],
+            "acr": "idporten-loa-low"
+          }
+        }
+      ]
+    }
+  ]
+}

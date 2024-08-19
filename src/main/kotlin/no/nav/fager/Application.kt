@@ -20,17 +20,32 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
+import java.net.URI
 import kotlinx.serialization.Serializable
 import org.slf4j.event.Level
 import java.net.URL
 import java.util.concurrent.TimeUnit
 
 fun main() {
-    embeddedServer(CIO, port = 8080, host = "0.0.0.0", module = Application::ktorConfig)
+    val authConfig = AuthConfig(
+        clientId = System.getenv("TOKEN_X_CLIENT_ID"),
+        issuer = System.getenv("TOKEN_X_ISSUER"),
+        jwksUri = System.getenv("TOKEN_X_JWKS_URI"),
+    )
+
+    embeddedServer(CIO, port = 8080, host = "0.0.0.0", module = {
+        ktorConfig(authConfig)
+    })
         .start(wait = true)
 }
 
-fun Application.ktorConfig() {
+class AuthConfig(
+    val clientId: String,
+    val issuer: String,
+    val jwksUri: String,
+)
+
+fun Application.ktorConfig(authConfig: AuthConfig) {
     install(Compression) {
         gzip {
             priority = 1.0
@@ -47,17 +62,15 @@ fun Application.ktorConfig() {
     }
 
     authentication {
-        jwt {
-            val jwtAudience = System.getenv("TOKEN_X_CLIENT_ID")
-            val issuer = System.getenv("TOKEN_X_ISSUER")
-            val jwkProvider = JwkProviderBuilder(URL(System.getenv("TOKEN_X_JWKS_URI")))
+        jwt() {
+            val jwkProvider = JwkProviderBuilder(URI(authConfig.jwksUri).toURL())
                 .cached(10, 24, TimeUnit.HOURS)
                 .rateLimited(10, 1, TimeUnit.MINUTES)
                 .build()
 
-            verifier(jwkProvider, issuer) {
-                withIssuer(issuer)
-                withAudience(jwtAudience)
+            verifier(jwkProvider, authConfig.issuer) {
+                withIssuer(authConfig.issuer)
+                withAudience(authConfig.clientId)
                 withClaim("acr", "idporten-loa-high")
                 withClaimPresence("pid")
             }
@@ -106,22 +119,26 @@ fun Application.ktorConfig() {
         }
     }
     routing {
-        get("/internal/prometheus") {
-            call.respond<String>(appMicrometerRegistry.scrape())
+        route("internal") {
+            get("prometheus") {
+                call.respond<String>(appMicrometerRegistry.scrape())
+            }
+            get("isalive") {
+                call.respondText("I'm alive")
+            }
+            get("isready") {
+                call.respondText("I'm ready")
+            }
         }
-        post("/json/kotlinx-serialization") {
-            val body = call.receive<AltinnOrganisasjon>()
-            println(body)
-            call.respond<AltinnOrganisasjon>(body)
-        }
-        get("/internal/isalive") {
-            call.respondText("I'm alive")
-        }
-        get("/internal/isready") {
-            call.respondText("I'm ready")
+
+        authenticate {
+            post("/json/kotlinx-serialization") {
+                val body = call.receive<AltinnOrganisasjon>()
+                println(body)
+                call.respond<AltinnOrganisasjon>(body)
+            }
         }
     }
-
 }
 
 @Serializable

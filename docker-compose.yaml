@@ -1,0 +1,15 @@
+---
+version: '2'
+services:
+  oauth:
+    image: ghcr.io/navikt/mock-oauth2-server:2.1.8
+    ports:
+      - "9000:9000"
+    environment:
+      SERVER_PORT: "9000"
+      JSON_CONFIG_PATH: ./mock-oauth2-config.json
+    volumes:
+      - ./mock-oauth2-config.json:/mock-oauth2-config.json
+
+volumes:
+  database-data:
