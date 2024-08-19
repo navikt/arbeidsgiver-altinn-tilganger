@@ -23,7 +23,6 @@ import io.micrometer.prometheus.PrometheusMeterRegistry
 import java.net.URI
 import kotlinx.serialization.Serializable
 import org.slf4j.event.Level
-import java.net.URL
 import java.util.concurrent.TimeUnit
 
 fun main() {
