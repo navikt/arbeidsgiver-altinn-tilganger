@@ -34,6 +34,11 @@ jobs:
 
       - run: mvn -B package
 
+      - uses: actions/upload-artifact@v4
+        with:
+         name: ${{ github.sha }}.bom.json
+         path: target/bom.json
+
       - uses: nais/docker-build-push@v0
         id: gar-push
         with:
@@ -41,30 +46,39 @@ jobs:
           salsa: false
           project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
           identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
+
     outputs:
       image: ${{ steps.gar-push.outputs.image }}
       digest: ${{ steps.gar-push.outputs.digest }}
 
   salsa:
-    name: Generate SBOM, attest and sign image
+    name: attest and sign image
     needs: [ build ]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
     steps:
-      # https://github.com/navikt/dagpenger/blob/e1b4eef41fc5e7ad835d741972c718b85f343783/actions/attest-sign/action.yml
-      - uses: navikt/dagpenger/actions/attest-sign@master
+      - uses: nais/login@v0
+        id: login
         with:
-          team: fager
-          digest: ${{ needs.build.outputs.digest }}
-          identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
           project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
+          identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
+          team: fager
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ github.sha }}.bom.json
+          path: ./
+
+      - uses: nais/attest-sign@v1
+        with:
+          image_ref: ${{ needs.build.outputs.image }}@${{ needs.build.outputs.digest }}
+          sbom: bom.json
 
   deploy-dev:
     needs: [ build ]
     runs-on: ubuntu-latest
     permissions:
-      contents: read
       id-token: write
     steps:
       - uses: actions/checkout@v4
