@@ -24,7 +24,7 @@ jobs:
           -e "SERVER_PORT=9000"
           -e "JSON_CONFIG_PATH=./mock-oauth2-config.json"
           -v "./mock-oauth2-config.json":"/mock-oauth2-config.json"
-          ghcr.io/navikt/mock-oauth2-server:2.1.8
+          $(yq '.services.oauth.image' docker-compose.yaml)
 
       - uses: actions/setup-java@v4
         with:
