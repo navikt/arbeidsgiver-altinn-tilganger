@@ -7,12 +7,12 @@ on:
 
 
 jobs:
-  bygg-og-deploy:
-    name: Bygg og deploy
+  build:
+    name: Bygg
     runs-on: ubuntu-latest
     permissions:
-      contents: "read"
-      id-token: "write"
+      contents: read
+      id-token: write
 
     steps:
       - uses: actions/checkout@v4
@@ -38,14 +38,39 @@ jobs:
         id: gar-push
         with:
           team: fager
+          salsa: false
           project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
           identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
+    outputs:
+      image: ${{ steps.gar-push.outputs.image }}
+      digest: ${{ steps.gar-push.outputs.digest }}
 
+  salsa:
+    name: Generate SBOM, attest and sign image
+    needs: [ build ]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      # https://github.com/navikt/dagpenger/blob/e1b4eef41fc5e7ad835d741972c718b85f343783/actions/attest-sign/action.yml
+      - uses: navikt/dagpenger/actions/attest-sign@master
+        with:
+          team: fager
+          digest: ${{ needs.build.outputs.digest }}
+          identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
+          project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
+
+  deploy-dev:
+    needs: [ build ]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
       - uses: nais/deploy/actions/deploy@v2
         name: Deploy dev-gcp
         env:
-          VAR: image=${{ steps.gar-push.outputs.image }}
+          VAR: image=${{ needs.build.outputs.image }}
           RESOURCE: nais/dev-gcp.yaml
           CLUSTER: dev-gcp
-
-
