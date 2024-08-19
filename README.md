@@ -4,7 +4,7 @@ API for å hente hvilke tilganger en person har i en virksomhet fra Altinn
 # Starte lokal, mocked applikasjon
 1. Start docker compose:
    ```shell
-    docker-compoes up
+    docker-compose up
     ```
 2. Kjør main fra filen [MockedApplication.kt](./src/test/kotlin/no/nav/fager/MockedApplication.kt)
 3. Gå til swagger-ui: http://localhost:8080/swagger-ui/index.html
