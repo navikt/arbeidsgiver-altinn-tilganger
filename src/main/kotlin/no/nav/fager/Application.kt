@@ -2,28 +2,51 @@ package no.nav.fager
 
 import com.auth0.jwk.JwkProviderBuilder
 import io.github.smiley4.ktorswaggerui.SwaggerUI
-import io.ktor.http.*
-import io.ktor.serialization.kotlinx.json.*
-import io.ktor.server.application.*
-import io.ktor.server.auth.*
-import io.ktor.server.auth.jwt.*
-import io.ktor.server.cio.*
-import io.ktor.server.engine.*
-import io.ktor.server.metrics.micrometer.*
-import io.ktor.server.plugins.callid.*
-import io.ktor.server.plugins.callloging.*
-import io.ktor.server.plugins.compression.*
-import io.ktor.server.plugins.contentnegotiation.*
-import io.ktor.server.plugins.defaultheaders.*
-import io.ktor.server.request.*
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
+import io.github.smiley4.ktorswaggerui.dsl.routing.get
+import io.github.smiley4.ktorswaggerui.dsl.routing.post
+import io.github.smiley4.ktorswaggerui.routing.openApiSpec
+import io.github.smiley4.ktorswaggerui.routing.swaggerUI
+import io.github.smiley4.schemakenerator.reflection.processReflection
+import io.github.smiley4.schemakenerator.swagger.compileReferencingRoot
+import io.github.smiley4.schemakenerator.swagger.generateSwaggerSchema
+import io.github.smiley4.schemakenerator.swagger.handleSchemaAnnotations
+import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
+import io.ktor.serialization.kotlinx.json.json
+import io.ktor.server.application.Application
+import io.ktor.server.application.call
+import io.ktor.server.application.install
+import io.ktor.server.auth.Principal
+import io.ktor.server.auth.authenticate
+import io.ktor.server.auth.authentication
+import io.ktor.server.auth.jwt.jwt
+import io.ktor.server.cio.CIO
+import io.ktor.server.engine.embeddedServer
+import io.ktor.server.metrics.micrometer.MicrometerMetrics
+import io.ktor.server.plugins.callid.CallId
+import io.ktor.server.plugins.callid.callIdMdc
+import io.ktor.server.plugins.callloging.CallLogging
+import io.ktor.server.plugins.compression.Compression
+import io.ktor.server.plugins.compression.deflate
+import io.ktor.server.plugins.compression.gzip
+import io.ktor.server.plugins.compression.minimumSize
+import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.server.plugins.defaultheaders.DefaultHeaders
+import io.ktor.server.request.path
+import io.ktor.server.request.receive
+import io.ktor.server.response.respond
+import io.ktor.server.response.respondRedirect
+import io.ktor.server.response.respondText
+import io.ktor.server.routing.route
+import io.ktor.server.routing.routing
 import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
+import io.swagger.v3.oas.annotations.media.Schema
 import java.net.URI
+import java.util.concurrent.TimeUnit
 import kotlinx.serialization.Serializable
 import org.slf4j.event.Level
-import java.util.concurrent.TimeUnit
 
 fun main() {
     val authConfig = AuthConfig(
@@ -103,18 +126,41 @@ fun Application.ktorConfig(authConfig: AuthConfig) {
     }
 
     install(SwaggerUI) {
-        swagger {
-            swaggerUrl = "swagger-ui"
-            forwardRoot = true
-        }
         info {
-            title = "Example API"
+            title = "Altinn tilgangsstyring av arbeidsgivere"
             version = "latest"
             description = "Example API for testing and demonstration purposes."
         }
+        pathFilter = { _, url -> url.getOrNull(0) != "internal" }
         server {
             url = "http://localhost:8080"
-            description = "Development Server"
+            description = "Local mock server"
+        }
+
+        schemas {
+            generator = { type ->
+                type
+                    .processReflection { }
+                    .generateSwaggerSchema { }
+                    .handleSchemaAnnotations()
+                    .compileReferencingRoot()
+            }
+        }
+        examples {
+            example("Stor virksomhet") {
+                value = AltinnOrganisasjon(
+                    organisasjonsnummer = "1111111",
+                    navn = "Foobar inc",
+                    antallAnsatt = 3100,
+                )
+            }
+            example("Liten cafe") {
+                value = AltinnOrganisasjon(
+                    organisasjonsnummer = "22222",
+                    navn = "På hjørne",
+                    antallAnsatt = 2,
+                )
+            }
         }
     }
     routing {
@@ -130,8 +176,77 @@ fun Application.ktorConfig(authConfig: AuthConfig) {
             }
         }
 
+        get("/", {
+            hidden = true
+        }) {
+            call.respondRedirect("/swagger-ui/index.html")
+        }
+        route("api.json") {
+            openApiSpec()
+        }
+        route("swagger-ui") {
+            swaggerUI("/api.json")
+        }
+
         authenticate {
-            post("/json/kotlinx-serialization") {
+            post("/json/kotlinx-serialization", {
+                summary = "en kort beskrivesle"
+                description = """
+                    en lang beskrivelse.
+                    This is our new endpoint. We can use markdown here: 
+                    This text is *italics*. This is **bold**.
+                    
+                    Man knan ha avsnitt.
+                    # overskrift?
+                    ## underoverskrift?
+                    Og [lenker](https://nrk.no).
+                    
+                    Og 
+                    ```
+                    fun foo(): Int {
+                        return 0
+                    }
+                    ```
+                """.trimIndent()
+
+                request {
+                    headerParameter<String>("authorization")
+                    pathParameter<Int>("count")
+                    body<AltinnOrganisasjon> {
+                        description = "En organisasjon som input"
+                    }
+                }
+
+                response {
+                    HttpStatusCode.OK to {
+                        description = "Successful Request"
+                        body<AltinnOrganisasjon> {
+                            description = "the response"
+                            mediaTypes(ContentType.Application.Json)
+                            example("possible return value") {
+                                value = AltinnOrganisasjon(
+                                    organisasjonsnummer = "11223344",
+                                    antallAnsatt = 32,
+                                    navn = "Ivarsen AS",
+                                )
+                            }
+                            example("another possible return value") {
+                                value = AltinnOrganisasjon(
+                                    organisasjonsnummer = "99999999",
+                                    antallAnsatt = 11,
+                                    navn = "Gunnar AS",
+                                )
+                            }
+                            exampleRef("Liten cafe")
+                            exampleRef("Stor virksomhet")
+                        }
+                    }
+                    HttpStatusCode.Unauthorized to {
+                        description = "Bruker er ikke autentisert. Husket du authorization-header med bearer-token?"
+                    }
+                }
+            }) {
+
                 val body = call.receive<AltinnOrganisasjon>()
                 println(body)
                 call.respond<AltinnOrganisasjon>(body)
@@ -141,12 +256,53 @@ fun Application.ktorConfig(authConfig: AuthConfig) {
 }
 
 @Serializable
+@Schema(
+    title = "Altinn organisasjons title",
+    description = """Description for klassen.
+Her kan vi ha mye tekst.
+
+Vi kan ha et avsnitt om vi vil.
+""",
+)
 data class AltinnOrganisasjon(
+    @field:Schema(
+        title = "Organisasjonsnummeret",
+        description = "9-sifret greie",
+        minimum = "0",
+        maximum = "0",
+        examples = ["111111111", "2222222", "33333333"]
+    )
     val organisasjonsnummer: String,
+
     val navn: String,
-    val antallAnsatt: Int
+
+    @field:Schema(
+        title = "antall ansatte",
+        description = "Antall ansatte i virksomheten",
+        minimum = "0",
+        maximum = "3333",
+        example = "3",
+    )
+    val antallAnsatt: Int,
+
+    @field:Schema(
+        name = "name anstall ansatte",
+        title = "antall ansatte",
+        description = "Antall ansatte i virksomheten",
+        minimum = "0",
+        maximum = "3333",
+        example = "3",
+        minLength = 0,
+        maxLength = 0,
+        requiredMode = Schema.RequiredMode.AUTO,
+        defaultValue = "0",
+    )
+    val someOtherNumber: Int? = 0,
+
+    val innloggetBrukerPrincipal: InloggetBrukerPrincipal? = null,
 )
 
+@Serializable
 class InloggetBrukerPrincipal(
     val fnr: String
 ) : Principal
