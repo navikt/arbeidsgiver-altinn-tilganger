@@ -196,7 +196,7 @@ fun Application.ktorConfig(authConfig: AuthConfig) {
                     This is our new endpoint. We can use markdown here: 
                     This text is *italics*. This is **bold**.
                     
-                    Man knan ha avsnitt.
+                    Man kan ha avsnitt.
                     # overskrift?
                     ## underoverskrift?
                     Og [lenker](https://nrk.no).
