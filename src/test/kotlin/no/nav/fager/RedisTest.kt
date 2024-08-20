@@ -2,7 +2,6 @@ package no.nav.fager
 
 import io.ktor.client.call.*
 import io.ktor.client.request.*
-import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.server.testing.*
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
@@ -30,7 +29,7 @@ class RedisTest {
     @Test
     fun `Cache to redis via Altinn Tilganger`() = testApplication {
         application {
-            ktorConfig(authConfig = mockOauth2ServerConfig)
+            ktorConfig(authConfig = oauth2MockServer, maskinportenConfig = maskinportenMockConfig)
         }
         val keyValue = Pair("key", "value")
 
