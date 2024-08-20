@@ -25,7 +25,7 @@ val mockOauth2ServerConfig = AuthConfig(
  * The required service is started by running `docker-compose up`.
  * Users are defined in `/mock-oauth2-config.json`.
  */
-suspend fun HttpRequestBuilder.authorization(fnr: String) {
+suspend fun HttpRequestBuilder.authorization(subject: String) {
     val client = HttpClient(CIO) {
         install(ContentNegotiation) {
             json(Json {
@@ -35,7 +35,7 @@ suspend fun HttpRequestBuilder.authorization(fnr: String) {
     }
     val response = client.post("http://localhost:9000/tokenx/token") {
         header("content-type", "application/x-www-form-urlencoded")
-        setBody("""grant_type=client_credentials&client_id=1234&client_secret=1234&scope=$fnr""".trimIndent())
+        setBody("""grant_type=client_credentials&client_id=1234&client_secret=1234&sub=$subject""".trimIndent())
     }
     val token = response.body<AccessToken>().accessToken
     header("Authorization", "Bearer $token")

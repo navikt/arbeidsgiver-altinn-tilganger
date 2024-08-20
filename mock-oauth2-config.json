@@ -6,11 +6,10 @@
       "tokenExpiry": 120,
       "requestMappings": [
         {
-          "requestParam": "scope",
-          "match": "11111111111",
+          "requestParam": "sub",
+          "match": "acr-high-11111111111",
           "claims": {
             "pid": "11111111111",
-            "sub": "some-sub1",
             "aud": [
               "local:fager:arbeidsgiver-altinn-tilganger"
             ],
@@ -18,11 +17,10 @@
           }
         },
         {
-          "requestParam": "scope",
-          "match": "22222222222",
+          "requestParam": "sub",
+          "match": "acr-high-22222222222",
           "claims": {
             "pid": "22222222222",
-            "sub": "some-sub2",
             "aud": [
               "local:fager:arbeidsgiver-altinn-tilganger"
             ],
@@ -30,15 +28,25 @@
           }
         },
         {
-          "requestParam": "scope",
-          "match": "33333333333",
+          "requestParam": "sub",
+          "match": "acr-low-33333333333",
           "claims": {
             "pid": "33333333333",
-            "sub": "some-sub2",
             "aud": [
               "local:fager:arbeidsgiver-altinn-tilganger"
             ],
             "acr": "idporten-loa-low"
+          }
+        },
+        {
+          "requestParam": "sub",
+          "match": "wrong-audience-44444444444",
+          "claims": {
+            "pid": "44444444444",
+            "aud": [
+              "distant:fager:arbeidsgiver-altinn-tilganger"
+            ],
+            "acr": "idporten-loa-high"
           }
         }
       ]
