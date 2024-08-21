@@ -40,6 +40,10 @@ import io.ktor.server.response.respondRedirect
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
+import io.lettuce.core.ExperimentalLettuceCoroutinesApi
+import io.lettuce.core.RedisClient
+import io.lettuce.core.api.coroutines
+import io.lettuce.core.api.coroutines.RedisCoroutinesCommands
 import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import io.swagger.v3.oas.annotations.media.Schema
@@ -67,6 +71,7 @@ class AuthConfig(
     val jwksUri: String,
 )
 
+@OptIn(ExperimentalLettuceCoroutinesApi::class)
 fun Application.ktorConfig(authConfig: AuthConfig) {
     install(Compression) {
         gzip {
@@ -163,6 +168,8 @@ fun Application.ktorConfig(authConfig: AuthConfig) {
             }
         }
     }
+    val redisAdresse = "redis://localhost:6379"
+    val redisClient = RedisClient.create(redisAdresse)
     routing {
         route("internal") {
             get("prometheus") {
@@ -186,6 +193,25 @@ fun Application.ktorConfig(authConfig: AuthConfig) {
         }
         route("swagger-ui") {
             swaggerUI("/api.json")
+        }
+
+
+
+        post("/SetCache") {
+            val keyValue = call.receive<SetBody>()
+            val response = redisClient.redisClientConnection { api ->
+                api.set(keyValue.key, keyValue.value)
+            }
+
+            call.respondText("" + response, status = HttpStatusCode.Created)
+        }
+
+        post("/GetCache") {
+            val key = call.receive<GetKey>().key
+            val response = redisClient.redisClientConnection{ api ->
+                api.get(key)
+            }
+            call.respond(GetValue(response))
         }
 
         authenticate {
@@ -255,6 +281,15 @@ fun Application.ktorConfig(authConfig: AuthConfig) {
     }
 }
 
+suspend fun <T> RedisClient.redisClientConnection(
+    body: suspend (RedisCoroutinesCommands<String, String>) -> T
+): T {
+    return this.connect().use { connection ->
+        val api = connection.coroutines()
+        body(api)
+    }
+}
+
 @Serializable
 @Schema(
     title = "Altinn organisasjons title",
@@ -306,3 +341,19 @@ data class AltinnOrganisasjon(
 class InloggetBrukerPrincipal(
     val fnr: String
 ) : Principal
+
+@Serializable
+data class SetBody(
+    val key: String,
+    val value: String
+)
+
+@Serializable
+data class GetKey(
+    val key: String
+)
+
+@Serializable
+data class GetValue(
+    val value: String?
+)
