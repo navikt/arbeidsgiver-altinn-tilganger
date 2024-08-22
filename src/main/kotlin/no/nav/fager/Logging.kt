@@ -39,8 +39,12 @@ class LogConfig : ContextAwareBase(), Configurator {
             }
         }
 
+        if (naisCluster == null || naisCluster == "dev-gcp") {
+            lc.getLogger("io.ktor.auth.jwt").level = Level.TRACE
+        }
+
         lc.getLogger(Logger.ROOT_LOGGER_NAME).apply {
-            level = Level.INFO
+            level = Level.DEBUG
             addAppender(rootAppender)
         }
 

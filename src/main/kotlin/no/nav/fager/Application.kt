@@ -108,7 +108,12 @@ fun Application.ktorConfig(
             verifier(jwkProvider, authConfig.issuer) {
                 withIssuer(authConfig.issuer)
                 withAudience(authConfig.clientId)
-                withClaim("acr", "idporten-loa-high")
+
+                withClaim("acr") { acr, _ ->
+                    /* Trenger å støtte både Level4 og ideporten-loa-high, se:
+                     * https://doc.nais.io/auth/tokenx/reference/#claim-mappings */
+                    acr.asString() in listOf("idporten-loa-high", "Level4")
+                }
                 withClaimPresence("pid")
             }
 
@@ -121,6 +126,10 @@ fun Application.ktorConfig(
         level = Level.INFO
         filter { call -> !call.request.path().startsWith("/internal/") }
         callIdMdc("call-id")
+
+        if (System.getenv("NAIS_CLUSTER_NAME") != null) {
+            disableDefaultColors()
+        }
     }
     install(CallId) {
         header(HttpHeaders.XRequestId)
