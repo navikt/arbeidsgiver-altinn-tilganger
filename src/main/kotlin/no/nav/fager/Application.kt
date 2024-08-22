@@ -56,8 +56,6 @@ import java.net.URI
 import java.util.concurrent.TimeUnit
 import kotlin.time.ExperimentalTime
 import kotlinx.serialization.Serializable
-import no.nav.fager.maskinporten.MaskinportenConfig
-import no.nav.fager.maskinporten.MaskinportenPlugin
 import org.slf4j.event.Level
 
 fun main() {

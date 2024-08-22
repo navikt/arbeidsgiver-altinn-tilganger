@@ -12,7 +12,6 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import no.nav.fager.maskinporten.MaskinportenConfig
 
 val maskinportenMockConfig = MaskinportenConfig(
     clientId = "uuid-from-digdir",

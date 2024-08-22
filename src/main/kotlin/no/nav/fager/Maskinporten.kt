@@ -1,4 +1,4 @@
-package no.nav.fager.maskinporten
+package no.nav.fager
 
 import com.nimbusds.jose.JOSEObjectType
 import com.nimbusds.jose.JWSAlgorithm
@@ -39,8 +39,6 @@ import kotlinx.coroutines.time.delay
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import no.nav.fager.logger
-import org.slf4j.LoggerFactory
 
 
 class MaskinportenConfig(

@@ -19,10 +19,6 @@ import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
-import no.nav.fager.maskinporten.Maskinporten
-import no.nav.fager.maskinporten.MaskinportenConfig
-import no.nav.fager.maskinporten.MaskinportenPlugin
-import no.nav.fager.maskinporten.TokenEndpointResponse
 
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalTime::class)
 class MaskinportenTest {
