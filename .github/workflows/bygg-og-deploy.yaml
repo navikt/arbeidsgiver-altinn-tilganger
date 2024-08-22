@@ -90,5 +90,5 @@ jobs:
         name: Deploy dev-gcp
         env:
           VAR: image=${{ needs.build.outputs.image }}
-          RESOURCE: nais/dev-gcp.yaml, nais/dev-redis.yaml
+          RESOURCE: nais/dev-gcp.yaml,nais/dev-redis.yaml
           CLUSTER: dev-gcp
