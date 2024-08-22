@@ -181,7 +181,7 @@ fun Application.ktorConfig(authConfig: AuthConfig, maskinportenConfig: Maskinpor
             }
         }
     }
-    val uri = "redis://localhost:6379" //system.getEnv()
+    val uri = "redis://127.0.0.1:6379" //system.getEnv()
     val username = ""
     val password = "123"
 

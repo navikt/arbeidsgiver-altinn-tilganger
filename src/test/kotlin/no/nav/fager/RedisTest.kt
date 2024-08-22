@@ -8,6 +8,8 @@ import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.testing.*
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.RedisClient
+import io.lettuce.core.RedisURI
+import io.lettuce.core.StaticCredentialsProvider
 import io.lettuce.core.api.coroutines
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
@@ -19,7 +21,10 @@ class RedisTest {
     @Test
     fun redisClientTest() {
         runBlocking {
-            val redisClient = RedisClient.create("redis://localhost:6379")
+            val redisURI = RedisURI.create("redis://127.0.0.1:6379").apply {
+                credentialsProvider = StaticCredentialsProvider("", "123".toCharArray())
+            }
+            val redisClient = RedisClient.create(redisURI)
             redisClient.connect().use { connection ->
                 val api = connection.coroutines()
                 api.set("key", "value")
