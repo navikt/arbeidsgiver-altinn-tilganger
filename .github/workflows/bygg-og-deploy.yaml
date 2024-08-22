@@ -16,6 +16,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - uses: getong/redis-action@v1
+        with:
+          redis version: '6.2-alpine'
+          redis password: '123'
 
       # mock-oauth2-server needs config from repo to start, so run it manually
       - run: >-
@@ -86,5 +90,5 @@ jobs:
         name: Deploy dev-gcp
         env:
           VAR: image=${{ needs.build.outputs.image }}
-          RESOURCE: nais/dev-gcp.yaml
+          RESOURCE: nais/dev-gcp.yaml, nais/dev-redis.yaml
           CLUSTER: dev-gcp
