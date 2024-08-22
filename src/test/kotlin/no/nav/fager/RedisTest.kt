@@ -1,9 +1,11 @@
 package no.nav.fager
 
 import io.ktor.client.call.*
+import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
+import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.testing.*
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.RedisClient
@@ -32,6 +34,11 @@ class RedisTest {
         application {
             ktorConfig(authConfig = mockOauth2ServerConfig)
         }
+        val client = createClient {
+            install(ContentNegotiation) {
+                json()
+            }
+        }
         val keyValue = Pair("key", "value")
 
         val postedCache = client.post("/SetCache") {
@@ -48,10 +55,13 @@ class RedisTest {
             contentType(ContentType.Application.Json)
             setBody("""{"key":"${keyValue.first}"}""")
         }
+
         val retrievedCache = response.body<GetValue>()
 
         assertEquals(keyValue.second, retrievedCache.value)
         assertEquals(response.status.value,  200)
+
+
 
         val response2 = client.post("/GetCache"){
             contentType(ContentType.Application.Json)
@@ -59,6 +69,5 @@ class RedisTest {
         }
 
         assertEquals(null, response2.body<GetValue>().value)
-
     }
 }

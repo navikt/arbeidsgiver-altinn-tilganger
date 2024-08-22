@@ -42,6 +42,7 @@ import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.RedisClient
+import io.lettuce.core.RedisURI
 import io.lettuce.core.api.coroutines
 import io.lettuce.core.api.coroutines.RedisCoroutinesCommands
 import io.micrometer.prometheus.PrometheusConfig
@@ -168,7 +169,8 @@ fun Application.ktorConfig(authConfig: AuthConfig) {
             }
         }
     }
-    val redisAdresse = "redis://localhost:6379"
+    val redisAdresse = RedisURI.Builder.redis("localhost").withAuthentication("", "123").build()
+
     val redisClient = RedisClient.create(redisAdresse)
     routing {
         route("internal") {
@@ -203,7 +205,7 @@ fun Application.ktorConfig(authConfig: AuthConfig) {
                 api.set(keyValue.key, keyValue.value)
             }
 
-            call.respondText("" + response, status = HttpStatusCode.Created)
+            call.respond(GetValue(response))
         }
 
         post("/GetCache") {
@@ -281,6 +283,7 @@ fun Application.ktorConfig(authConfig: AuthConfig) {
     }
 }
 
+@OptIn(ExperimentalLettuceCoroutinesApi::class)
 suspend fun <T> RedisClient.redisClientConnection(
     body: suspend (RedisCoroutinesCommands<String, String>) -> T
 ): T {
