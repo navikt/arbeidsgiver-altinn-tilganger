@@ -49,7 +49,7 @@ class MaskinportenConfig(
 ) {
     /** OBS: Verdien [clientJwk] er en *secret*. Pass på at den ikke blir logget! */
     override fun toString() =
-        "Maskinporten(clientId: $clientId, issuer: $issuer, tokenEndpoint: $tokenEndpoint)"
+        "Maskinporten(clientId: $clientId, clientJwk: SECRET, issuer: $issuer, tokenEndpoint: $tokenEndpoint)"
 
     companion object {
         fun nais() = MaskinportenConfig(

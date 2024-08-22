@@ -63,7 +63,7 @@ fun main() {
         .start(wait = true)
 }
 
-class AuthConfig(
+data class AuthConfig(
     val clientId: String,
     val issuer: String,
     val jwksUri: String,
