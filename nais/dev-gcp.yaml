@@ -44,3 +44,6 @@ spec:
     outbound:
       external:
         - host: tt02.altinn.no
+  redis:
+    - instance: tilganger
+      access: readwrite

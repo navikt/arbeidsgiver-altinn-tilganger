@@ -46,6 +46,7 @@ import io.ktor.server.routing.routing
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.RedisClient
 import io.lettuce.core.RedisURI
+import io.lettuce.core.StaticCredentialsProvider
 import io.lettuce.core.api.coroutines
 import io.lettuce.core.api.coroutines.RedisCoroutinesCommands
 import io.micrometer.prometheus.PrometheusConfig
@@ -180,9 +181,16 @@ fun Application.ktorConfig(authConfig: AuthConfig, maskinportenConfig: Maskinpor
             }
         }
     }
-    val redisAdresse = RedisURI.Builder.redis("localhost").withAuthentication("", "123").build()
+    val uri = "redis://localhost:6379" //system.getEnv()
+    val username = ""
+    val password = "123"
 
-    val redisClient = RedisClient.create(redisAdresse)
+
+    val redisURI = RedisURI.create(uri).apply {
+        credentialsProvider = StaticCredentialsProvider(username, password.toCharArray())
+    }
+
+    val redisClient = RedisClient.create(redisURI)
 
     val maskinportenHttpClient = HttpClient(io.ktor.client.engine.cio.CIO) {
         install(MaskinportenPlugin) {
