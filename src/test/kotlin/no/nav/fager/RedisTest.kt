@@ -3,7 +3,6 @@ package no.nav.fager
 import io.ktor.client.call.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
-import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.testing.*
@@ -32,7 +31,7 @@ class RedisTest {
     @Test
     fun `Cache to redis via Altinn Tilganger`() = testApplication {
         application {
-            ktorConfig(authConfig = mockOauth2ServerConfig)
+            ktorConfig(authConfig = oauth2MockServer, maskinportenConfig = maskinportenMockConfig)
         }
         val client = createClient {
             install(ContentNegotiation) {

@@ -14,7 +14,7 @@ class AuthTest {
     @Test
     fun `internal isalive is open`() = testApplication {
         application {
-            ktorConfig(authConfig = mockOauth2ServerConfig)
+            ktorConfig(authConfig = oauth2MockServer, maskinportenConfig = maskinportenMockConfig)
         }
         client.get("/internal/isalive").apply {
             assertEquals(HttpStatusCode.OK, status)
@@ -24,7 +24,7 @@ class AuthTest {
     @Test
     fun `internal isready is open`() = testApplication {
         application {
-            ktorConfig(authConfig = mockOauth2ServerConfig)
+            ktorConfig(authConfig = oauth2MockServer, maskinportenConfig = maskinportenMockConfig)
         }
         client.get("/internal/isready").apply {
             assertEquals(HttpStatusCode.OK, status)
@@ -34,7 +34,7 @@ class AuthTest {
     @Test
     fun `internal prometheus is open`() = testApplication {
         application {
-            ktorConfig(authConfig = mockOauth2ServerConfig)
+            ktorConfig(authConfig = oauth2MockServer, maskinportenConfig = maskinportenMockConfig)
         }
         client.get("/internal/prometheus").apply {
             assertEquals(HttpStatusCode.OK, status)
@@ -44,7 +44,7 @@ class AuthTest {
     @Test
     fun `json serialize reject unauthenticated call`() = testApplication {
         application {
-            ktorConfig(authConfig = mockOauth2ServerConfig)
+            ktorConfig(authConfig = oauth2MockServer, maskinportenConfig = maskinportenMockConfig)
         }
         client.post("/json/kotlinx-serialization") {
             setBody(""" """.trimIndent())
@@ -56,7 +56,7 @@ class AuthTest {
     @Test
     fun `json serialize accepts authenticated call`() = testApplication {
         application {
-            ktorConfig(authConfig = mockOauth2ServerConfig)
+            ktorConfig(authConfig = oauth2MockServer, maskinportenConfig = maskinportenMockConfig)
         }
         client.post("/json/kotlinx-serialization") {
             authorization(subject = "acr-high-11111111111")
@@ -77,7 +77,7 @@ class AuthTest {
     @Test
     fun `json serialize reject low authenticated call`() = testApplication {
         application {
-            ktorConfig(authConfig = mockOauth2ServerConfig)
+            ktorConfig(authConfig = oauth2MockServer, maskinportenConfig = maskinportenMockConfig)
         }
         client.post("/json/kotlinx-serialization") {
             authorization(subject="acr-low-33333333333")
@@ -95,7 +95,7 @@ class AuthTest {
     @Test
     fun `json serialize reject other autience call`() = testApplication {
         application {
-            ktorConfig(authConfig = mockOauth2ServerConfig)
+            ktorConfig(authConfig = oauth2MockServer, maskinportenConfig = maskinportenMockConfig)
         }
         client.post( "/json/kotlinx-serialization") {
             authorization("wrong-audience-44444444444")

@@ -10,6 +10,9 @@ import io.github.smiley4.schemakenerator.reflection.processReflection
 import io.github.smiley4.schemakenerator.swagger.compileReferencingRoot
 import io.github.smiley4.schemakenerator.swagger.generateSwaggerSchema
 import io.github.smiley4.schemakenerator.swagger.handleSchemaAnnotations
+import io.ktor.client.HttpClient
+import io.ktor.client.request.get
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
@@ -50,18 +53,18 @@ import io.micrometer.prometheus.PrometheusMeterRegistry
 import io.swagger.v3.oas.annotations.media.Schema
 import java.net.URI
 import java.util.concurrent.TimeUnit
+import kotlin.time.ExperimentalTime
 import kotlinx.serialization.Serializable
+import no.nav.fager.maskinporten.MaskinportenConfig
+import no.nav.fager.maskinporten.MaskinportenPlugin
 import org.slf4j.event.Level
 
 fun main() {
-    val authConfig = AuthConfig(
-        clientId = System.getenv("TOKEN_X_CLIENT_ID"),
-        issuer = System.getenv("TOKEN_X_ISSUER"),
-        jwksUri = System.getenv("TOKEN_X_JWKS_URI"),
-    )
-
     embeddedServer(CIO, port = 8080, host = "0.0.0.0", module = {
-        ktorConfig(authConfig)
+        ktorConfig(
+            authConfig = AuthConfig.nais(),
+            maskinportenConfig = MaskinportenConfig.nais()
+        )
     })
         .start(wait = true)
 }
@@ -70,10 +73,18 @@ class AuthConfig(
     val clientId: String,
     val issuer: String,
     val jwksUri: String,
-)
+) {
+    companion object {
+        fun nais() = AuthConfig(
+            clientId = System.getenv("TOKEN_X_CLIENT_ID"),
+            issuer = System.getenv("TOKEN_X_ISSUER"),
+            jwksUri = System.getenv("TOKEN_X_JWKS_URI"),
+        )
+    }
+}
 
-@OptIn(ExperimentalLettuceCoroutinesApi::class)
-fun Application.ktorConfig(authConfig: AuthConfig) {
+@OptIn(ExperimentalLettuceCoroutinesApi::class, ExperimentalTime::class)
+fun Application.ktorConfig(authConfig: AuthConfig, maskinportenConfig: MaskinportenConfig) {
     install(Compression) {
         gzip {
             priority = 1.0
@@ -90,7 +101,7 @@ fun Application.ktorConfig(authConfig: AuthConfig) {
     }
 
     authentication {
-        jwt() {
+        jwt {
             val jwkProvider = JwkProviderBuilder(URI(authConfig.jwksUri).toURL())
                 .cached(10, 24, TimeUnit.HOURS)
                 .rateLimited(10, 1, TimeUnit.MINUTES)
@@ -172,6 +183,14 @@ fun Application.ktorConfig(authConfig: AuthConfig) {
     val redisAdresse = RedisURI.Builder.redis("localhost").withAuthentication("", "123").build()
 
     val redisClient = RedisClient.create(redisAdresse)
+
+    val maskinportenHttpClient = HttpClient(io.ktor.client.engine.cio.CIO) {
+        install(MaskinportenPlugin) {
+            this.maskinportenConfig = maskinportenConfig
+            this.scope = "altinn:serviceowner/reportees"
+        }
+    }
+
     routing {
         route("internal") {
             get("prometheus") {
@@ -274,11 +293,19 @@ fun Application.ktorConfig(authConfig: AuthConfig) {
                     }
                 }
             }) {
-
                 val body = call.receive<AltinnOrganisasjon>()
                 println(body)
                 call.respond<AltinnOrganisasjon>(body)
             }
+
+        }
+        get("/maskinporten-test") {
+            val body = maskinportenHttpClient.get("http://arbeidsgiver-altinn-tilganger/some/api-endpoint/from/altinn").bodyAsText()
+            call.respond(body)
+        }
+        get("/maskinporten-fake-endpoint") {
+            val authorization = call.request.headers["authorization"]
+            call.respondText(authorization ?: "no header found")
         }
     }
 }
