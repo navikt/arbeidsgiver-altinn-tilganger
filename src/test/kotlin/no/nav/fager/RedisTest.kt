@@ -1,34 +1,33 @@
 package no.nav.fager
 
-import io.ktor.client.call.*
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.client.request.*
-import io.ktor.http.*
-import io.ktor.serialization.kotlinx.json.*
-import io.ktor.server.testing.*
+import io.ktor.client.call.body
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
+import io.ktor.serialization.kotlinx.json.json
+import io.ktor.server.testing.testApplication
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
-import io.lettuce.core.RedisClient
-import io.lettuce.core.RedisURI
-import io.lettuce.core.StaticCredentialsProvider
-import io.lettuce.core.api.coroutines
-import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlinx.coroutines.runBlocking
 
+val localRedisConfig = RedisConfig(
+    uri = "redis://127.0.0.1:6379",
+    username = "",
+    password = "123",
+)
 
 @OptIn(ExperimentalLettuceCoroutinesApi::class)
 class RedisTest {
     @Test
     fun redisClientTest() {
         runBlocking {
-            val redisURI = RedisURI.create("redis://127.0.0.1:6379").apply {
-                credentialsProvider = StaticCredentialsProvider("", "123".toCharArray())
-            }
-            val redisClient = RedisClient.create(redisURI)
-            redisClient.connect().use { connection ->
-                val api = connection.coroutines()
-                api.set("key", "value")
-                assertEquals("value", api.get("key"))
+            val redisClient = localRedisConfig.createClient()
+            redisClient.connect { connection ->
+                connection.set("key", "value")
+                assertEquals("value", connection.get("key"))
             }
         }
     }
@@ -36,7 +35,7 @@ class RedisTest {
     @Test
     fun `Cache to redis via Altinn Tilganger`() = testApplication {
         application {
-            ktorConfig(authConfig = oauth2MockServer, maskinportenConfig = maskinportenMockConfig)
+            mockKtorConfig()
         }
         val client = createClient {
             install(ContentNegotiation) {

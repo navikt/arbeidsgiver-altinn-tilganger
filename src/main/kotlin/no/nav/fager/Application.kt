@@ -44,17 +44,11 @@ import io.ktor.server.response.respondText
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
-import io.lettuce.core.RedisClient
-import io.lettuce.core.RedisURI
-import io.lettuce.core.StaticCredentialsProvider
-import io.lettuce.core.api.coroutines
-import io.lettuce.core.api.coroutines.RedisCoroutinesCommands
 import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import io.swagger.v3.oas.annotations.media.Schema
 import java.net.URI
 import java.util.concurrent.TimeUnit
-import kotlin.time.ExperimentalTime
 import kotlinx.serialization.Serializable
 import org.slf4j.event.Level
 
@@ -62,7 +56,8 @@ fun main() {
     embeddedServer(CIO, port = 8080, host = "0.0.0.0", module = {
         ktorConfig(
             authConfig = AuthConfig.nais(),
-            maskinportenConfig = MaskinportenConfig.nais()
+            maskinportenConfig = MaskinportenConfig.nais(),
+            redisConfig = RedisConfig.nais(),
         )
     })
         .start(wait = true)
@@ -82,8 +77,12 @@ class AuthConfig(
     }
 }
 
-@OptIn(ExperimentalLettuceCoroutinesApi::class, ExperimentalTime::class)
-fun Application.ktorConfig(authConfig: AuthConfig, maskinportenConfig: MaskinportenConfig) {
+@OptIn(ExperimentalLettuceCoroutinesApi::class)
+fun Application.ktorConfig(
+    authConfig: AuthConfig,
+    maskinportenConfig: MaskinportenConfig,
+    redisConfig: RedisConfig,
+) {
     install(Compression) {
         gzip {
             priority = 1.0
@@ -179,16 +178,8 @@ fun Application.ktorConfig(authConfig: AuthConfig, maskinportenConfig: Maskinpor
             }
         }
     }
-    val uri = "redis://127.0.0.1:6379" //system.getEnv()
-    val username = ""
-    val password = "123"
 
-
-    val redisURI = RedisURI.create(uri).apply {
-        credentialsProvider = StaticCredentialsProvider(username, password.toCharArray())
-    }
-
-    val redisClient = RedisClient.create(redisURI)
+    val redisClient = redisConfig.createClient()
 
     val maskinportenHttpClient = HttpClient(io.ktor.client.engine.cio.CIO) {
         install(MaskinportenPlugin) {
@@ -226,16 +217,15 @@ fun Application.ktorConfig(authConfig: AuthConfig, maskinportenConfig: Maskinpor
 
         post("/SetCache") {
             val keyValue = call.receive<SetBody>()
-            val response = redisClient.redisClientConnection { api ->
+            val response = redisClient.connect { api ->
                 api.set(keyValue.key, keyValue.value)
             }
-
             call.respond(GetValue(response))
         }
 
         post("/GetCache") {
             val key = call.receive<GetKey>().key
-            val response = redisClient.redisClientConnection{ api ->
+            val response = redisClient.connect{ api ->
                 api.get(key)
             }
             call.respond(GetValue(response))
@@ -313,16 +303,6 @@ fun Application.ktorConfig(authConfig: AuthConfig, maskinportenConfig: Maskinpor
             val authorization = call.request.headers["authorization"]
             call.respondText(authorization ?: "no header found")
         }
-    }
-}
-
-@OptIn(ExperimentalLettuceCoroutinesApi::class)
-suspend fun <T> RedisClient.redisClientConnection(
-    body: suspend (RedisCoroutinesCommands<String, String>) -> T
-): T {
-    return this.connect().use { connection ->
-        val api = connection.coroutines()
-        body(api)
     }
 }
 
