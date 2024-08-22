@@ -122,7 +122,7 @@ fun Application.ktorConfig(authConfig: AuthConfig, maskinportenConfig: Maskinpor
     }
     install(CallLogging) {
         level = Level.INFO
-        filter { call -> call.request.path().startsWith("/") }
+        filter { call -> !call.request.path().startsWith("/internal/") }
         callIdMdc("call-id")
     }
     install(CallId) {

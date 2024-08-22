@@ -12,7 +12,6 @@
         <ktor_version>2.3.12</ktor_version>
         <kotlin.code.style>official</kotlin.code.style>
         <kotlin_version>2.0.10</kotlin_version>
-        <logback_version>1.4.14</logback_version>
         <slf4j_version>2.0.9</slf4j_version>
         <schema_kenerator_version>1.1.0</schema_kenerator_version>
 
@@ -150,11 +149,6 @@
             <version>${ktor_version}</version>
         </dependency>
         <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>${logback_version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>${slf4j_version}</version>
@@ -182,6 +176,23 @@
             <artifactId>kotlinx-coroutines-debug</artifactId>
             <version>1.6.4</version>
             <scope>test</scope>
+        </dependency>
+
+        <!-- logging -->
+        <dependency>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+            <version>7.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>2.0.13</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.5.6</version>
         </dependency>
 
         <dependency>

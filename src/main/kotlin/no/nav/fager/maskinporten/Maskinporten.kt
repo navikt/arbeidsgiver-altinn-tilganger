@@ -39,6 +39,7 @@ import kotlinx.coroutines.time.delay
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import no.nav.fager.logger
 import org.slf4j.LoggerFactory
 
 
@@ -113,7 +114,7 @@ class Maskinporten(
     /** Kun nødvendig for test-kode. */
     httpClientEngine: HttpClientEngine = CIO.create(),
 ) {
-    private val log = LoggerFactory.getLogger(this.javaClass)!!
+    private val log = logger()
 
     /* Implementasjon basert på nais-doc:
      * https://doc.nais.io/auth/maskinporten/how-to/consume/#acquire-token
