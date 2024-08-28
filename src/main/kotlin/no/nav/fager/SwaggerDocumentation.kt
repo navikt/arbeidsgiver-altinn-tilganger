@@ -3,10 +3,10 @@ package no.nav.fager
 import io.github.smiley4.ktorswaggerui.SwaggerUI
 import io.github.smiley4.ktorswaggerui.data.AuthScheme
 import io.github.smiley4.ktorswaggerui.data.AuthType
-import io.github.smiley4.schemakenerator.reflection.processReflection
+import io.github.smiley4.schemakenerator.serialization.processKotlinxSerialization
 import io.github.smiley4.schemakenerator.swagger.compileReferencingRoot
 import io.github.smiley4.schemakenerator.swagger.generateSwaggerSchema
-import io.github.smiley4.schemakenerator.swagger.handleSchemaAnnotations
+import io.github.smiley4.schemakenerator.swagger.handleCoreAnnotations
 import io.ktor.http.HttpHeaders
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
@@ -110,9 +110,9 @@ fun Application.swaggerDocumentation() {
         schemas {
             generator = { type ->
                 type
-                    .processReflection { }
+                    .processKotlinxSerialization()
                     .generateSwaggerSchema { }
-                    .handleSchemaAnnotations()
+                    .handleCoreAnnotations()
                     .compileReferencingRoot()
             }
         }

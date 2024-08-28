@@ -18,7 +18,7 @@
         <ktor_version>2.3.12</ktor_version>
         <kotlin_version>2.0.10</kotlin_version>
         <kotlinx_coroutines_version>1.8.1</kotlinx_coroutines_version>
-        <schema_kenerator_version>1.1.0</schema_kenerator_version>
+        <schema_kenerator_version>1.1.1</schema_kenerator_version>
     </properties>
 
     <dependencies>
@@ -114,11 +114,6 @@
         </dependency>
         <dependency>
             <groupId>io.github.smiley4</groupId>
-            <artifactId>schema-kenerator-reflection</artifactId>
-            <version>${schema_kenerator_version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.github.smiley4</groupId>
             <artifactId>schema-kenerator-swagger</artifactId>
             <version>${schema_kenerator_version}</version>
         </dependency>
@@ -128,9 +123,9 @@
             <version>${schema_kenerator_version}</version>
         </dependency>
         <dependency>
-            <groupId>io.swagger.core.v3</groupId>
-            <artifactId>swagger-annotations</artifactId>
-            <version>2.2.22</version>
+            <groupId>io.github.smiley4</groupId>
+            <artifactId>schema-kenerator-serialization</artifactId>
+            <version>${schema_kenerator_version}</version>
         </dependency>
 
         <!-- ktor client -->

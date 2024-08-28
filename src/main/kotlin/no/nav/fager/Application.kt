@@ -5,6 +5,10 @@ import io.github.smiley4.ktorswaggerui.dsl.routing.get
 import io.github.smiley4.ktorswaggerui.dsl.routing.post
 import io.github.smiley4.ktorswaggerui.routing.openApiSpec
 import io.github.smiley4.ktorswaggerui.routing.swaggerUI
+import io.github.smiley4.schemakenerator.core.annotations.Default
+import io.github.smiley4.schemakenerator.core.annotations.Description
+import io.github.smiley4.schemakenerator.core.annotations.Example
+import io.github.smiley4.schemakenerator.core.annotations.Title
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
@@ -40,7 +44,6 @@ import io.ktor.server.routing.routing
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
-import io.swagger.v3.oas.annotations.media.Schema
 import kotlinx.serialization.Serializable
 import org.slf4j.event.Level
 import java.net.URI
@@ -262,7 +265,7 @@ fun Application.ktorConfig(
                 """.trimIndent()
 
                 request {
-                    headerParameter<String>("authorization")
+//                    headerParameter<String>("authorization")
                     pathParameter<Int>("count")
                     body<AltinnOrganisasjon> {
                         description = "En organisasjon som input"
@@ -293,9 +296,6 @@ fun Application.ktorConfig(
                             exampleRef("Stor virksomhet")
                         }
                     }
-                    HttpStatusCode.Unauthorized to {
-                        description = "Bruker er ikke autentisert. Husket du authorization-header med bearer-token?"
-                    }
                 }
             }) {
                 val body = call.receive<AltinnOrganisasjon>()
@@ -323,47 +323,28 @@ private fun mapToResult(
 }
 
 @Serializable
-@Schema(
-    title = "Altinn organisasjons title",
-    description = """Description for klassen.
-Her kan vi ha mye tekst.
+@Title("Altinn organisasjon")
+@Description(
+    """
+Dette represneterer en organisasjon i altinn.
 
-Vi kan ha et avsnitt om vi vil.
-""",
+Dett er et avsnitt, en [lenke](https://nav.no) og litt kode `asf`.
+"""
 )
 data class AltinnOrganisasjon(
-    @field:Schema(
-        title = "Organisasjonsnummeret",
-        description = "9-sifret greie",
-        minimum = "0",
-        maximum = "0",
-        examples = ["111111111", "2222222", "33333333"]
-    )
     val organisasjonsnummer: String,
 
+    @Description("Navnet på virksomheten.")
+    @Example("Ivar Aasen AS")
+    @Default("Default navn")
     val navn: String,
 
-    @field:Schema(
-        title = "antall ansatte",
-        description = "Antall ansatte i virksomheten",
-        minimum = "0",
-        maximum = "3333",
-        example = "3",
-    )
+    @Description("Antall ansatte i virksomheten")
+    @Example("444")
+    @Default("123")
     val antallAnsatt: Int,
 
-    @field:Schema(
-        name = "name anstall ansatte",
-        title = "antall ansatte",
-        description = "Antall ansatte i virksomheten",
-        minimum = "0",
-        maximum = "3333",
-        example = "3",
-        minLength = 0,
-        maxLength = 0,
-        requiredMode = Schema.RequiredMode.AUTO,
-        defaultValue = "0",
-    )
+
     val someOtherNumber: Int? = 0,
 
     val innloggetBrukerPrincipal: InloggetBrukerPrincipal? = null,
