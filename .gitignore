@@ -1,5 +1,4 @@
 target/
-docs/
 
 
 ### STS ###
@@ -14,14 +13,13 @@ bin/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
 
-### IntelliJ IDEA ###
-.idea
+### Idea
+### see also .idea/.gitignore
 *.iws
 *.iml
 *.ipr
 out/
-!**/src/main/**/out/
-!**/src/test/**/out/
+
 
 ### NetBeans ###
 /nbproject/private/
