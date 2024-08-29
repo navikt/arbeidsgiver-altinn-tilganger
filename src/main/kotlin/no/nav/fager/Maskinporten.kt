@@ -109,7 +109,7 @@ class Maskinporten(
     @OptIn(DelicateCoroutinesApi::class)
     private val coroutineScope: CoroutineScope = GlobalScope,
 
-    /** Kun nødvendig for test-kode. */
+    /** Injection kun nødvendig for test-kode. */
     httpClientEngine: HttpClientEngine = CIO.create(),
 ) {
     private val log = logger()
@@ -142,12 +142,13 @@ class Maskinporten(
 
     val isReady: Boolean get() = cache != null
 
-    private var refreshJob = coroutineScope.launch(CoroutineName("maksinporten-refresh-job"), start = CoroutineStart.LAZY) {
-        while (true) {
-            refreshTokenIfNeeded()
-            delay(10.seconds.toJavaDuration())
+    private var refreshJob =
+        coroutineScope.launch(CoroutineName("maksinporten-refresh-job"), start = CoroutineStart.LAZY) {
+            while (true) {
+                refreshTokenIfNeeded()
+                delay(10.seconds.toJavaDuration())
+            }
         }
-    }
 
     suspend fun refreshTokenIfNeeded() {
         val snapshot = cache
@@ -161,7 +162,7 @@ class Maskinporten(
 
     fun accessToken(): String {
         return requireNotNull(cache?.accessToken) {
-           """
+            """
                 Maskinporten is not ready yet. Did you forget to connect Maskinporten::isReady into
                 the k8s' ready-endpoint?
            """.trimIndent()

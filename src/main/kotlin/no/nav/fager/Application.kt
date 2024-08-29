@@ -24,6 +24,7 @@ import io.ktor.server.auth.Principal
 import io.ktor.server.auth.authenticate
 import io.ktor.server.auth.authentication
 import io.ktor.server.auth.jwt.jwt
+import io.ktor.server.auth.principal
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.metrics.micrometer.MicrometerMetrics
@@ -234,13 +235,24 @@ fun Application.ktorConfig(
 
         post("/GetCache") {
             val key = call.receive<GetKey>().key
-            val response = redisClient.connect{ api ->
+            val response = redisClient.connect { api ->
                 api.get(key)
             }
             call.respond(GetValue(response))
         }
 
         authenticate {
+            val altinn3Client = Altinn3Client(
+                altinn3Config = Altinn3Config("", ""),
+                maskinportenConfig = null,
+            )
+
+            post("/altinn-tilganger") {
+                val fnr = call.principal<InloggetBrukerPrincipal>()!!.fnr
+                val authorizedParties = altinn3Client.hentAuthorizedParties(fnr)
+                call.respond(authorizedParties)
+            }
+
             post("/json/kotlinx-serialization", {
                 summary = "en kort beskrivesle"
                 description = """
@@ -305,7 +317,8 @@ fun Application.ktorConfig(
 
         }
         get("/maskinporten-test") {
-            val body = maskinportenHttpClient.get("http://arbeidsgiver-altinn-tilganger/some/api-endpoint/from/altinn").bodyAsText()
+            val body = maskinportenHttpClient.get("http://arbeidsgiver-altinn-tilganger/some/api-endpoint/from/altinn")
+                .bodyAsText()
             call.respond(body)
         }
         get("/maskinporten-fake-endpoint") {
@@ -364,21 +377,21 @@ data class AltinnOrganisasjon(
 
 @Serializable
 class InloggetBrukerPrincipal(
-    val fnr: String
+    val fnr: String,
 ) : Principal
 
 @Serializable
 data class SetBody(
     val key: String,
-    val value: String
+    val value: String,
 )
 
 @Serializable
 data class GetKey(
-    val key: String
+    val key: String,
 )
 
 @Serializable
 data class GetValue(
-    val value: String?
+    val value: String?,
 )
