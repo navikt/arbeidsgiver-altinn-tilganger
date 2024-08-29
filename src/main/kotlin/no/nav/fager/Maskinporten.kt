@@ -9,7 +9,6 @@ import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -20,15 +19,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.isSuccess
 import io.ktor.http.parameters
 import io.ktor.serialization.kotlinx.json.json
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.time.delay
+import kotlinx.coroutines.delay
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -65,32 +56,11 @@ class MaskinportenConfig(
 
 class MaskinportenPluginConfig(
     var maskinporten: Maskinporten? = null,
-    var maskinportenConfig: MaskinportenConfig? = null,
-    var scope: String? = null,
 )
 
-/** Husk å close clienten når du er ferdig med den! Ellers lekker det ressurser. */
-@OptIn(ExperimentalTime::class)
 val MaskinportenPlugin = createClientPlugin("MaskinportenPlugin", ::MaskinportenPluginConfig) {
-    val maskinporten = pluginConfig.run {
-        val maskinporten = this.maskinporten
-        val maskinportenConfig = this.maskinportenConfig
-        val scope = this.scope
-
-        if (maskinporten != null && maskinportenConfig == null && scope == null)
-            maskinporten
-        else if (maskinporten == null && maskinportenConfig != null && scope != null) {
-            Maskinporten(maskinportenConfig, scope).also {
-                onClose {
-                    runBlocking {
-                        it.close()
-                    }
-                }
-                it.start()
-            }
-        } else {
-            error("Enten må `maskinporten` være definert, eller `maskinportenConfig` og `scope`.")
-        }
+    val maskinporten = requireNotNull(pluginConfig.maskinporten) {
+        "MaskinportenPlugin: property 'maskinporten' must be set in configuration when installing plugin"
     }
 
     onRequest { request, _ ->
@@ -106,13 +76,6 @@ class Maskinporten(
 
     /** Kun nødvendig for test-kode. */
     private val timeSource: TimeSource.WithComparableMarks = TimeSource.Monotonic,
-
-    /** Kun nødvendig for test-kode. */
-    @OptIn(DelicateCoroutinesApi::class)
-    private val coroutineScope: CoroutineScope = GlobalScope,
-
-    /** Injection kun nødvendig for test-kode. */
-    httpClientEngine: HttpClientEngine = CIO.create(),
 ) {
     private val log = logger()
 
@@ -126,7 +89,7 @@ class Maskinporten(
         .type(JOSEObjectType.JWT)
         .build()
 
-    private val httpClient = HttpClient(httpClientEngine) {
+    private val httpClient = HttpClient(CIO) {
         install(ContentNegotiation) {
             json(Json { ignoreUnknownKeys = true })
         }
@@ -144,17 +107,9 @@ class Maskinporten(
 
     val isReady: Boolean get() = cache != null
 
-    private var refreshJob =
-        coroutineScope.launch(CoroutineName("maksinporten-refresh-job"), start = CoroutineStart.LAZY) {
-            while (true) {
-                refreshTokenIfNeeded()
-                delay(10.seconds.toJavaDuration())
-            }
-        }
-
     suspend fun refreshTokenIfNeeded() {
-        val snapshot = cache
-        if (snapshot == null || snapshot.expiresIn() < 5.minutes) {
+        val cacheSnapshot = cache
+        if (cacheSnapshot == null || cacheSnapshot.expiresIn() < 5.minutes) {
             val newToken = fetchToken()
             if (newToken != null) {
                 cache = newToken
@@ -163,21 +118,12 @@ class Maskinporten(
     }
 
     fun accessToken(): String {
-        runBlocking { refreshTokenIfNeeded() }
         return requireNotNull(cache?.accessToken) {
             """
                 Maskinporten is not ready yet. Did you forget to connect Maskinporten::isReady into
                 the k8s' ready-endpoint?
            """.trimIndent()
         }
-    }
-
-    fun start() {
-        refreshJob.start()
-    }
-
-    suspend fun close() {
-        refreshJob.cancelAndJoin()
     }
 
     private suspend fun fetchToken(): Cache? {
@@ -208,7 +154,7 @@ class Maskinporten(
         }
 
         if (!httpResponse.status.isSuccess()) {
-            /* Ikke error siden det er retrylogikk. */
+            /* Ikke error siden det er retrylogikk. For alerts, så lager vi heller metric på expiration time. */
             log.info("request for token from maskinporten failed with http status {}", httpResponse.status)
             return null
         }
@@ -220,6 +166,17 @@ class Maskinporten(
             accessToken = body.accessToken,
             expiresAt = timeSource.markNow() + body.expiresIn.seconds,
         )
+    }
+
+    suspend fun refreshLoop() {
+        while (true) {
+            try {
+                refreshTokenIfNeeded()
+                delay(1.minutes)
+            } catch (e: Exception) {
+                delay(5.seconds)
+            }
+        }
     }
 }
 

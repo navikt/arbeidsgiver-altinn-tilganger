@@ -39,6 +39,12 @@ class LogConfig : ContextAwareBase(), Configurator {
             }
         }
 
+        if (naisCluster == null) {
+            lc.getLogger("io.ktor.auth.jwt").apply {
+                level = Level.TRACE
+            }
+        }
+
         lc.getLogger(Logger.ROOT_LOGGER_NAME).apply {
             level = Level.INFO
             addAppender(rootAppender)
@@ -50,8 +56,7 @@ class LogConfig : ContextAwareBase(), Configurator {
 
 private fun <T> T.setup(context: LoggerContext, body: T.() -> Unit = {}): T
         where T : ContextAware,
-              T : LifeCycle
-{
+              T : LifeCycle {
     this.context = context
     this.body()
     this.start()
@@ -59,7 +64,7 @@ private fun <T> T.setup(context: LoggerContext, body: T.() -> Unit = {}): T
 }
 
 
-class MaskingAppender: AppenderBase<ILoggingEvent>() {
+class MaskingAppender : AppenderBase<ILoggingEvent>() {
 
     var appender: Appender<ILoggingEvent>? = null
 

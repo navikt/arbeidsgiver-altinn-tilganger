@@ -1,4 +1,4 @@
-package no.nav.fager
+package no.nav.fager.executable
 
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
@@ -9,23 +9,34 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import no.nav.fager.Altinn3Config
+import no.nav.fager.AuthConfig
+import no.nav.fager.MaskinportenConfig
+import no.nav.fager.RedisConfig
+import no.nav.fager.ktorConfig
 
 
 fun main() {
     val resourceNames = findSecretResourceNames()
-    fun findResourceName(prefix: String) = requireNotNull(resourceNames.find { it.startsWith(prefix)}) {
+    fun findResourceName(prefix: String) = requireNotNull(resourceNames.find { it.startsWith(prefix) }) {
         "can't find $prefix secrets :'("
     }
+
     val tokenx = getSecrets(findResourceName("tokenx-arbeidsgiver-altinn-tilganger"))
     val maskinporten = getSecrets(findResourceName("maskinporten-arbeidsgiver-altinn-tilganger"))
     val redis = getSecrets(findResourceName("aiven-arbeidsgiver-altinn-tilganger"))
 
     embeddedServer(CIO, port = 8080, host = "0.0.0.0", module = {
         ktorConfig(
+            altinn3Config = Altinn3Config(
+                /* todo */
+                baseUrl = "",
+                ocpApimSubscriptionKey = "",
+            ),
             authConfig = AuthConfig(
                 clientId = tokenx["TOKEN_X_CLIENT_ID"]!!,
                 issuer = tokenx["TOKEN_X_ISSUER"]!!,
-                jwksUri =tokenx["TOKEN_X_JWKS_URI"]!!,
+                jwksUri = tokenx["TOKEN_X_JWKS_URI"]!!,
             ).also {
                 println(it)
             },
@@ -57,15 +68,17 @@ private fun findSecretResourceNames() = exec(
         {'}'}
         """.trimMargin()
 ).let { json ->
-        val x = Json.decodeFromString<JsonElement>(json).jsonObject
-        val envFromNames = x["envFrom"]!!.jsonArray.map { it.jsonObject["secretRef"]!!.jsonObject["name"]!!.jsonPrimitive.content }
-        val redisName = x["env"]!!.jsonArray.find { it.jsonObject["name"]!!.jsonPrimitive.content == "REDIS_USERNAME_TILGANGER" }!!
+    val x = Json.decodeFromString<JsonElement>(json).jsonObject
+    val envFromNames =
+        x["envFrom"]!!.jsonArray.map { it.jsonObject["secretRef"]!!.jsonObject["name"]!!.jsonPrimitive.content }
+    val redisName =
+        x["env"]!!.jsonArray.find { it.jsonObject["name"]!!.jsonPrimitive.content == "REDIS_USERNAME_TILGANGER" }!!
             .jsonObject["valueFrom"]!!.jsonObject["secretKeyRef"]!!.jsonObject["name"]!!.jsonPrimitive.content
-        buildList {
-            add(redisName)
-            addAll(envFromNames)
-        }
+    buildList {
+        add(redisName)
+        addAll(envFromNames)
     }
+}
 
 private fun getSecrets(secretName: String) =
     exec(*kubectl, "get", "secret", secretName, "-o", "jsonpath={@.data}").let {
@@ -79,22 +92,26 @@ private fun exec(vararg cmd: String): String {
     val process = Runtime.getRuntime().exec(cmd.toList().toTypedArray<String>())
     try {
         if (!process.waitFor(timeout, TimeUnit.SECONDS)) {
-            error("""
+            error(
+                """
                 executing command timed out after $timeout seconds.
                 command: ${cmd.joinToString(" ")}
-                """.trimIndent())
+                """.trimIndent()
+            )
         }
         val exit = process.exitValue()
         val stderr = process.errorReader().readText()
-        val stdout =  process.inputReader().readText()
+        val stdout = process.inputReader().readText()
         if (exit != 0) {
-            error("""
+            error(
+                """
                 command failed (exit value $exit): ${cmd.joinToString(" ")}
                 stdout:
                 ${stdout.prependIndent()}
                 stderr:
                 ${stderr.prependIndent()}
-            """.trimIndent())
+            """.trimIndent()
+            )
         }
         return stdout
     } finally {

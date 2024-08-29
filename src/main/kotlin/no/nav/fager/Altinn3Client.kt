@@ -1,7 +1,7 @@
 package no.nav.fager
 
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.HttpClientEngine
+import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.accept
 import io.ktor.client.request.post
@@ -28,9 +28,8 @@ class Altinn3Config(
 class Altinn3Client(
     val altinn3Config: Altinn3Config,
     val maskinporten: Maskinporten,
-    httpClientEngine: HttpClientEngine,
 ) {
-    private val httpClient = HttpClient(httpClientEngine) {
+    private val httpClient = HttpClient(CIO) {
         install(MaskinportenPlugin) {
             maskinporten = this@Altinn3Client.maskinporten
         }
@@ -53,7 +52,9 @@ class Altinn3Client(
             )
         }
 
-        httpResponse.status.isSuccess()
+        if (!httpResponse.status.isSuccess())
+            error("oh noes not ok")
+
         return ""
     }
 }

@@ -10,10 +10,6 @@ import io.github.smiley4.schemakenerator.reflection.processReflection
 import io.github.smiley4.schemakenerator.swagger.compileReferencingRoot
 import io.github.smiley4.schemakenerator.swagger.generateSwaggerSchema
 import io.github.smiley4.schemakenerator.swagger.handleSchemaAnnotations
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.HttpClientEngine
-import io.ktor.client.request.get
-import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
@@ -49,15 +45,23 @@ import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import io.swagger.v3.oas.annotations.media.Schema
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import org.slf4j.event.Level
 import java.net.URI
 import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
 fun main() {
     embeddedServer(CIO, port = 8080, host = "0.0.0.0", module = {
         ktorConfig(
+            altinn3Config = Altinn3Config(
+                baseUrl = "",
+                ocpApimSubscriptionKey = "",
+            ),
             authConfig = AuthConfig.nais(),
             maskinportenConfig = MaskinportenConfig.nais(),
             redisConfig = RedisConfig.nais(),
@@ -82,9 +86,9 @@ data class AuthConfig(
 
 @OptIn(ExperimentalLettuceCoroutinesApi::class)
 fun Application.ktorConfig(
+    altinn3Config: Altinn3Config,
     authConfig: AuthConfig,
     maskinportenConfig: MaskinportenConfig,
-    httpClientEngine: HttpClientEngine = io.ktor.client.engine.cio.CIO.create(),
     redisConfig: RedisConfig,
 ) {
     install(Compression) {
@@ -194,11 +198,14 @@ fun Application.ktorConfig(
 
     val redisClient = redisConfig.createClient()
 
-    val maskinportenHttpClient = HttpClient(io.ktor.client.engine.cio.CIO) {
-        install(MaskinportenPlugin) {
-            this.maskinportenConfig = maskinportenConfig
-            this.scope = "altinn:serviceowner/reportees"
-        }
+    @OptIn(ExperimentalTime::class)
+    val maskinporten = Maskinporten(
+        maskinportenConfig = maskinportenConfig,
+        scope = "altinn:accessmanagement/authorizedparties.resourceowner",
+    )
+
+    launch {
+        maskinporten.refreshLoop()
     }
 
     routing {
@@ -210,7 +217,7 @@ fun Application.ktorConfig(
                 call.respondText("I'm alive")
             }
             get("isready") {
-                call.respondText("I'm ready")
+                call.respond(if (maskinporten.isReady) HttpStatusCode.OK else HttpStatusCode.ServiceUnavailable)
             }
         }
 
@@ -225,8 +232,6 @@ fun Application.ktorConfig(
         route("swagger-ui") {
             swaggerUI("/api.json")
         }
-
-
 
         post("/SetCache") {
             val keyValue = call.receive<SetBody>()
@@ -245,15 +250,9 @@ fun Application.ktorConfig(
         }
 
         authenticate {
-            @OptIn(ExperimentalTime::class)
             val altinn3Client = Altinn3Client(
-                altinn3Config = Altinn3Config("http://altinn.test", "secret-stuff"),
-                maskinporten = Maskinporten(
-                    maskinportenConfig = maskinportenConfig,
-                    scope = "altinn:accessmanagement/authorizedparties.resourceowner",
-                    httpClientEngine = httpClientEngine,
-                ),
-                httpClientEngine = httpClientEngine,
+                altinn3Config = altinn3Config,
+                maskinporten = maskinporten,
             )
 
             post("/altinn-tilganger") {
@@ -323,16 +322,6 @@ fun Application.ktorConfig(
                 println(body)
                 call.respond<AltinnOrganisasjon>(body)
             }
-
-        }
-        get("/maskinporten-test") {
-            val body = maskinportenHttpClient.get("http://arbeidsgiver-altinn-tilganger/some/api-endpoint/from/altinn")
-                .bodyAsText()
-            call.respond(body)
-        }
-        get("/maskinporten-fake-endpoint") {
-            val authorization = call.request.headers["authorization"]
-            call.respondText(authorization ?: "no header found")
         }
     }
 }
