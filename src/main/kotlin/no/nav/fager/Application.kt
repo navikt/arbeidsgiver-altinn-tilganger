@@ -11,6 +11,7 @@ import io.github.smiley4.schemakenerator.swagger.compileReferencingRoot
 import io.github.smiley4.schemakenerator.swagger.generateSwaggerSchema
 import io.github.smiley4.schemakenerator.swagger.handleSchemaAnnotations
 import io.ktor.client.HttpClient
+import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
@@ -48,10 +49,11 @@ import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import io.swagger.v3.oas.annotations.media.Schema
-import java.net.URI
-import java.util.concurrent.TimeUnit
 import kotlinx.serialization.Serializable
 import org.slf4j.event.Level
+import java.net.URI
+import java.util.concurrent.TimeUnit
+import kotlin.time.ExperimentalTime
 
 fun main() {
     embeddedServer(CIO, port = 8080, host = "0.0.0.0", module = {
@@ -82,6 +84,7 @@ data class AuthConfig(
 fun Application.ktorConfig(
     authConfig: AuthConfig,
     maskinportenConfig: MaskinportenConfig,
+    httpClientEngine: HttpClientEngine = io.ktor.client.engine.cio.CIO.create(),
     redisConfig: RedisConfig,
 ) {
     install(Compression) {
@@ -242,15 +245,21 @@ fun Application.ktorConfig(
         }
 
         authenticate {
+            @OptIn(ExperimentalTime::class)
             val altinn3Client = Altinn3Client(
-                altinn3Config = Altinn3Config("", ""),
-                maskinportenConfig = null,
+                altinn3Config = Altinn3Config("http://altinn.test", "secret-stuff"),
+                maskinporten = Maskinporten(
+                    maskinportenConfig = maskinportenConfig,
+                    scope = "altinn:accessmanagement/authorizedparties.resourceowner",
+                    httpClientEngine = httpClientEngine,
+                ),
+                httpClientEngine = httpClientEngine,
             )
 
             post("/altinn-tilganger") {
                 val fnr = call.principal<InloggetBrukerPrincipal>()!!.fnr
                 val authorizedParties = altinn3Client.hentAuthorizedParties(fnr)
-                call.respond(authorizedParties)
+                call.respondText(authorizedParties, ContentType.Application.Json)
             }
 
             post("/json/kotlinx-serialization", {

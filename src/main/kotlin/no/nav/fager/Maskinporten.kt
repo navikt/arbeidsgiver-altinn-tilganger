@@ -13,20 +13,13 @@ import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.request.accept
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.forms.submitForm
+import io.ktor.http.ContentType
 import io.ktor.http.isSuccess
 import io.ktor.http.parameters
 import io.ktor.serialization.kotlinx.json.json
-import java.time.Instant
-import java.util.*
-import kotlin.time.ComparableTimeMark
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
-import kotlin.time.ExperimentalTime
-import kotlin.time.TimeSource
-import kotlin.time.toJavaDuration
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -39,6 +32,15 @@ import kotlinx.coroutines.time.delay
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import java.time.Instant
+import java.util.*
+import kotlin.time.ComparableTimeMark
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.ExperimentalTime
+import kotlin.time.TimeSource
+import kotlin.time.toJavaDuration
 
 
 class MaskinportenConfig(
@@ -161,6 +163,7 @@ class Maskinporten(
     }
 
     fun accessToken(): String {
+        runBlocking { refreshTokenIfNeeded() }
         return requireNotNull(cache?.accessToken) {
             """
                 Maskinporten is not ready yet. Did you forget to connect Maskinporten::isReady into
@@ -200,7 +203,9 @@ class Maskinporten(
                 append("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer")
                 append("assertion", clientAssertion)
             }
-        )
+        ) {
+            accept(ContentType.Application.Json)
+        }
 
         if (!httpResponse.status.isSuccess()) {
             /* Ikke error siden det er retrylogikk. */

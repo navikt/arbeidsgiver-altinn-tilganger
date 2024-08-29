@@ -15,7 +15,7 @@ import kotlinx.serialization.json.Json
 
 val maskinportenMockConfig = MaskinportenConfig(
     clientId = "uuid-from-digdir",
-    issuer = "http://localhost:9000/maskinporten",
+    issuer = "https://maskinporten.dummy/maskinporten",
     clientJwk = """
         {
           "p":"zsPY7ILYO-SD_AsuMPm56EJuVcnytlcE_XVmIWQufOPzThlMsyKKqCioBxWdzsNgHw0tRgN7Zh6YOP4syi2HhvVDD0lnhB5JGX3q8AzlVtyWpjrGMXF3lLPzDQ8D4pc5itGZHpQX-CYu2Wo7W0xmZaTR-U-ya_-UwxzL43RbQGk",
@@ -34,7 +34,7 @@ val maskinportenMockConfig = MaskinportenConfig(
           "n":"mA8o6H52_fdI-DzINbIRzpCjN6i5gHzOfJnszCliffCPS-FJBwNcknAMWo0INjt49q2BX2rVgncX7y_WwRqQZ8no4kvu0UlV_B0Hx_4dtvqNhkfGJ0AIqNpZi5GJL-oKC8o1Sw4jHeQ6c99-vZ1rkhZUD51yC-fbK0y1otbVTVRYJGsRPQcWQmG7GTDFN04hI-UX_df7Xtc6-cyPdMumsOKLe1HmI7QKLARrefHbXLx8oS8XwyeP5wup7X7H7goKpegFcJjto3meFcvb7r0OvNxNFjWoQn7mHRoFNtosF3ZFmLXHoWHLdWpKN6kc6zdZaVWmUey3T8hr-girPlMi8w"
         }
     """.trimIndent(),
-    tokenEndpoint = "http://localhost:9000/maskinporten/token",
+    tokenEndpoint = "https://maskinporten.dummy/maskinporten/token",
 )
 
 val oauth2MockServer = AuthConfig(

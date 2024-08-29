@@ -6,11 +6,6 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
-import io.ktor.server.application.call
-import io.ktor.server.response.respond
-import io.ktor.server.routing.get
-import io.ktor.server.routing.post
-import io.ktor.server.routing.routing
 import io.ktor.server.testing.testApplication
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -83,15 +78,6 @@ class AuthTest {
      */
     @Test
     fun `json serialize reject low authenticated call`() = testApplication {
-        externalServices {
-            hosts("maskinporten") {
-                routing {
-                    post("/test/maskinporten") {
-                        call.respond("et-token")
-                    }
-                }
-            }
-        }
         application {
             mockKtorConfig()
         }
