@@ -45,7 +45,7 @@ class FakeApplication(
         fakeAltinn3Api.start()
         fakeMaskinporten.before()
         server.start(wait = wait)
-        server.waitUntilAlive()
+        server.waitUntilReady()
 
         val port = runBlocking {
             server.resolvedConnectors().first().port
@@ -70,7 +70,6 @@ class FakeApplication(
     class TestContext(
         val client: HttpClient,
     )
-
 
     fun runTest(body: suspend TestContext.() -> Unit) = runBlocking {
         testContext!!.body()

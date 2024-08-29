@@ -3,17 +3,16 @@ package no.nav.fager.fakes
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.http.HttpStatusCode
-import io.ktor.server.application.ApplicationStopped
 import io.ktor.server.cio.CIOApplicationEngine
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 
-fun CIOApplicationEngine.startAndWaitUntilStarted() {
+fun CIOApplicationEngine.startAndWaitUntilReady() {
     start()
-    waitUntilAlive()
+    waitUntilReady()
 }
 
-fun CIOApplicationEngine.waitUntilAlive() {
+fun CIOApplicationEngine.waitUntilReady() {
     val port = runBlocking {
         resolvedConnectors().first().port
     }
@@ -22,7 +21,7 @@ fun CIOApplicationEngine.waitUntilAlive() {
     suspend fun isAlive() = runCatching {
         client.get("http://localhost:$port/internal/isready").status == HttpStatusCode.OK
     }.getOrElse {
-        println("not alive: $it")
+        println("not alive yet: $it")
         false
     }
 

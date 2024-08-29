@@ -47,7 +47,6 @@ import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import io.swagger.v3.oas.annotations.media.Schema
-import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import org.slf4j.event.Level
 import java.net.URI
@@ -208,11 +207,8 @@ fun Application.ktorConfig(
     val maskinporten = Maskinporten(
         maskinportenConfig = maskinportenConfig,
         scope = "altinn:accessmanagement/authorizedparties.resourceowner",
+        backgroundCoroutineScope = this,
     )
-
-    launch {
-        maskinporten.refreshLoop()
-    }
 
     routing {
         route("internal") {

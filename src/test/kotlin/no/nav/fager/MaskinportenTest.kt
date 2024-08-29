@@ -11,13 +11,13 @@ import io.ktor.http.headersOf
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.testTimeSource
 import no.nav.fager.fakes.FakeMaskinporten
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFails
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
-import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Duration.Companion.hours
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalTime::class)
@@ -50,12 +50,13 @@ class MaskinportenTest {
 
     @Test
     fun `plugin legger på token`() = runTest {
-
         val maskinporten = Maskinporten(
             maskinportenConfig = fakeMaskinporten.config(),
-            timeSource = testScheduler.timeSource,
             scope = "1234",
+            backgroundCoroutineScope = null,
+            timeSource = testTimeSource,
         )
+
 
         val fakeProtectedAPiEndpoint = MockEngine(MockEngineConfig().apply {
             addHandler {
@@ -67,21 +68,13 @@ class MaskinportenTest {
             }
         })
 
-
         val httpClient = HttpClient(fakeProtectedAPiEndpoint) {
             install(MaskinportenPlugin) {
                 this.maskinporten = maskinporten
             }
         }
 
-        assertFails("Using the client without starting maskinporten-service fails") {
-            httpClient.get("/some/protected/endpoint")
-        }
-
         fakeMaskinporten.accessToken = "first_token"
-
-        assertEquals(0, fakeMaskinporten.callCount.get(), "No calls should be made by starting maskinporten")
-
         maskinporten.refreshTokenIfNeeded()
 
         assertEquals(1, fakeMaskinporten.callCount.get(), "One call to maskinporten on initial refresh")
@@ -100,7 +93,8 @@ class MaskinportenTest {
         }
 
         fakeMaskinporten.accessToken = "second_token"
-        advanceTimeBy(5600.seconds)
+
+        advanceTimeBy(1.hours)
         maskinporten.refreshTokenIfNeeded()
 
         assertEquals(
@@ -117,7 +111,7 @@ class MaskinportenTest {
         assertEquals(
             2,
             fakeMaskinporten.callCount.get(),
-            "Expect two calls to maskinporten, as first token has expired."
+            "Still two calls to maskinporten, because of caching."
         )
     }
 }

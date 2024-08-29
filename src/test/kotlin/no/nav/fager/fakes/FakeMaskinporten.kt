@@ -25,7 +25,7 @@ class FakeMaskinporten : org.junit.rules.ExternalResource() {
     var accessToken: String? = null
 
     public override fun before() {
-        server.startAndWaitUntilStarted()
+        server.startAndWaitUntilReady()
     }
 
     public override fun after() {

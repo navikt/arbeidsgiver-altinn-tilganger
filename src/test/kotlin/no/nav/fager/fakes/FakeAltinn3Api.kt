@@ -34,7 +34,7 @@ class FakeAltinn3Api {
     var error: Throwable? = null
 
     fun start() {
-        server.startAndWaitUntilStarted()
+        server.startAndWaitUntilReady()
     }
 
     fun stop() {

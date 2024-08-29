@@ -1,5 +1,7 @@
 package no.nav.fager
 
+import arrow.core.Either
+import arrow.core.raise.either
 import com.nimbusds.jose.JOSEObjectType
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.JWSHeader
@@ -19,7 +21,9 @@ import io.ktor.http.ContentType
 import io.ktor.http.isSuccess
 import io.ktor.http.parameters
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -74,6 +78,8 @@ class Maskinporten(
 
     private val scope: String,
 
+    backgroundCoroutineScope: CoroutineScope?,
+
     /** Kun nødvendig for test-kode. */
     private val timeSource: TimeSource.WithComparableMarks = TimeSource.Monotonic,
 ) {
@@ -107,26 +113,44 @@ class Maskinporten(
 
     val isReady: Boolean get() = cache != null
 
-    suspend fun refreshTokenIfNeeded() {
-        val cacheSnapshot = cache
-        if (cacheSnapshot == null || cacheSnapshot.expiresIn() < 5.minutes) {
-            val newToken = fetchToken()
-            if (newToken != null) {
-                cache = newToken
+    init {
+        backgroundCoroutineScope?.launch {
+            while (true) {
+                refreshTokenIfNeeded()
+                delay(5.seconds)
             }
         }
     }
 
-    fun accessToken(): String {
-        return requireNotNull(cache?.accessToken) {
-            """
-                Maskinporten is not ready yet. Did you forget to connect Maskinporten::isReady into
-                the k8s' ready-endpoint?
-           """.trimIndent()
+    suspend fun refreshTokenIfNeeded() {
+        val cacheSnapshot = cache
+        if (cacheSnapshot == null || cacheSnapshot.expiresIn() < 5.minutes) {
+            when (val result = fetchToken()) {
+                is Either.Right -> {
+                    cache = result.value
+                    log.info(
+                        "hentet nytt token med scope={} expires_in={}",
+                        scope,
+                        result.value.expiresIn().toIsoString()
+                    )
+                }
+
+                is Either.Left -> {
+                    log.info(
+                        "hente nytt token for scope={} feilet med exception={}, gammelt expires_in={}",
+                        scope,
+                        result.value.javaClass.canonicalName,
+                        cacheSnapshot?.expiresIn()?.toIsoString(),
+                        result.value
+                    )
+                }
+            }
+        } else {
+            log.info("nothing to do for scope={} expires_in={}", scope, cacheSnapshot.expiresIn().toIsoString())
         }
     }
 
-    private suspend fun fetchToken(): Cache? {
+    private suspend fun fetchToken(): Either<Throwable, Cache> = either {
         val now = Instant.now()
         val expiration = now + 1.minutes.toJavaDuration()
 
@@ -155,27 +179,29 @@ class Maskinporten(
 
         if (!httpResponse.status.isSuccess()) {
             /* Ikke error siden det er retrylogikk. For alerts, så lager vi heller metric på expiration time. */
-            log.info("request for token from maskinporten failed with http status {}", httpResponse.status)
-            return null
+            raise(
+                RuntimeException(
+                    "request for token from maskinporten failed with http status ${httpResponse.status}"
+                )
+            )
         }
         val body = httpResponse.body<TokenEndpointResponse>()
 
         log.info("hentet token: scope=$scope expiresIn=${body.expiresIn}s")
 
-        return Cache(
+        Cache(
             accessToken = body.accessToken,
             expiresAt = timeSource.markNow() + body.expiresIn.seconds,
         )
     }
 
-    suspend fun refreshLoop() {
-        while (true) {
-            try {
-                refreshTokenIfNeeded()
-                delay(1.minutes)
-            } catch (e: Exception) {
-                delay(5.seconds)
-            }
+
+    fun accessToken(): String {
+        return requireNotNull(cache?.accessToken) {
+            """
+                Maskinporten is not ready yet. Did you forget to connect Maskinporten::isReady into
+                the k8s' ready-endpoint?
+           """.trimIndent()
         }
     }
 }
