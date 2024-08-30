@@ -51,6 +51,9 @@ spec:
         - application: tokenx-token-generator
           namespace: aura
           cluster: dev-gcp
+    outbound:
+      external:
+        - host: platform.tt02.altinn.no
 
   redis:
     - instance: tilganger
