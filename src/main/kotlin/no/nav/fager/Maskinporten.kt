@@ -114,40 +114,67 @@ class Maskinporten(
 
     val isReady: Boolean get() = cache != null
 
+    private val refreshThreshold = 10.minutes
+
     init {
         backgroundCoroutineScope?.launch {
             while (true) {
-                refreshTokenIfNeeded()
-                delay(5.seconds)
+                val (error, currentToken) = refreshTokenIfNeeded()
+                when {
+                    currentToken == null -> {
+                        log.info("token med scope={} mangler. forsøk på å hente nytt feilet.", scope, error)
+                        /* Prøv å refreshe ganske aggresivt når vi starter opp. */
+                        delay(1.seconds)
+                    }
+
+                    currentToken.expiresIn() < 0.seconds -> {
+                        log.error("token med scope={} er utløpt. forsøk på å hente nytt feilet.", scope, error)
+                        /* Nå har det feilet lenge, så det er ikke stort poeng i å prøve
+                         * såpass ofte at vi legger unødvendig last på maskinporten. */
+                        delay(10.seconds)
+                    }
+
+                    currentToken.expiresIn() < refreshThreshold -> {
+                        log.info(
+                            "token med scope={} expires_in={}. forsøk på å hente nytt feilet.",
+                            scope,
+                            currentToken.expiresIn().toIsoString(),
+                            error
+                        )
+                        /* Hvis vi er her så har det feilet minst en gang å prøve å refreshe tokenet.
+                        * Vi har ganske god tid på oss (se [refreshThreshold]), så vi fortsetter bare
+                        * å spørre i et jevnt tempo. */
+                        delay(10.seconds)
+                    }
+
+                    else -> {
+                        log.info(
+                            "token med scope={} expires_in={}. standing by.",
+                            scope,
+                            currentToken.expiresIn().toIsoString()
+                        )
+                        delay(1.minutes)
+                    }
+                }
             }
         }
     }
 
-    suspend fun refreshTokenIfNeeded() {
+    suspend fun refreshTokenIfNeeded(): Pair<Throwable?, Cache?> {
         val cacheSnapshot = cache
-        if (cacheSnapshot == null || cacheSnapshot.expiresIn() < 5.minutes) {
+        return if (cacheSnapshot == null || cacheSnapshot.expiresIn() < refreshThreshold) {
             when (val result = fetchToken()) {
                 is Either.Right -> {
                     cache = result.value
-                    log.info(
-                        "hentet nytt token med scope={} expires_in={}",
-                        scope,
-                        result.value.expiresIn().toIsoString()
-                    )
+                    Pair(null, result.value)
                 }
 
                 is Either.Left -> {
-                    log.info(
-                        "hente nytt token for scope={} feilet med exception={}, gammelt expires_in={}",
-                        scope,
-                        result.value.javaClass.canonicalName,
-                        cacheSnapshot?.expiresIn()?.toIsoString(),
-                        result.value
-                    )
+                    Pair(result.value, cacheSnapshot)
                 }
             }
         } else {
-            log.info("nothing to do for scope={} expires_in={}", scope, cacheSnapshot.expiresIn().toIsoString())
+            Pair(null, cacheSnapshot)
         }
     }
 
@@ -187,8 +214,6 @@ class Maskinporten(
             )
         }
         val body = httpResponse.body<TokenEndpointResponse>()
-
-        log.info("hentet token: scope=$scope expiresIn=${body.expiresIn}s")
 
         Cache(
             accessToken = body.accessToken,
