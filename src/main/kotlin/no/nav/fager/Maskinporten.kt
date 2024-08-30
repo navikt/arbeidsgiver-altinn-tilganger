@@ -17,6 +17,7 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.accept
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.forms.submitForm
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.isSuccess
 import io.ktor.http.parameters
@@ -181,7 +182,7 @@ class Maskinporten(
             /* Ikke error siden det er retrylogikk. For alerts, så lager vi heller metric på expiration time. */
             raise(
                 RuntimeException(
-                    "request for token from maskinporten failed with http status ${httpResponse.status}"
+                    "request for token from maskinporten failed with http status ${httpResponse.status}: ${httpResponse.bodyAsText()}"
                 )
             )
         }
