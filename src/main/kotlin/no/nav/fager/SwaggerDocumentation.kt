@@ -21,9 +21,9 @@ fun Application.swaggerDocumentation() {
                 Med innlogget bruker, mener vi at api-et vårt kun godtar kall med on-behalf-of access token 
                 for brukeren.
                 
-                ## Hvordan du kan teste api-et gjennom denne siden
-                For at du skal kunne kalle api-et vårt direkte her fra swagger, må du: 
-                1. Åpne i nettleseren: 
+                ## Hvordan du kaller dev-gcp-api-et fra denne siden
+                For at du skal kunne kalle dev-gcp-api-et vårt direkte her fra swagger, må du: 
+                1. Åpn i nettleseren: 
                 [https://tokenx-token-generator.intern.dev.nav.no/api/obo?aud=dev-gcp:fager:arbeidsgiver-altinn-tilganger&acr=idporten-loa-high](
                 https://tokenx-token-generator.intern.dev.nav.no/api/obo?aud=dev-gcp:fager:arbeidsgiver-altinn-tilganger&acr=idporten-loa-high).
                 2. Logg inn med *test*-brukeren du ønsker token for. 
@@ -32,7 +32,7 @@ fun Application.swaggerDocumentation() {
                 
                 Om du foretrekker curl, postman eller noe annet, må du legge ved tokenet som en header i HTTP-requesten:
                 ```
-                ${HttpHeaders.Authorization}: Bearer tokenet-du-i-steg-3-her
+                ${HttpHeaders.Authorization}: Bearer tokenet-fra-steg-3-her
                 ```
                 
                 ## Access policy i dev-gcp og prod-gcp
@@ -92,6 +92,19 @@ fun Application.swaggerDocumentation() {
                 type = AuthType.HTTP
                 scheme = AuthScheme.BEARER
                 bearerFormat = "JWT"
+                description = """
+                    Du skaffer deg et token som du kan bruke her ved å logge inn med test-bruker på [denne nettsiden](
+                    https://tokenx-token-generator.intern.dev.nav.no/api/obo?aud=dev-gcp:fager:arbeidsgiver-altinn-tilganger&acr=idporten-loa-high
+                    ) og bruker veriden fra `"access_token"`-feltet. Ikke ta med fnuttene (`"`).
+                """.trimIndent()
+            }
+            defaultUnauthorizedResponse {
+                description = """
+                    Når vi ikke aksepterer tokenet du sendte i ${HttpHeaders.Authorization}-headeren. Vi sjekker blant annet at tokenet:
+                    - ikke er utgått
+                    - har `acr`-claim med `Level4` eller `idporten-loa-high`
+                    - har riktig audience og issuer (`aud` og `iss`)
+                """.trimIndent()
             }
         }
         schemas {
