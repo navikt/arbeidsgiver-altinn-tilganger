@@ -6,7 +6,7 @@ metadata:
   labels:
     team: fager
 spec:
-  image: { { { image } } }
+  image: {{{ image }}}
 
   liveness:
     path: /internal/isalive
