@@ -6,7 +6,7 @@ metadata:
   labels:
     team: fager
 spec:
-  image: {{{ image }}}
+  image: { { { image } } }
 
   liveness:
     path: /internal/isalive
@@ -27,7 +27,12 @@ spec:
   env:
     - name: JAVA_OPTS
       value: "-XX:+UseParallelGC -XX:MaxRAMPercentage=75.0 -XX:ActiveProcessorCount=2"
+    - name: ALTINN_3_API_BASE_URL
+      value: https://platform.tt02.altinn.no
 
+  envFrom:
+    - secret: altinn-tilganger
+  
   tokenx:
     enabled: true
 

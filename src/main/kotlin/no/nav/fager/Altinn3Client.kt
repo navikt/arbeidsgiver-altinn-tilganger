@@ -1,15 +1,20 @@
 package no.nav.fager
 
+import com.sun.jndi.toolkit.url.Uri
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.accept
+import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.URLBuilder
+import io.ktor.http.Url
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
+import io.ktor.http.path
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
@@ -27,6 +32,13 @@ class Altinn3Config(
 ) {
     /** OBS: Verdien [ocpApimSubscriptionKey] er en *secret*. Pass på at den ikke blir logget! */
     override fun toString() = """Altinn3Config(baseUrl: $baseUrl, ocpApimSubscriptionKey: SECRET)"""
+
+    companion object {
+        fun nais() = Altinn3Config(
+            baseUrl = System.getenv("ALTINN_3_API_BASE_URL"),
+            ocpApimSubscriptionKey = System.getenv("OCP_APIM_SUBSCRIPTION_KEY"),
+        )
+    }
 }
 
 /** Swagger for api:
@@ -50,16 +62,18 @@ class Altinn3Client(
     }
 
     suspend fun hentAuthorizedParties(fnr: String): List<AuthoririzedParty> {
-        val httpResponse = httpClient.post("${altinn3Config.baseUrl}/resourceowner/authorizedparties") {
-            accept(ContentType.Application.Json)
-            contentType(ContentType.Application.Json)
-            setBody(
-                mapOf(
-                    "type" to "urn:altinn:person:identifier-no",
-                    "value" to fnr
+        val httpResponse =
+            httpClient.post("${altinn3Config.baseUrl}/accessmanagement/api/v1/resourceowner/authorizedparties") {
+                accept(ContentType.Application.Json)
+                contentType(ContentType.Application.Json)
+                header("ocp-apim-subscription-key", altinn3Config.ocpApimSubscriptionKey)
+                setBody(
+                    mapOf(
+                        "type" to "urn:altinn:person:identifier-no",
+                        "value" to fnr
+                    )
                 )
-            )
-        }
+            }
 
         if (!httpResponse.status.isSuccess())
             error("oh noes not ok")

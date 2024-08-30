@@ -56,10 +56,7 @@ import kotlin.time.ExperimentalTime
 fun main() {
     embeddedServer(CIO, port = 8080, host = "0.0.0.0", module = {
         ktorConfig(
-            altinn3Config = Altinn3Config(
-                baseUrl = "",
-                ocpApimSubscriptionKey = "",
-            ),
+            altinn3Config = Altinn3Config.nais(),
             authConfig = AuthConfig.nais(),
             maskinportenConfig = MaskinportenConfig.nais(),
             redisConfig = RedisConfig.nais(),
