@@ -1,14 +1,24 @@
 package no.nav.fager
 
 import io.ktor.client.HttpClient
+import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.accept
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
 
 class Altinn3Config(
@@ -39,22 +49,57 @@ class Altinn3Client(
         }
     }
 
-    suspend fun hentAuthorizedParties(fnr: String): String {
+    suspend fun hentAuthorizedParties(fnr: String): List<AuthoririzedParty> {
         val httpResponse = httpClient.post("${altinn3Config.baseUrl}/resourceowner/authorizedparties") {
             accept(ContentType.Application.Json)
+            contentType(ContentType.Application.Json)
             setBody(
-                """
-                    {
-                        "type": "urn:altinn:person:identifier-no",
-                        "value": "$fnr"
-                    }
-                """
+                mapOf(
+                    "type" to "urn:altinn:person:identifier-no",
+                    "value" to fnr
+                )
             )
         }
 
         if (!httpResponse.status.isSuccess())
             error("oh noes not ok")
 
-        return ""
+        return httpResponse.body()
     }
+}
+
+@Suppress("unused")
+@Serializable
+class AuthoririzedParty(
+    val organizationNumber: String,
+    val authorizedResources: List<AuthorizedResource>
+)
+
+@Serializable(with = AuthorizedResourceSerializer::class)
+class AuthorizedResource(
+    val appname: String,
+    val resourceid: String,
+)
+
+class AuthorizedResourceSerializer : KSerializer<AuthorizedResource> {
+    @OptIn(ExperimentalSerializationApi::class)
+    private val delegateSerializer = ListSerializer(String.serializer())
+
+    @OptIn(ExperimentalSerializationApi::class)
+    override val descriptor = SerialDescriptor("AuthorizedResource", delegateSerializer.descriptor)
+
+    override fun deserialize(decoder: Decoder): AuthorizedResource {
+        val (appname, resourceid) = decoder.decodeSerializableValue(delegateSerializer).also {
+            require(it.size == 2) { "uforventet antall elementer i authorizedResources" }
+        }
+        return AuthorizedResource(
+            appname = appname,
+            resourceid = resourceid
+        )
+    }
+
+    override fun serialize(encoder: Encoder, value: AuthorizedResource) {
+        encoder.encodeSerializableValue(delegateSerializer, listOf(value.appname, value.resourceid))
+    }
+
 }

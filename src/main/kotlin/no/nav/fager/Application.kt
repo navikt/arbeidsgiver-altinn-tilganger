@@ -2,6 +2,8 @@ package no.nav.fager
 
 import com.auth0.jwk.JwkProviderBuilder
 import io.github.smiley4.ktorswaggerui.SwaggerUI
+import io.github.smiley4.ktorswaggerui.data.AuthScheme
+import io.github.smiley4.ktorswaggerui.data.AuthType
 import io.github.smiley4.ktorswaggerui.dsl.routing.get
 import io.github.smiley4.ktorswaggerui.dsl.routing.post
 import io.github.smiley4.ktorswaggerui.routing.openApiSpec
@@ -45,14 +47,11 @@ import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import io.swagger.v3.oas.annotations.media.Schema
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import org.slf4j.event.Level
 import java.net.URI
 import java.util.concurrent.TimeUnit
-import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
 fun main() {
@@ -165,10 +164,17 @@ fun Application.ktorConfig(
         }
         pathFilter = { _, url -> url.getOrNull(0) != "internal" }
         server {
-            url = "http://localhost:8080"
+            url = "http://0.0.0.0:8080"
             description = "Local mock server"
         }
-
+        security {
+            defaultSecuritySchemeNames("BearerAuth")
+            securityScheme("BearerAuth") {
+                type = AuthType.HTTP
+                scheme = AuthScheme.BEARER
+                bearerFormat = "JWT"
+            }
+        }
         schemas {
             generator = { type ->
                 type
@@ -255,10 +261,12 @@ fun Application.ktorConfig(
                 maskinporten = maskinporten,
             )
 
-            post("/altinn-tilganger") {
+            post("/altinn-tilganger", {
+                // TODO: document Bearer Auth
+            }) {
                 val fnr = call.principal<InloggetBrukerPrincipal>()!!.fnr
                 val authorizedParties = altinn3Client.hentAuthorizedParties(fnr)
-                call.respondText(authorizedParties, ContentType.Application.Json)
+                call.respond(authorizedParties)
             }
 
             post("/json/kotlinx-serialization", {
