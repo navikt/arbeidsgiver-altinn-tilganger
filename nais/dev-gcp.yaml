@@ -40,7 +40,7 @@ spec:
     enabled: true
     scopes:
       consumes:
-        - name: "altinn:serviceowner/reportees"
+        - name: "altinn:accessmanagement/authorizedparties.resourceowner"
 
   accessPolicy:
     inbound:
