@@ -36,6 +36,7 @@ import io.ktor.server.plugins.compression.gzip
 import io.ktor.server.plugins.compression.minimumSize
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.defaultheaders.DefaultHeaders
+import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.request.path
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
@@ -86,6 +87,8 @@ fun Application.ktorConfig(
     maskinportenConfig: MaskinportenConfig,
     redisConfig: RedisConfig,
 ) {
+    val log = logger()
+
     install(Compression) {
         gzip {
             priority = 1.0
@@ -99,6 +102,13 @@ fun Application.ktorConfig(
         // header("commit", "1234")
         // header("image", "")
         header("X-Engine", "Ktor") // will send this header with each response
+    }
+
+    install(StatusPages) {
+        exception<Throwable> { call, cause ->
+            log.info("Unexpected exception at ktor-toplevel: {}", cause.javaClass.canonicalName, cause)
+            call.respond(HttpStatusCode.InternalServerError)
+        }
     }
 
     authentication {
