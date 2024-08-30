@@ -11,6 +11,7 @@ import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.URLBuilder
 import io.ktor.http.Url
 import io.ktor.http.contentType
@@ -61,7 +62,11 @@ class Altinn3Client(
             json(Json { ignoreUnknownKeys = true })
         }
 
-        install(Logging)
+        install(Logging) {
+            sanitizeHeader {
+                true
+            }
+        }
     }
 
     suspend fun hentAuthorizedParties(fnr: String): List<AuthoririzedParty> {
