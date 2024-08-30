@@ -13,9 +13,6 @@ import kotlinx.coroutines.runBlocking
 import no.nav.fager.ktorConfig
 import no.nav.fager.localRedisConfig
 
-fun main() {
-    FakeApplication(port = 8080).start(wait = true)
-}
 
 class FakeApplication(
     private val port: Int = 0,
