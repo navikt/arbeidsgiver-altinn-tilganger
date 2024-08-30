@@ -1,17 +1,10 @@
 package no.nav.fager
 
 import com.auth0.jwk.JwkProviderBuilder
-import io.github.smiley4.ktorswaggerui.SwaggerUI
-import io.github.smiley4.ktorswaggerui.data.AuthScheme
-import io.github.smiley4.ktorswaggerui.data.AuthType
 import io.github.smiley4.ktorswaggerui.dsl.routing.get
 import io.github.smiley4.ktorswaggerui.dsl.routing.post
 import io.github.smiley4.ktorswaggerui.routing.openApiSpec
 import io.github.smiley4.ktorswaggerui.routing.swaggerUI
-import io.github.smiley4.schemakenerator.reflection.processReflection
-import io.github.smiley4.schemakenerator.swagger.compileReferencingRoot
-import io.github.smiley4.schemakenerator.swagger.generateSwaggerSchema
-import io.github.smiley4.schemakenerator.swagger.handleSchemaAnnotations
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
@@ -162,55 +155,7 @@ fun Application.ktorConfig(
         json()
     }
 
-    install(SwaggerUI) {
-        info {
-            title = "Altinn tilgangsstyring av arbeidsgivere"
-            version = "latest"
-            description = "Example API for testing and demonstration purposes."
-        }
-        pathFilter = { _, url -> url.getOrNull(0) != "internal" }
-        server {
-            url = "http://0.0.0.0:8080"
-            description = "Local mock server"
-        }
-        server {
-            url = "https://arbeidsgiver-altinn-tilganger.intern.dev.nav.no"
-            description = "dev-gcp"
-        }
-        security {
-            defaultSecuritySchemeNames("BearerAuth")
-            securityScheme("BearerAuth") {
-                type = AuthType.HTTP
-                scheme = AuthScheme.BEARER
-                bearerFormat = "JWT"
-            }
-        }
-        schemas {
-            generator = { type ->
-                type
-                    .processReflection { }
-                    .generateSwaggerSchema { }
-                    .handleSchemaAnnotations()
-                    .compileReferencingRoot()
-            }
-        }
-        examples {
-            example("Stor virksomhet") {
-                value = AltinnOrganisasjon(
-                    organisasjonsnummer = "1111111",
-                    navn = "Foobar inc",
-                    antallAnsatt = 3100,
-                )
-            }
-            example("Liten cafe") {
-                value = AltinnOrganisasjon(
-                    organisasjonsnummer = "22222",
-                    navn = "På hjørne",
-                    antallAnsatt = 2,
-                )
-            }
-        }
-    }
+    swaggerDocumentation()
 
     val redisClient = redisConfig.createClient()
 
