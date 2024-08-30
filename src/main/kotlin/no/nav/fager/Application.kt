@@ -163,6 +163,10 @@ fun Application.ktorConfig(
             url = "http://0.0.0.0:8080"
             description = "Local mock server"
         }
+        server {
+            url = "https://arbeidsgiver-altinn-tilganger.intern.dev.nav.no"
+            description = "dev-gcp"
+        }
         security {
             defaultSecuritySchemeNames("BearerAuth")
             securityScheme("BearerAuth") {
