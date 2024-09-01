@@ -1,6 +1,5 @@
 package no.nav.fager
 
-import com.sun.jndi.toolkit.url.Uri
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
@@ -11,9 +10,7 @@ import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
-import io.ktor.http.HttpHeaders
 import io.ktor.http.URLBuilder
-import io.ktor.http.Url
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.http.path
@@ -70,8 +67,17 @@ class Altinn3Client(
     }
 
     suspend fun hentAuthorizedParties(fnr: String): List<AuthoririzedParty> {
+        val baseUrl = URLBuilder(altinn3Config.baseUrl)
         val httpResponse =
-            httpClient.post("${altinn3Config.baseUrl}/accessmanagement/api/v1/resourceowner/authorizedparties") {
+            httpClient.post {
+                url {
+                    protocol = baseUrl.protocol
+                    host = baseUrl.host
+                    port = baseUrl.port
+
+                    path("/accessmanagement/api/v1/resourceowner/authorizedparties")
+                    parameters.append("includeAltinn2", "true")
+                }
                 accept(ContentType.Application.Json)
                 contentType(ContentType.Application.Json)
                 header("ocp-apim-subscription-key", altinn3Config.ocpApimSubscriptionKey)
@@ -104,7 +110,6 @@ class AuthorizedResource(
 )
 
 class AuthorizedResourceSerializer : KSerializer<AuthorizedResource> {
-    @OptIn(ExperimentalSerializationApi::class)
     private val delegateSerializer = ListSerializer(String.serializer())
 
     @OptIn(ExperimentalSerializationApi::class)
