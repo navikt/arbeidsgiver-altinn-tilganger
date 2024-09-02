@@ -1,12 +1,16 @@
 package no.nav.fager
 
+import io.ktor.client.call.body
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.post
 import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod.Companion.Post
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
+import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.call
 import io.ktor.server.response.respondText
+import kotlinx.serialization.json.Json
 import no.nav.fager.fakes.FakeApplication
 import no.nav.fager.fakes.authorization
 import kotlin.test.Test
@@ -16,7 +20,13 @@ class AltinnTilgangerTest {
     companion object {
         @JvmField
         @org.junit.ClassRule
-        val app = FakeApplication()
+        val app = FakeApplication(
+            clientConfig = {
+                install(ContentNegotiation) {
+                    json(Json { ignoreUnknownKeys = true })
+                }
+            }
+        )
     }
 
     @Test
@@ -24,42 +34,53 @@ class AltinnTilgangerTest {
         app.altinnResponse(Post, "/accessmanagement/api/v1/resourceowner/authorizedparties") {
             call.respondText(
                 """
-                  [
+                [
                   {
-                    "partyUuid": "8a884071-8921-4ecf-93a8-c8502df5e3f8",
-                    "name": "Ola Nordmann",
-                    "organizationNumber": "string",
-                    "personId": "01017012345",
-                    "type": "Person",
-                    "partyId": 50001337,
-                    "unitType": "string",
+                    "partyUuid": "a1c831cf-c7b7-4e5e-9910-2ad9a05b4ec1",
+                    "name": "MALMEFJORDEN OG RIDABU REGNSKAP",
+                    "organizationNumber": "810825472",
+                    "personId": null,
+                    "partyId": 50166368,
+                    "type": "Organization",
+                    "unitType": "AS",
                     "isDeleted": false,
-                    "onlyHierarchyElementWithNoAccess": false,
-                    "authorizedResources": [
-                      [
-                        "app_org_appname",
-                        "someresourceid"
-                      ]
-                    ],
-                    "authorizedRoles": [
-                      "PRIV"
-                    ],
+                    "onlyHierarchyElementWithNoAccess": true,
+                    "authorizedResources": [],
+                    "authorizedRoles": [],
                     "subunits": [
-                      "string"
+                      {
+                        "partyUuid": "8656eab6-119b-4691-8a8a-6f51a203aba7",
+                        "name": "SLEMMESTAD OG STAVERN REGNSKAP",
+                        "organizationNumber": "910825496",
+                        "personId": null,
+                        "partyId": 50169034,
+                        "type": "Organization",
+                        "unitType": "BEDR",
+                        "isDeleted": false,
+                        "onlyHierarchyElementWithNoAccess": false,
+                        "authorizedResources": [
+                          "test-fager"
+                        ],
+                        "authorizedRoles": [],
+                        "subunits": []
+                      }
                     ]
                   }
                 ]
-            """, ContentType.Application.Json
+            """.trimIndent(), ContentType.Application.Json
             )
         }
 
 
-        client.post("/altinn-tilganger") {
+        val resources: List<AuthoririzedParty> = client.post("/altinn-tilganger") {
             authorization(subject = "acr-high-11111111111")
             contentType(ContentType.Application.Json)
         }.apply {
             assertEquals(HttpStatusCode.OK, status)
-        }
+        }.body()
+
+        assertEquals(resources[0].subunits[0].authorizedResources, listOf("test-fager"))
+
     }
 
 }

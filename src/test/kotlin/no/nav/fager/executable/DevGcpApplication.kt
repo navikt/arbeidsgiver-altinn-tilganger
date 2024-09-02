@@ -3,7 +3,6 @@ package no.nav.fager.executable
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
 import io.ktor.util.decodeBase64String
-import java.util.concurrent.TimeUnit
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.jsonArray
@@ -14,6 +13,7 @@ import no.nav.fager.AuthConfig
 import no.nav.fager.MaskinportenConfig
 import no.nav.fager.RedisConfig
 import no.nav.fager.ktorConfig
+import java.util.concurrent.TimeUnit
 
 
 fun main() {
@@ -25,13 +25,13 @@ fun main() {
     val tokenx = getSecrets(findResourceName("tokenx-arbeidsgiver-altinn-tilganger"))
     val maskinporten = getSecrets(findResourceName("maskinporten-arbeidsgiver-altinn-tilganger"))
     val redis = getSecrets(findResourceName("aiven-arbeidsgiver-altinn-tilganger"))
+    val altinnTilganger = getSecrets("altinn-tilganger")
 
     embeddedServer(CIO, port = 8080, host = "0.0.0.0", module = {
         ktorConfig(
             altinn3Config = Altinn3Config(
-                /* todo */
-                baseUrl = "",
-                ocpApimSubscriptionKey = "",
+                baseUrl = "https://platform.tt02.altinn.no",
+                ocpApimSubscriptionKey = altinnTilganger["OCP_APIM_SUBSCRIPTION_KEY"]!!,
             ),
             authConfig = AuthConfig(
                 clientId = tokenx["TOKEN_X_CLIENT_ID"]!!,

@@ -15,14 +15,7 @@ import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.http.path
 import io.ktor.serialization.kotlinx.json.json
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.builtins.serializer
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
 
 class Altinn3Config(
@@ -100,33 +93,6 @@ class Altinn3Client(
 @Serializable
 class AuthoririzedParty(
     val organizationNumber: String?,
-    val authorizedResources: List<AuthorizedResource>
+    val authorizedResources: List<String>,
+    val subunits: List<AuthoririzedParty>
 )
-
-@Serializable(with = AuthorizedResourceSerializer::class)
-class AuthorizedResource(
-    val appname: String,
-    val resourceid: String,
-)
-
-class AuthorizedResourceSerializer : KSerializer<AuthorizedResource> {
-    private val delegateSerializer = ListSerializer(String.serializer())
-
-    @OptIn(ExperimentalSerializationApi::class)
-    override val descriptor = SerialDescriptor("AuthorizedResource", delegateSerializer.descriptor)
-
-    override fun deserialize(decoder: Decoder): AuthorizedResource {
-        val (appname, resourceid) = decoder.decodeSerializableValue(delegateSerializer).also {
-            require(it.size == 2) { "uforventet antall elementer i authorizedResources" }
-        }
-        return AuthorizedResource(
-            appname = appname,
-            resourceid = resourceid
-        )
-    }
-
-    override fun serialize(encoder: Encoder, value: AuthorizedResource) {
-        encoder.encodeSerializableValue(delegateSerializer, listOf(value.appname, value.resourceid))
-    }
-
-}
