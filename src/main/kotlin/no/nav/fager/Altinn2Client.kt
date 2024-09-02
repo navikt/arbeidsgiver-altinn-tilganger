@@ -9,9 +9,9 @@ import io.ktor.client.request.accept
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.http.ContentType
-import io.ktor.http.URLBuilder
+import io.ktor.http.appendPathSegments
 import io.ktor.http.contentType
-import io.ktor.http.path
+import io.ktor.http.takeFrom
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -104,21 +104,18 @@ class Altinn2Client(
     }
 
     private suspend fun hentReportees(fnr: String, serviceCode: String, serviceEdition: String): ReporteeResult {
-        val baseUrl = URLBuilder(altinn2Config.baseUrl)
         val httpResponse =
             httpClient.get {
                 url {
-                    protocol = baseUrl.protocol
-                    host = baseUrl.host
-                    port = baseUrl.port
-
-                    path("/api/serviceowner/reportees")
+                    takeFrom(altinn2Config.baseUrl)
+                    appendPathSegments("/api/serviceowner/reportees")
 
                     //parameters.append("ForceEIAuthentication", "") // med denne angitt henger requesten til timeout
                     parameters.append("subject", fnr)
                     parameters.append("serviceCode", serviceCode)
                     parameters.append("serviceEdition", serviceEdition)
                     parameters.append("\$filter", "Type ne 'Person' and Status eq 'Active'")
+
                 }
                 accept(ContentType.Application.Json)
                 contentType(ContentType.Application.Json)

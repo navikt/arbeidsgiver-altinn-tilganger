@@ -11,9 +11,11 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.URLBuilder
+import io.ktor.http.appendPathSegments
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.http.path
+import io.ktor.http.takeFrom
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -64,11 +66,8 @@ class Altinn3Client(
         val httpResponse =
             httpClient.post {
                 url {
-                    protocol = baseUrl.protocol
-                    host = baseUrl.host
-                    port = baseUrl.port
-
-                    path("/accessmanagement/api/v1/resourceowner/authorizedparties")
+                    takeFrom(altinn3Config.baseUrl)
+                    appendPathSegments("/accessmanagement/api/v1/resourceowner/authorizedparties")
                     parameters.append("includeAltinn2", "true")
                 }
                 accept(ContentType.Application.Json)
