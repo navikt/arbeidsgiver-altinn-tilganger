@@ -184,7 +184,12 @@ fun Application.ktorConfig(
                 call.respondText("I'm alive")
             }
             get("isready") {
-                call.respond(if (maskinportenA3.isReady) HttpStatusCode.OK else HttpStatusCode.ServiceUnavailable)
+                call.respond(
+                    if (maskinportenA3.isReady && maskinportenA2.isReady)
+                        HttpStatusCode.OK
+                    else
+                        HttpStatusCode.ServiceUnavailable
+                )
             }
         }
 
