@@ -305,16 +305,16 @@ private fun mapToResult(
     authorizedParties: List<AuthoririzedParty>,
     altinn2Reportees: Map<String, List<Altinn2Tjeneste>>
 ): List<AltinnTilgang> {
-    return authorizedParties.map { party ->
-        AltinnTilgang(
-            virksomhetsnummer = party.organizationNumber,
-            altinn3Tilganger = party.authorizedResources,
-            altinn2Tilganger = altinn2Reportees[party.organizationNumber]
-                ?.map { it.serviceCode to it.serviceEdition }
-                ?: emptyList(),
-            underenheter = mapToResult(party.subunits, altinn2Reportees)
-        )
-    }
+    return authorizedParties
+        .filter { it.organizationNumber != null } // er null for type=person
+        .map { party ->
+            AltinnTilgang(
+                orgNr = party.organizationNumber!!,
+                altinn3Tilganger = party.authorizedResources,
+                altinn2Tilganger = altinn2Reportees[party.organizationNumber] ?: emptyList(),
+                underenheter = mapToResult(party.subunits, altinn2Reportees)
+            )
+        }
 }
 
 @Serializable
@@ -387,8 +387,8 @@ data class GetValue(
 
 @Serializable
 data class AltinnTilgang(
-    val virksomhetsnummer: String?,
+    val orgNr: String,
     val altinn3Tilganger: List<String>,
-    val altinn2Tilganger: List<Pair<String, String>>,
+    val altinn2Tilganger: List<Altinn2Tjeneste>,
     val underenheter: List<AltinnTilgang>,
 )

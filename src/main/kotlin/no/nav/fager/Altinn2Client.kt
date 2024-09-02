@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.toList
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -39,7 +40,8 @@ class Altinn2Config(
     }
 }
 
-class Altinn2Tjeneste(
+@Serializable
+data class Altinn2Tjeneste(
     val serviceCode: String,
     val serviceEdition: String,
 )
@@ -52,13 +54,17 @@ class Altinn2Client(
     val maskinporten: Maskinporten,
 ) {
 
+    @OptIn(ExperimentalSerializationApi::class)
     private val httpClient = HttpClient(CIO) {
         install(MaskinportenPlugin) {
             maskinporten = this@Altinn2Client.maskinporten
         }
 
         install(ContentNegotiation) {
-            json(Json { ignoreUnknownKeys = true })
+            json(Json {
+                ignoreUnknownKeys = true
+                explicitNulls = false
+            })
         }
 
         install(Logging) {
@@ -108,11 +114,11 @@ class Altinn2Client(
 
                     path("/api/serviceowner/reportees")
 
+                    //parameters.append("ForceEIAuthentication", "") // med denne angitt henger requesten til timeout
                     parameters.append("subject", fnr)
                     parameters.append("serviceCode", serviceCode)
                     parameters.append("serviceEdition", serviceEdition)
-                    parameters.append("ForceEIAuthentication", "")
-                    parameters.append("filter", "Type ne 'Person' and Status eq 'Active'")
+                    parameters.append("\$filter", "Type ne 'Person' and Status eq 'Active'")
                 }
                 accept(ContentType.Application.Json)
                 contentType(ContentType.Application.Json)
@@ -174,6 +180,11 @@ private class Altinn2TjenesteDefinisjon(
  * GET https://altinn.no/api/metadata?language=1033&$top=2000&$filter=ServiceOwnerCode eq 'NAV'
  */
 private val tjenester = listOf(
+    Altinn2TjenesteDefinisjon(
+        serviceCode = "2896",
+        serviceEdition = "87",
+        serviceName = "Endre bankkontonummer for refusjoner fra NAV til arbeidsgiver",
+    ),
     Altinn2TjenesteDefinisjon(
         serviceCode = "3403",
         serviceEdition = "2",

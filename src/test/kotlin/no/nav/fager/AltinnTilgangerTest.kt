@@ -98,7 +98,7 @@ class AltinnTilgangerTest {
         }.body()
 
         assertEquals(tilganger[0].underenheter[0].altinn3Tilganger, listOf("test-fager"))
-        assertEquals(tilganger[0].underenheter[0].altinn2Tilganger, listOf("4936" to "1"))
+        assertEquals(tilganger[0].underenheter[0].altinn2Tilganger, listOf(Altinn2Tjeneste("4936", "1")))
     }
 
 }
