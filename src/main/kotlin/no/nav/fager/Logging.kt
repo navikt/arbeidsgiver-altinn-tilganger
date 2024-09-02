@@ -4,6 +4,7 @@ import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.LoggerContext
 import ch.qos.logback.classic.PatternLayout
+import ch.qos.logback.classic.boolex.OnMarkerEvaluator
 import ch.qos.logback.classic.spi.Configurator
 import ch.qos.logback.classic.spi.Configurator.ExecutionStatus
 import ch.qos.logback.classic.spi.ILoggingEvent
@@ -12,13 +13,24 @@ import ch.qos.logback.core.Appender
 import ch.qos.logback.core.AppenderBase
 import ch.qos.logback.core.ConsoleAppender
 import ch.qos.logback.core.encoder.LayoutWrappingEncoder
+import ch.qos.logback.core.filter.EvaluatorFilter
+import ch.qos.logback.core.rolling.FixedWindowRollingPolicy
+import ch.qos.logback.core.rolling.RollingFileAppender
+import ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy
 import ch.qos.logback.core.spi.ContextAware
 import ch.qos.logback.core.spi.ContextAwareBase
+import ch.qos.logback.core.spi.FilterReply
 import ch.qos.logback.core.spi.LifeCycle
+import ch.qos.logback.core.util.FileSize
 import net.logstash.logback.encoder.LogstashEncoder
 import org.slf4j.LoggerFactory
+import org.slf4j.MarkerFactory
+import java.io.File
 
 inline fun <reified T> T.logger(): org.slf4j.Logger = LoggerFactory.getLogger(T::class.qualifiedName)
+
+private const val SECURE_LOG_MARKER = "SECURE_LOGGER"
+val SECURE: org.slf4j.Marker = MarkerFactory.getMarker(SECURE_LOG_MARKER)
 
 /* used by resources/META-INF/services/ch.qos.logback.classic.spi */
 class LogConfig : ContextAwareBase(), Configurator {
@@ -26,6 +38,13 @@ class LogConfig : ContextAwareBase(), Configurator {
         val naisCluster = System.getenv("NAIS_CLUSTER_NAME")
 
         val rootAppender = MaskingAppender().setup(lc) {
+            addFilter(EvaluatorFilter<ILoggingEvent>().setup(lc) {
+                evaluator = OnMarkerEvaluator().setup(lc) {
+                    addMarker(SECURE_LOG_MARKER)
+                }
+                onMismatch = FilterReply.NEUTRAL
+                onMatch = FilterReply.DENY
+            })
             appender = ConsoleAppender<ILoggingEvent>().setup(lc) {
                 if (naisCluster != null) {
                     encoder = LogstashEncoder().setup(lc)
@@ -39,6 +58,37 @@ class LogConfig : ContextAwareBase(), Configurator {
             }
         }
 
+        val secureLogFile = if (naisCluster == null)
+            File.createTempFile("secure-", ".log")
+                .apply { deleteOnExit() }
+                .absolutePath
+        else
+            "/secure-logs/secure.log"
+
+        val secureAppender = RollingFileAppender<ILoggingEvent>().setup(lc) {
+            val secureAppender = this
+            file = secureLogFile
+
+            rollingPolicy = FixedWindowRollingPolicy().setup(lc) {
+                setParent(secureAppender)
+                fileNamePattern = "$secureLogFile.%i"
+                maxIndex = 1
+                minIndex = 1
+            }
+
+            triggeringPolicy = SizeBasedTriggeringPolicy<ILoggingEvent>().setup(lc) {
+                maxFileSize = FileSize.valueOf("128MB")
+            }
+            addFilter(EvaluatorFilter<ILoggingEvent>().setup(lc) {
+                evaluator = OnMarkerEvaluator().setup(lc) {
+                    addMarker(SECURE_LOG_MARKER)
+                }
+                onMismatch = FilterReply.DENY
+                onMatch = FilterReply.NEUTRAL
+            })
+            encoder = LogstashEncoder().setup(lc)
+        }
+
         if (naisCluster == null) {
             lc.getLogger("io.ktor.auth.jwt").apply {
                 level = Level.TRACE
@@ -48,6 +98,7 @@ class LogConfig : ContextAwareBase(), Configurator {
         lc.getLogger(Logger.ROOT_LOGGER_NAME).apply {
             level = Level.INFO
             addAppender(rootAppender)
+            addAppender(secureAppender)
         }
 
         return ExecutionStatus.DO_NOT_INVOKE_NEXT_IF_ANY
@@ -65,7 +116,6 @@ private fun <T> T.setup(context: LoggerContext, body: T.() -> Unit = {}): T
 
 
 class MaskingAppender : AppenderBase<ILoggingEvent>() {
-
     var appender: Appender<ILoggingEvent>? = null
 
     override fun append(event: ILoggingEvent) {
