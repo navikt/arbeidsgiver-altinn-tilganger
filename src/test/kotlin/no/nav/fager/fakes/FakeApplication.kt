@@ -19,12 +19,14 @@ class FakeApplication(
     private val clientConfig: HttpClientConfig<CIOEngineConfig>.() -> Unit = {}
 ) : org.junit.rules.ExternalResource() {
     private val fakeAltinn3Api = FakeAltinn3Api()
+    private val fakeAltinn2Api = FakeAltinn2Api()
     private val fakeMaskinporten = FakeMaskinporten()
 
     private val server by lazy {
         embeddedServer(CIO, port = port, host = "0.0.0.0", module = {
             ktorConfig(
                 altinn3Config = fakeAltinn3Api.config(),
+                altinn2Config = fakeAltinn2Api.config(),
                 authConfig = oauth2MockServer,
                 maskinportenConfig = fakeMaskinporten.config(),
                 redisConfig = localRedisConfig,
@@ -40,6 +42,7 @@ class FakeApplication(
 
     fun start(wait: Boolean = false) {
         fakeAltinn3Api.start()
+        fakeAltinn2Api.start()
         fakeMaskinporten.before()
         server.start(wait = wait)
         server.waitUntilReady()
@@ -62,6 +65,7 @@ class FakeApplication(
         server.stop()
         fakeMaskinporten.after()
         fakeAltinn3Api.stop()
+        fakeAltinn2Api.stop()
     }
 
     class TestContext(
@@ -82,5 +86,16 @@ class FakeApplication(
         fakeAltinn3Api.expectedPath = path
         fakeAltinn3Api.handler = handlePost
         fakeAltinn3Api.error = null
+    }
+
+    fun altinn2Response(
+        httpMethod: HttpMethod,
+        path: String,
+        handlePost: (suspend PipelineContext<Unit, ApplicationCall>.(Any) -> Unit)
+    ) {
+        fakeAltinn2Api.expectedMethod = httpMethod
+        fakeAltinn2Api.expectedPath = path
+        fakeAltinn2Api.handler = handlePost
+        fakeAltinn2Api.error = null
     }
 }

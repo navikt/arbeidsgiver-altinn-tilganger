@@ -4,6 +4,7 @@ import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.post
 import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod.Companion.Get
 import io.ktor.http.HttpMethod.Companion.Post
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
@@ -67,20 +68,37 @@ class AltinnTilgangerTest {
                     ]
                   }
                 ]
-            """.trimIndent(), ContentType.Application.Json
+                """.trimIndent(), ContentType.Application.Json
             )
+        }
+        app.altinn2Response(Get, "/api/serviceowner/reportees") {
+            if (call.request.queryParameters["serviceCode"] == "4936")
+                call.respondText(
+                    """
+                    [
+                        {
+                            "Name": "SLEMMESTAD OG STAVERN REGNSKAP",
+                            "Type": "Business",
+                            "OrganizationNumber": "910825496",
+                            "ParentOrganizationNumber": "810825472",
+                            "OrganizationForm": "BEDR",
+                            "Status": "Active"
+                        }
+                    ]
+                    """.trimIndent(), ContentType.Application.Json
+                )
         }
 
 
-        val resources: List<AuthoririzedParty> = client.post("/altinn-tilganger") {
+        val tilganger: List<AltinnTilgang> = client.post("/altinn-tilganger") {
             authorization(subject = "acr-high-11111111111")
             contentType(ContentType.Application.Json)
         }.apply {
             assertEquals(HttpStatusCode.OK, status)
         }.body()
 
-        assertEquals(resources[0].subunits[0].authorizedResources, listOf("test-fager"))
-
+        assertEquals(tilganger[0].underenheter[0].altinn3Tilganger, listOf("test-fager"))
+        assertEquals(tilganger[0].underenheter[0].altinn2Tilganger, listOf("4936" to "1"))
     }
 
 }

@@ -51,6 +51,7 @@ fun main() {
     embeddedServer(CIO, port = 8080, host = "0.0.0.0", module = {
         ktorConfig(
             altinn3Config = Altinn3Config.nais(),
+            altinn2Config = Altinn2Config.nais(),
             authConfig = AuthConfig.nais(),
             maskinportenConfig = MaskinportenConfig.nais(),
             redisConfig = RedisConfig.nais(),
@@ -76,6 +77,7 @@ data class AuthConfig(
 @OptIn(ExperimentalLettuceCoroutinesApi::class)
 fun Application.ktorConfig(
     altinn3Config: Altinn3Config,
+    altinn2Config: Altinn2Config,
     authConfig: AuthConfig,
     maskinportenConfig: MaskinportenConfig,
     redisConfig: RedisConfig,
@@ -160,9 +162,16 @@ fun Application.ktorConfig(
     val redisClient = redisConfig.createClient()
 
     @OptIn(ExperimentalTime::class)
-    val maskinporten = Maskinporten(
+    val maskinportenA3 = Maskinporten(
         maskinportenConfig = maskinportenConfig,
         scope = "altinn:accessmanagement/authorizedparties.resourceowner",
+        backgroundCoroutineScope = this,
+    )
+
+    @OptIn(ExperimentalTime::class)
+    val maskinportenA2 = Maskinporten(
+        maskinportenConfig = maskinportenConfig,
+        scope = "altinn:serviceowner/reportees",
         backgroundCoroutineScope = this,
     )
 
@@ -175,7 +184,7 @@ fun Application.ktorConfig(
                 call.respondText("I'm alive")
             }
             get("isready") {
-                call.respond(if (maskinporten.isReady) HttpStatusCode.OK else HttpStatusCode.ServiceUnavailable)
+                call.respond(if (maskinportenA3.isReady) HttpStatusCode.OK else HttpStatusCode.ServiceUnavailable)
             }
         }
 
@@ -210,7 +219,11 @@ fun Application.ktorConfig(
         authenticate {
             val altinn3Client = Altinn3Client(
                 altinn3Config = altinn3Config,
-                maskinporten = maskinporten,
+                maskinporten = maskinportenA3,
+            )
+            val altinn2Client = Altinn2Client(
+                altinn2Config = altinn2Config,
+                maskinporten = maskinportenA2,
             )
 
             post("/altinn-tilganger", {
@@ -218,7 +231,9 @@ fun Application.ktorConfig(
             }) {
                 val fnr = call.principal<InloggetBrukerPrincipal>()!!.fnr
                 val authorizedParties = altinn3Client.hentAuthorizedParties(fnr)
-                call.respond(authorizedParties)
+                val altinn2Reportees = altinn2Client.hentReportees(fnr)
+
+                call.respond(mapToResult(authorizedParties, altinn2Reportees))
             }
 
             post("/json/kotlinx-serialization", {
@@ -283,6 +298,22 @@ fun Application.ktorConfig(
                 call.respond<AltinnOrganisasjon>(body)
             }
         }
+    }
+}
+
+private fun mapToResult(
+    authorizedParties: List<AuthoririzedParty>,
+    altinn2Reportees: Map<String, List<Altinn2Tjeneste>>
+): List<AltinnTilgang> {
+    return authorizedParties.map { party ->
+        AltinnTilgang(
+            virksomhetsnummer = party.organizationNumber,
+            altinn3Tilganger = party.authorizedResources,
+            altinn2Tilganger = altinn2Reportees[party.organizationNumber]
+                ?.map { it.serviceCode to it.serviceEdition }
+                ?: emptyList(),
+            underenheter = mapToResult(party.subunits, altinn2Reportees)
+        )
     }
 }
 
@@ -352,4 +383,12 @@ data class GetKey(
 @Serializable
 data class GetValue(
     val value: String?,
+)
+
+@Serializable
+data class AltinnTilgang(
+    val virksomhetsnummer: String?,
+    val altinn3Tilganger: List<String>,
+    val altinn2Tilganger: List<Pair<String, String>>,
+    val underenheter: List<AltinnTilgang>,
 )

@@ -8,6 +8,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import no.nav.fager.Altinn2Config
 import no.nav.fager.Altinn3Config
 import no.nav.fager.AuthConfig
 import no.nav.fager.MaskinportenConfig
@@ -32,6 +33,10 @@ fun main() {
             altinn3Config = Altinn3Config(
                 baseUrl = "https://platform.tt02.altinn.no",
                 ocpApimSubscriptionKey = altinnTilganger["OCP_APIM_SUBSCRIPTION_KEY"]!!,
+            ),
+            altinn2Config = Altinn2Config(
+                baseUrl = "https://tt02.altinn.no",
+                apiKey = altinnTilganger["ALTINN_2_API_KEY"]!!,
             ),
             authConfig = AuthConfig(
                 clientId = tokenx["TOKEN_X_CLIENT_ID"]!!,
