@@ -238,10 +238,10 @@ fun Application.ktorConfig(
                 // TODO: document Bearer Auth
             }) {
                 val fnr = call.principal<InloggetBrukerPrincipal>()!!.fnr
-                val authorizedParties = altinn3Client.hentAuthorizedParties(fnr)
-                val altinn2Reportees = altinn2Client.hentReportees(fnr)
+                val altinn3Tilganger = altinn3Client.hentAuthorizedParties(fnr)
+                val altinn2Tilganger = altinn2Client.hentAltinn2Tilganger(fnr)
 
-                call.respond(mapToResult(authorizedParties, altinn2Reportees))
+                call.respond(AltinnTilgangerResponse.fromResult(altinn2Tilganger, altinn3Tilganger))
             }
 
             post("/json/kotlinx-serialization", {
@@ -306,22 +306,6 @@ fun Application.ktorConfig(
     }
 }
 
-private fun mapToResult(
-    authorizedParties: List<AuthoririzedParty>,
-    altinn2Reportees: Map<String, List<Altinn2Tjeneste>>
-): List<AltinnTilgang> {
-    return authorizedParties
-        .filter { it.organizationNumber != null } // er null for type=person
-        .map { party ->
-            AltinnTilgang(
-                orgNr = party.organizationNumber!!,
-                altinn3Tilganger = party.authorizedResources,
-                altinn2Tilganger = altinn2Reportees[party.organizationNumber] ?: emptyList(),
-                underenheter = mapToResult(party.subunits, altinn2Reportees)
-            )
-        }
-}
-
 @Serializable
 @Title("Altinn organisasjon")
 @Description(
@@ -375,6 +359,61 @@ data class GetValue(
 data class AltinnTilgang(
     val orgNr: String,
     val altinn3Tilganger: List<String>,
-    val altinn2Tilganger: List<Altinn2Tjeneste>,
+    val altinn2Tilganger: List<String>,
     val underenheter: List<AltinnTilgang>,
 )
+
+@Serializable
+data class AltinnTilgangerResponse(
+    val isError: Boolean,
+    val hierarki: List<AltinnTilgang>,
+    val orgNrTilTilganger: Map<String, List<String>>,
+    val tilgangTilOrgNr: Map<String, List<String>>,
+) {
+    companion object {
+        fun fromResult(
+            altinn2Tilganger: Altinn2Tilganger,
+            altinn3Tilganger: List<AuthoririzedParty>
+        ): AltinnTilgangerResponse {
+            val orgNrTilTilganger: Map<String, List<String>> =
+                altinn3Tilganger.flatMap { it.subunits }
+                    .associate {
+                        val authorizedServices = altinn2Tilganger.orgNrTilTjenester[it.organizationNumber]
+                            ?.map { (serviceCode, serviceEdition) -> """${serviceCode}:${serviceEdition}""" }
+                            ?: emptyList()
+                        it.organizationNumber!! to it.authorizedResources + authorizedServices
+                    }
+
+            val tilgangToOrgNr = orgNrTilTilganger.flatMap { (orgNr, tjenester) ->
+                tjenester.map { it to orgNr }
+            }.groupBy({ it.first }, { it.second })
+
+            val hierarki = mapToHierarchy(altinn3Tilganger, altinn2Tilganger)
+
+            return AltinnTilgangerResponse(
+                isError = altinn2Tilganger.isError,
+                hierarki = hierarki,
+                orgNrTilTilganger = orgNrTilTilganger,
+                tilgangTilOrgNr = tilgangToOrgNr,
+            )
+        }
+
+        private fun mapToHierarchy(
+            authorizedParties: List<AuthoririzedParty>,
+            altinn2Tilganger: Altinn2Tilganger
+        ): List<AltinnTilgang> {
+            return authorizedParties
+                .filter { it.organizationNumber != null } // er null for type=person
+                .map { party ->
+                    AltinnTilgang(
+                        orgNr = party.organizationNumber!!, // alle orgnr finnes i altinn3 pga includeAltinn2=true
+                        altinn3Tilganger = party.authorizedResources,
+                        altinn2Tilganger = altinn2Tilganger.orgNrTilTjenester[party.organizationNumber]
+                            ?.map { """${it.serviceCode}:${it.serviceEdition}""" }
+                            ?: emptyList(),
+                        underenheter = mapToHierarchy(party.subunits, altinn2Tilganger)
+                    )
+                }
+        }
+    }
+}

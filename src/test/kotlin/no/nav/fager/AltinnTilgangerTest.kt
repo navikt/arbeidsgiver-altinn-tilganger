@@ -90,15 +90,18 @@ class AltinnTilgangerTest {
         }
 
 
-        val tilganger: List<AltinnTilgang> = client.post("/altinn-tilganger") {
+        val tilganger: AltinnTilgangerResponse = client.post("/altinn-tilganger") {
             authorization(subject = "acr-high-11111111111")
             contentType(ContentType.Application.Json)
         }.apply {
             assertEquals(HttpStatusCode.OK, status)
         }.body()
 
-        assertEquals(tilganger[0].underenheter[0].altinn3Tilganger, listOf("test-fager"))
-        assertEquals(tilganger[0].underenheter[0].altinn2Tilganger, listOf(Altinn2Tjeneste("4936", "1")))
+        assertEquals(true, tilganger.isError)
+        assertEquals(listOf("test-fager"), tilganger.hierarki[0].underenheter[0].altinn3Tilganger)
+        assertEquals(listOf("4936:1"), tilganger.hierarki[0].underenheter[0].altinn2Tilganger)
+        assertEquals(listOf("910825496"), tilganger.tilgangTilOrgNr["4936:1"])
+        assertEquals(listOf("test-fager", "4936:1"), tilganger.orgNrTilTilganger["910825496"])
     }
 
 }

@@ -40,7 +40,12 @@ class Altinn2Config(
     }
 }
 
-@Serializable
+
+class Altinn2Tilganger(
+    val isError: Boolean,
+    val orgNrTilTjenester: Map<String, List<Altinn2Tjeneste>>,
+)
+
 data class Altinn2Tjeneste(
     val serviceCode: String,
     val serviceEdition: String,
@@ -78,7 +83,7 @@ class Altinn2Client(
      * henter tilganger i altinn 2 og returnerer som et map av orgnummer til tjeneste
      */
     @OptIn(ExperimentalCoroutinesApi::class)
-    suspend fun hentReportees(fnr: String): Map<String, List<Altinn2Tjeneste>> {
+    suspend fun hentAltinn2Tilganger(fnr: String): Altinn2Tilganger {
         val reportees: List<ReporteeResult> = tjenester.asFlow()
             .flowOn(Dispatchers.IO)
             .flatMapMerge { tjeneste ->
@@ -89,17 +94,19 @@ class Altinn2Client(
                 }
             }.toList()
 
-        val isError = reportees.any { it.isError } // TODO: expose error
-        return reportees.flatMap { reportee ->
-            reportee.reportees.map {
-                it.organizationNumber!! to Altinn2Tjeneste(
-                    serviceCode = reportee.serviceCode,
-                    serviceEdition = reportee.serviceEdition
-                )
-            }
-        }.groupBy(
-            keySelector = { it.first },
-            valueTransform = { it.second }
+        return Altinn2Tilganger(
+            isError = reportees.any { it.isError },
+            orgNrTilTjenester = reportees.flatMap { reportee ->
+                reportee.reportees.map {
+                    it.organizationNumber!! to Altinn2Tjeneste(
+                        serviceCode = reportee.serviceCode,
+                        serviceEdition = reportee.serviceEdition
+                    )
+                }
+            }.groupBy(
+                keySelector = { it.first },
+                valueTransform = { it.second }
+            ),
         )
     }
 
@@ -110,7 +117,6 @@ class Altinn2Client(
                     takeFrom(altinn2Config.baseUrl)
                     appendPathSegments("/api/serviceowner/reportees")
 
-                    //parameters.append("ForceEIAuthentication", "") // med denne angitt henger requesten til timeout
                     parameters.append("subject", fnr)
                     parameters.append("serviceCode", serviceCode)
                     parameters.append("serviceEdition", serviceEdition)
@@ -141,7 +147,7 @@ class Altinn2Client(
     }
 }
 
-class ReporteeResult(
+private class ReporteeResult(
     val serviceCode: String,
     val serviceEdition: String,
     val reportees: List<Altinn2Reportee>,
@@ -164,6 +170,7 @@ class Altinn2Reportee(
     val status: String?
 )
 
+@Suppress("unused")
 private class Altinn2TjenesteDefinisjon(
     val serviceCode: String,
     val serviceEdition: String,
