@@ -55,14 +55,9 @@ spec:
           namespace: aura
           cluster: dev-gcp
         - application: notifikasjon-bruker-api
-          namespace: fager
-          cluster: dev-gcp
         - application: min-side-arbeidsgiver-api
-          namespace: fager
-          cluster: dev-gcp
         - application: permitteringsskjema-api
           namespace: permittering-og-nedbemanning
-          cluster: dev-gcp
     outbound:
       external:
         - host: platform.tt02.altinn.no
