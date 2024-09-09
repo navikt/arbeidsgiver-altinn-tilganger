@@ -87,6 +87,8 @@ fun Application.ktorConfig(
 ) {
     val log = logger()
 
+    log.info(SECURE, "hello secure log")
+
     install(Compression) {
         gzip {
             priority = 1.0
