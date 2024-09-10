@@ -63,6 +63,9 @@ spec:
         - host: platform.tt02.altinn.no
         - host: tt02.altinn.no
 
+  secureLogs:
+    enabled: true
+
   redis:
     - instance: tilganger
       access: readwrite
