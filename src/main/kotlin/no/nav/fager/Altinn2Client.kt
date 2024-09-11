@@ -111,6 +111,14 @@ class Altinn2Client(
         )
     }
 
+    /** Viktig om personvern: Dette endepunktet hos Altinn forventer fødselsnummer som et query-parameter. Det fører
+     * til ekstra risiko for at NAVs infrastruktur eller våre biblioteker logger fødselsnummeret.
+     *
+     * 1. Vi maskerer fødselsnummer i denne appen sine logger (se klassen [MaskingAppender]).
+     * 2. Nais' auto-instrumentation logger bla. query path, men [nais maskerer fødselsnummer
+     *    ](https://docs.nais.io/observability/reference/auto-config/?h=auto#sanitizing-sensitive-data).
+     *    Vi har verifisert i grafana at nais faktisk maskerer fødselsnummeret.
+     **/
     private suspend fun hentReportees(fnr: String, serviceCode: String, serviceEdition: String): ReporteeResult = try {
         val httpResponse = httpClient.get {
             url {
@@ -121,7 +129,6 @@ class Altinn2Client(
                 parameters.append("serviceCode", serviceCode)
                 parameters.append("serviceEdition", serviceEdition)
                 parameters.append("\$filter", "Type ne 'Person' and Status eq 'Active'")
-
             }
             accept(ContentType.Application.Json)
             contentType(ContentType.Application.Json)
