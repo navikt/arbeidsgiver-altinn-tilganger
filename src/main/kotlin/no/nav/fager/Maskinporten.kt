@@ -179,6 +179,7 @@ class Maskinporten(
         }
     }
 
+    @WithSpan
     private suspend fun fetchToken(): Either<Throwable, Cache> = either {
         val now = Instant.now()
         val expiration = now + 1.minutes.toJavaDuration()
@@ -223,7 +224,6 @@ class Maskinporten(
     }
 
 
-    @WithSpan
     fun accessToken(): String {
         return requireNotNull(cache?.accessToken) {
             """
