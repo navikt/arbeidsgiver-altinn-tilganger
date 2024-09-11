@@ -14,6 +14,7 @@ import io.ktor.http.appendPathSegments
 import io.ktor.http.contentType
 import io.ktor.http.takeFrom
 import io.ktor.serialization.kotlinx.json.json
+import io.opentelemetry.instrumentation.annotations.WithSpan
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
@@ -62,6 +63,7 @@ class Altinn3Client(
         }
     }
 
+    @WithSpan
     suspend fun hentAuthorizedParties(fnr: String): List<AuthoririzedParty> = try {
         val httpResponse = httpClient.post {
             url {

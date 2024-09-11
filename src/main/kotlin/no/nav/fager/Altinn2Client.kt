@@ -13,6 +13,7 @@ import io.ktor.http.appendPathSegments
 import io.ktor.http.contentType
 import io.ktor.http.takeFrom
 import io.ktor.serialization.kotlinx.json.json
+import io.opentelemetry.instrumentation.annotations.WithSpan
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.asFlow
@@ -84,6 +85,7 @@ class Altinn2Client(
      * henter tilganger i altinn 2 og returnerer som et map av orgnummer til tjeneste
      */
     @OptIn(ExperimentalCoroutinesApi::class)
+    @WithSpan
     suspend fun hentAltinn2Tilganger(fnr: String): Altinn2Tilganger {
         val reportees: List<ReporteeResult> = tjenester.asFlow()
             .flowOn(Dispatchers.IO)

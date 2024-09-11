@@ -22,6 +22,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.isSuccess
 import io.ktor.http.parameters
 import io.ktor.serialization.kotlinx.json.json
+import io.opentelemetry.instrumentation.annotations.WithSpan
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -222,6 +223,7 @@ class Maskinporten(
     }
 
 
+    @WithSpan
     fun accessToken(): String {
         return requireNotNull(cache?.accessToken) {
             """
