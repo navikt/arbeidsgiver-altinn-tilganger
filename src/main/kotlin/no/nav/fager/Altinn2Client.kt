@@ -58,6 +58,7 @@ class Altinn2Client(
     val altinn2Config: Altinn2Config,
     val maskinporten: Maskinporten,
 ) {
+    private val log = logger()
 
     @OptIn(ExperimentalSerializationApi::class)
     private val httpClient = HttpClient(CIO) {
@@ -110,40 +111,44 @@ class Altinn2Client(
         )
     }
 
-    private suspend fun hentReportees(fnr: String, serviceCode: String, serviceEdition: String): ReporteeResult {
-        val httpResponse =
-            httpClient.get {
-                url {
-                    takeFrom(altinn2Config.baseUrl)
-                    appendPathSegments("/api/serviceowner/reportees")
+    private suspend fun hentReportees(fnr: String, serviceCode: String, serviceEdition: String): ReporteeResult = try {
+        val httpResponse = httpClient.get {
+            url {
+                takeFrom(altinn2Config.baseUrl)
+                appendPathSegments("/api/serviceowner/reportees")
 
-                    parameters.append("subject", fnr)
-                    parameters.append("serviceCode", serviceCode)
-                    parameters.append("serviceEdition", serviceEdition)
-                    parameters.append("\$filter", "Type ne 'Person' and Status eq 'Active'")
+                parameters.append("subject", fnr)
+                parameters.append("serviceCode", serviceCode)
+                parameters.append("serviceEdition", serviceEdition)
+                parameters.append("\$filter", "Type ne 'Person' and Status eq 'Active'")
 
-                }
-                accept(ContentType.Application.Json)
-                contentType(ContentType.Application.Json)
-                header("ApiKey", altinn2Config.apiKey)
             }
-
-        return try {
-            val reportees = httpResponse.body<List<Altinn2Reportee>>()
-            ReporteeResult(
-                serviceCode = serviceCode,
-                serviceEdition = serviceEdition,
-                reportees = reportees,
-                isError = false,
-            )
-        } catch (e: Exception) {
-            ReporteeResult(
-                serviceCode = serviceCode,
-                serviceEdition = serviceEdition,
-                reportees = listOf(),
-                isError = true,
-            )
+            accept(ContentType.Application.Json)
+            contentType(ContentType.Application.Json)
+            header("ApiKey", altinn2Config.apiKey)
         }
+
+        val reportees = httpResponse.body<List<Altinn2Reportee>>()
+        ReporteeResult(
+            serviceCode = serviceCode,
+            serviceEdition = serviceEdition,
+            reportees = reportees,
+            isError = false,
+        )
+    } catch (e: Exception) {
+        log.info(
+            "reportee for service code:edition {}:{} kastet exception {}",
+            serviceCode,
+            serviceEdition,
+            e::class.qualifiedName,
+            e
+        )
+        ReporteeResult(
+            serviceCode = serviceCode,
+            serviceEdition = serviceEdition,
+            reportees = listOf(),
+            isError = true,
+        )
     }
 }
 

@@ -10,11 +10,8 @@ import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
-import io.ktor.http.URLBuilder
 import io.ktor.http.appendPathSegments
 import io.ktor.http.contentType
-import io.ktor.http.isSuccess
-import io.ktor.http.path
 import io.ktor.http.takeFrom
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.Serializable
@@ -45,7 +42,11 @@ class Altinn3Client(
     val altinn3Config: Altinn3Config,
     val maskinporten: Maskinporten,
 ) {
+    private val log = logger()
+
     private val httpClient = HttpClient(CIO) {
+        expectSuccess = true
+
         install(MaskinportenPlugin) {
             maskinporten = this@Altinn3Client.maskinporten
         }
@@ -61,30 +62,28 @@ class Altinn3Client(
         }
     }
 
-    suspend fun hentAuthorizedParties(fnr: String): List<AuthoririzedParty> {
-        val baseUrl = URLBuilder(altinn3Config.baseUrl)
-        val httpResponse =
-            httpClient.post {
-                url {
-                    takeFrom(altinn3Config.baseUrl)
-                    appendPathSegments("/accessmanagement/api/v1/resourceowner/authorizedparties")
-                    parameters.append("includeAltinn2", "true")
-                }
-                accept(ContentType.Application.Json)
-                contentType(ContentType.Application.Json)
-                header("ocp-apim-subscription-key", altinn3Config.ocpApimSubscriptionKey)
-                setBody(
-                    mapOf(
-                        "type" to "urn:altinn:person:identifier-no",
-                        "value" to fnr
-                    )
-                )
+    suspend fun hentAuthorizedParties(fnr: String): List<AuthoririzedParty> = try {
+        val httpResponse = httpClient.post {
+            url {
+                takeFrom(altinn3Config.baseUrl)
+                appendPathSegments("/accessmanagement/api/v1/resourceowner/authorizedparties")
+                parameters.append("includeAltinn2", "true")
             }
+            accept(ContentType.Application.Json)
+            contentType(ContentType.Application.Json)
+            header("ocp-apim-subscription-key", altinn3Config.ocpApimSubscriptionKey)
+            setBody(
+                mapOf(
+                    "type" to "urn:altinn:person:identifier-no",
+                    "value" to fnr
+                )
+            )
+        }
 
-        if (!httpResponse.status.isSuccess())
-            error("oh noes not ok")
-
-        return httpResponse.body()
+        httpResponse.body()
+    } catch (e: Exception) {
+        log.info("POST /authorized_parties kastet exception {}", e::class.qualifiedName, e)
+        emptyList()
     }
 }
 

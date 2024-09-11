@@ -44,6 +44,7 @@ import io.ktor.server.routing.routing
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
+import kotlinx.coroutines.async
 import kotlinx.serialization.Serializable
 import org.slf4j.event.Level
 import java.net.URI
@@ -240,10 +241,16 @@ fun Application.ktorConfig(
                 // TODO: document Bearer Auth
             }) {
                 val fnr = call.principal<InloggetBrukerPrincipal>()!!.fnr
-                val altinn3Tilganger = altinn3Client.hentAuthorizedParties(fnr)
-                val altinn2Tilganger = altinn2Client.hentAltinn2Tilganger(fnr)
+                val altinn2TilgangerFuture = async { altinn2Client.hentAltinn2Tilganger(fnr) }
+                val altinn3TilgangerFuture = async { altinn3Client.hentAuthorizedParties(fnr) }
 
-                call.respond(AltinnTilgangerResponse.fromResult(altinn2Tilganger, altinn3Tilganger))
+                /* Ingen try-catch rundt .await() siden begge klientene håndterer alle exceptions internt. */
+                call.respond(
+                    AltinnTilgangerResponse.fromResult(
+                        altinn2TilgangerFuture.await(),
+                        altinn3TilgangerFuture.await()
+                    )
+                )
             }
 
             post("/json/kotlinx-serialization", {
