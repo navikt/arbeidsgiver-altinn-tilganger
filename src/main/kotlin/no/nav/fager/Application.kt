@@ -370,9 +370,6 @@ data class AltinnTilgang(
     val altinn3Tilganger: List<String>,
     val altinn2Tilganger: List<String>,
     val underenheter: List<AltinnTilgang>,
-    val name: String,
-    val parentOrgNr: String? = null,
-    val organizationForm: String,
 )
 
 @Serializable
@@ -419,13 +416,11 @@ data class AltinnTilgangerResponse(
                 .map { party ->
                     AltinnTilgang(
                         orgNr = party.organizationNumber!!, // alle orgnr finnes i altinn3 pga includeAltinn2=true
-                        name = party.name,
-                        organizationForm = party.unitType,
                         altinn3Tilganger = party.authorizedResources,
                         altinn2Tilganger = altinn2Tilganger.orgNrTilTjenester[party.organizationNumber]
                             ?.map { """${it.serviceCode}:${it.serviceEdition}""" }
                             ?: emptyList(),
-                        underenheter = mapToHierarchy(party.subunits, altinn2Tilganger),
+                        underenheter = mapToHierarchy(party.subunits, altinn2Tilganger)
                     )
                 }
         }
