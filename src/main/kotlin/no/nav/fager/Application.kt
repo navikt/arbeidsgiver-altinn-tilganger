@@ -44,7 +44,6 @@ import io.ktor.server.routing.routing
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
-import kotlinx.coroutines.async
 import kotlinx.serialization.Serializable
 import org.slf4j.event.Level
 import java.net.URI
