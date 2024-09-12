@@ -231,9 +231,15 @@ private val tjenester = listOf(
     ),
     Altinn2TjenesteDefinisjon(
         serviceCode = "5332",
+        serviceEdition = "1",
+        serviceName = "Tiltaksgjennomføring",
+        serviceEditionName = "Avtale om arbeidstrening (dev)",
+    ),
+    Altinn2TjenesteDefinisjon(
+        serviceCode = "5332",
         serviceEdition = "2",
         serviceName = "Tiltaksgjennomføring",
-        serviceEditionName = "Avtale om arbeidstrening",
+        serviceEditionName = "Avtale om arbeidstrening (prod)",
     ),
     Altinn2TjenesteDefinisjon(
         serviceCode = "5384",
