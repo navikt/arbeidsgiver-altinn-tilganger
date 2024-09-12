@@ -93,6 +93,9 @@ class Altinn3Client(
 @Serializable
 class AuthoririzedParty(
     val organizationNumber: String?,
-    val authorizedResources: List<String>,
+    val name: String,
+    val type: String?,
+    val unitType: String?,
+    val authorizedResources: Set<String>,
     val subunits: List<AuthoririzedParty>
 )

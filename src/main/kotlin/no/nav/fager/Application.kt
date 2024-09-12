@@ -237,18 +237,17 @@ fun Application.ktorConfig(
                 maskinporten = maskinportenA2,
             )
 
+            val altinnService = AltinnService(altinn2Client, altinn3Client)
+
             post("/altinn-tilganger", {
                 // TODO: document Bearer Auth
             }) {
                 val fnr = call.principal<InloggetBrukerPrincipal>()!!.fnr
-                val altinn2TilgangerFuture = async { altinn2Client.hentAltinn2Tilganger(fnr) }
-                val altinn3TilgangerFuture = async { altinn3Client.hentAuthorizedParties(fnr) }
+                val tilganger = altinnService.hentTilganger(fnr, this)
 
-                /* Ingen try-catch rundt .await() siden begge klientene håndterer alle exceptions internt. */
                 call.respond(
                     AltinnTilgangerResponse.fromResult(
-                        altinn2TilgangerFuture.await(),
-                        altinn3TilgangerFuture.await()
+                        tilganger
                     )
                 )
             }
@@ -364,65 +363,46 @@ data class GetValue(
     val value: String?,
 )
 
+
 @Serializable
 data class AltinnTilgang(
     val orgNr: String,
-    val altinn3Tilganger: List<String>,
-    val altinn2Tilganger: List<String>,
+    val altinn3Tilganger: Set<String>,
+    val altinn2Tilganger: Set<String>,
     val underenheter: List<AltinnTilgang>,
+    val name: String,
+    val parentOrgNr: String? = null,
+    val organizationForm: String,
 )
 
 @Serializable
 data class AltinnTilgangerResponse(
     val isError: Boolean,
     val hierarki: List<AltinnTilgang>,
-    val orgNrTilTilganger: Map<String, List<String>>,
-    val tilgangTilOrgNr: Map<String, List<String>>,
+    val orgNrTilTilganger: Map<String, Set<String>>,
+    val tilgangTilOrgNr: Map<String, Set<String>>,
 ) {
     companion object {
         fun fromResult(
-            altinn2Tilganger: Altinn2Tilganger,
-            altinn3Tilganger: List<AuthoririzedParty>
+            resultat: AltinnService.AltinnTilgangerResultat
         ): AltinnTilgangerResponse {
-            val orgNrTilTilganger: Map<String, List<String>> =
-                altinn3Tilganger.flatMap { it.subunits }
+            val orgNrTilTilganger: Map<String, Set<String>> =
+                resultat.altinnTilganger.flatMap { it.underenheter }
                     .associate {
-                        val authorizedServices = altinn2Tilganger.orgNrTilTjenester[it.organizationNumber]
-                            ?.map { (serviceCode, serviceEdition) -> """${serviceCode}:${serviceEdition}""" }
-                            ?: emptyList()
-                        it.organizationNumber!! to it.authorizedResources + authorizedServices
+                        it.orgNr to it.altinn2Tilganger + it.altinn3Tilganger
                     }
 
             val tilgangToOrgNr = orgNrTilTilganger.flatMap { (orgNr, tjenester) ->
                 tjenester.map { it to orgNr }
-            }.groupBy({ it.first }, { it.second })
+            }.groupBy({ it.first }, { it.second }).mapValues {  it.value.toSet() }
 
-            val hierarki = mapToHierarchy(altinn3Tilganger, altinn2Tilganger)
 
             return AltinnTilgangerResponse(
-                isError = altinn2Tilganger.isError,
-                hierarki = hierarki,
+                isError = resultat.isError,
+                hierarki = resultat.altinnTilganger,
                 orgNrTilTilganger = orgNrTilTilganger,
                 tilgangTilOrgNr = tilgangToOrgNr,
             )
-        }
-
-        private fun mapToHierarchy(
-            authorizedParties: List<AuthoririzedParty>,
-            altinn2Tilganger: Altinn2Tilganger
-        ): List<AltinnTilgang> {
-            return authorizedParties
-                .filter { it.organizationNumber != null } // er null for type=person
-                .map { party ->
-                    AltinnTilgang(
-                        orgNr = party.organizationNumber!!, // alle orgnr finnes i altinn3 pga includeAltinn2=true
-                        altinn3Tilganger = party.authorizedResources,
-                        altinn2Tilganger = altinn2Tilganger.orgNrTilTjenester[party.organizationNumber]
-                            ?.map { """${it.serviceCode}:${it.serviceEdition}""" }
-                            ?: emptyList(),
-                        underenheter = mapToHierarchy(party.subunits, altinn2Tilganger)
-                    )
-                }
         }
     }
 }

@@ -98,10 +98,10 @@ class AltinnTilgangerTest {
         }.body()
 
         assertEquals(true, tilganger.isError)
-        assertEquals(listOf("test-fager"), tilganger.hierarki[0].underenheter[0].altinn3Tilganger)
-        assertEquals(listOf("4936:1"), tilganger.hierarki[0].underenheter[0].altinn2Tilganger)
-        assertEquals(listOf("910825496"), tilganger.tilgangTilOrgNr["4936:1"])
-        assertEquals(listOf("test-fager", "4936:1"), tilganger.orgNrTilTilganger["910825496"])
+        assertEquals(setOf("test-fager"), tilganger.hierarki[0].underenheter[0].altinn3Tilganger)
+        assertEquals(setOf("4936:1"), tilganger.hierarki[0].underenheter[0].altinn2Tilganger)
+        assertEquals(setOf("910825496"), tilganger.tilgangTilOrgNr["4936:1"])
+        assertEquals(setOf("test-fager", "4936:1"), tilganger.orgNrTilTilganger["910825496"])
     }
 
 }
