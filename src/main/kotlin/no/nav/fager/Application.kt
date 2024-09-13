@@ -370,7 +370,6 @@ data class AltinnTilgang(
     val altinn2Tilganger: Set<String>,
     val underenheter: List<AltinnTilgang>,
     val name: String,
-    val parentOrgNr: String? = null,
     val organizationForm: String,
 )
 
