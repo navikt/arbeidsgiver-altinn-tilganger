@@ -1,16 +1,45 @@
 package no.nav.fager
 
+import io.lettuce.core.SetArgs
+import io.lettuce.core.codec.RedisCodec
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromStream
+import kotlinx.serialization.json.encodeToStream
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.IOException
+import java.nio.ByteBuffer
+import java.nio.charset.Charset
+import java.time.Duration
 
 
-class AltinnService(private val altinn2Client: Altinn2Client, private val altinn3Client: Altinn3Client) {
+class AltinnService(private val altinn2Client: Altinn2Client, private val altinn3Client: Altinn3Client, redisConfig: RedisConfig) {
+    private val syncedRedisConnection = redisConfig.createClient().connect(AltinnTilgangerCacheCodec())
+
+    @Serializable
     data class AltinnTilgangerResultat(
         val isError: Boolean,
         val altinnTilganger: List<AltinnTilgang>
     )
 
     suspend fun hentTilganger(fnr: String, scope: CoroutineScope) : AltinnTilgangerResultat {
+        var altinnTilganger = syncedRedisConnection.sync().get(altinnTilgangerCacheKey(fnr))
+        if (altinnTilganger === null) {
+            altinnTilganger = hentTilgangerFraAltinn(fnr, scope)
+            if (!altinnTilganger.isError){
+                syncedRedisConnection.sync().set(altinnTilgangerCacheKey(fnr), altinnTilganger, SetArgs.Builder.ex(
+                    Duration.ofMinutes(10)))
+            }
+        }
+
+        return altinnTilganger
+    }
+
+    private suspend fun hentTilgangerFraAltinn(fnr: String, scope: CoroutineScope) : AltinnTilgangerResultat {
         val altinn2TilgangerJob = scope.async { altinn2Client.hentAltinn2Tilganger(fnr) }
         val altinn3TilgangerJob = scope.async { altinn3Client.hentAuthorizedParties(fnr) }
 
@@ -20,6 +49,8 @@ class AltinnService(private val altinn2Client: Altinn2Client, private val altinn
 
         return AltinnTilgangerResultat(altinn2Tilganger.isError, mapToHierarchy(altinn3Tilganger, altinn2Tilganger))
     }
+
+    private fun altinnTilgangerCacheKey(fnr: String) = "altinn-tilganger-$fnr"
 
     private fun mapToHierarchy(
         authorizedParties: List<AuthoririzedParty>,
@@ -42,4 +73,36 @@ class AltinnService(private val altinn2Client: Altinn2Client, private val altinn
             }
     }
 
+    class AltinnTilgangerCacheCodec : RedisCodec<String, AltinnTilgangerResultat> {
+        private val charset: Charset = Charset.forName("UTF-8")
+
+        override fun decodeKey(bytes: ByteBuffer): String {
+            return charset.decode(bytes).toString()
+        }
+
+        @OptIn(ExperimentalSerializationApi::class)
+        override fun decodeValue(bytes: ByteBuffer): AltinnTilgangerResultat? {
+            try {
+                val tilganger = Json.decodeFromStream<AltinnTilgangerResultat>(ByteArrayInputStream(bytes.array()))
+                return tilganger
+            } catch (e: Exception) {
+                return null
+            }
+        }
+
+        override fun encodeKey(key: String): ByteBuffer {
+            return charset.encode(key)
+        }
+
+        @OptIn(ExperimentalSerializationApi::class)
+        override fun encodeValue(value: AltinnTilgangerResultat?): ByteBuffer {
+            try {
+                val stream = ByteArrayOutputStream()
+                Json.encodeToStream(value, stream)
+                return ByteBuffer.wrap(stream.toByteArray())
+            } catch (e: IOException) {
+                return ByteBuffer.wrap(ByteArray(0))
+            }
+        }
+    }
 }
