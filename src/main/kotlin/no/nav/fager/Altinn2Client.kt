@@ -66,6 +66,7 @@ class Altinn2Client(
 
     @OptIn(ExperimentalSerializationApi::class)
     private val httpClient = HttpClient(CIO) {
+        expectSuccess = true
         install(HttpRequestRetry) {
             maxRetries = 3
             retryOnExceptionIf { _, cause ->
