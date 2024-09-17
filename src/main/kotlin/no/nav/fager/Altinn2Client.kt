@@ -3,6 +3,7 @@ package no.nav.fager
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.accept
@@ -12,6 +13,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.appendPathSegments
 import io.ktor.http.contentType
 import io.ktor.http.takeFrom
+import io.ktor.network.sockets.SocketTimeoutException
 import io.ktor.serialization.kotlinx.json.json
 import io.opentelemetry.instrumentation.annotations.WithSpan
 import kotlinx.coroutines.Dispatchers
@@ -25,6 +27,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import javax.net.ssl.SSLHandshakeException
 
 class Altinn2Config(
     val baseUrl: String,
@@ -63,6 +66,16 @@ class Altinn2Client(
 
     @OptIn(ExperimentalSerializationApi::class)
     private val httpClient = HttpClient(CIO) {
+        install(HttpRequestRetry) {
+            maxRetries = 3
+            retryOnExceptionIf { _, cause ->
+                cause is SocketTimeoutException ||
+                        cause is SSLHandshakeException
+            }
+
+            delayMillis { 250L }
+        }
+
         install(MaskinportenPlugin) {
             maskinporten = this@Altinn2Client.maskinporten
         }
