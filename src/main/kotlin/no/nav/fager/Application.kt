@@ -212,7 +212,7 @@ fun Application.ktorConfig(
 
         post("/SetCache") {
             val keyValue = call.receive<SetBody>()
-            val response = redisClient.connect { api ->
+            val response = redisClient.useConnect { api ->
                 api.set(keyValue.key, keyValue.value)
             }
             call.respond(GetValue(response))
@@ -220,7 +220,7 @@ fun Application.ktorConfig(
 
         post("/GetCache") {
             val key = call.receive<GetKey>().key
-            val response = redisClient.connect { api ->
+            val response = redisClient.useConnect { api ->
                 api.get(key)
             }
             call.respond(GetValue(response))
@@ -236,7 +236,9 @@ fun Application.ktorConfig(
                 maskinporten = maskinportenA2,
             )
 
-            val altinnService = AltinnService(altinn2Client, altinn3Client)
+            val altinnTilgangerRedisClient = AltinnTilgangerRedisClientImpl(redisConfig)
+
+            val altinnService = AltinnService(altinn2Client, altinn3Client, altinnTilgangerRedisClient)
 
             post("/altinn-tilganger", {
                 // TODO: document Bearer Auth

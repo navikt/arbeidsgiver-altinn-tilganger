@@ -35,7 +35,7 @@ class RedisTest {
     fun redisClientTest() {
         runBlocking {
             val redisClient = localRedisConfig.createClient()
-            redisClient.connect { connection ->
+            redisClient.useConnect { connection ->
                 connection.set("key", "value")
                 assertEquals("value", connection.get("key"))
             }
