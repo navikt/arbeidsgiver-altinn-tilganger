@@ -227,11 +227,11 @@ fun Application.ktorConfig(
         }
 
         authenticate {
-            val altinn3Client = Altinn3Client(
+            val altinn3Client = Altinn3ClientImpl(
                 altinn3Config = altinn3Config,
                 maskinporten = maskinportenA3,
             )
-            val altinn2Client = Altinn2Client(
+            val altinn2Client = Altinn2ClientImpl(
                 altinn2Config = altinn2Config,
                 maskinporten = maskinportenA2,
             )

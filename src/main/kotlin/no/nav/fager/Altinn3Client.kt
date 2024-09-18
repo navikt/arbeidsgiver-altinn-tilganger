@@ -33,23 +33,27 @@ class Altinn3Config(
     }
 }
 
+interface Altinn3Client{
+    suspend fun hentAuthorizedParties(fnr: String): List<AuthoririzedParty>
+}
+
 /** Swagger for api:
  * https://docs.altinn.studio/api/accessmanagement/resourceowneropenapi/#/Authorized%20Parties/post_resourceowner_authorizedparties
  *
  * Se også:
  * https://docs.altinn.studio/nb/authorization/guides/integrating-link-service/
  **/
-class Altinn3Client(
+class Altinn3ClientImpl(
     val altinn3Config: Altinn3Config,
     val maskinporten: Maskinporten,
-) {
+) : Altinn3Client {
     private val log = logger()
 
     private val httpClient = HttpClient(CIO) {
         expectSuccess = true
 
         install(MaskinportenPlugin) {
-            maskinporten = this@Altinn3Client.maskinporten
+            maskinporten = this@Altinn3ClientImpl.maskinporten
         }
 
         install(ContentNegotiation) {
@@ -64,7 +68,7 @@ class Altinn3Client(
     }
 
     @WithSpan
-    suspend fun hentAuthorizedParties(fnr: String): List<AuthoririzedParty> = try {
+    override suspend fun hentAuthorizedParties(fnr: String): List<AuthoririzedParty> = try {
         val httpResponse = httpClient.post {
             url {
                 takeFrom(altinn3Config.baseUrl)

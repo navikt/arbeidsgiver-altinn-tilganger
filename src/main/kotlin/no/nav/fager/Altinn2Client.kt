@@ -58,10 +58,15 @@ data class Altinn2Tjeneste(
 /**
  * https://altinn.github.io/docs/api/tjenesteeiere/rest/autorisasjon/hent_avgiver/
  **/
-class Altinn2Client(
+
+interface Altinn2Client {
+    suspend fun hentAltinn2Tilganger(fnr: String): Altinn2Tilganger
+}
+
+class Altinn2ClientImpl(
     val altinn2Config: Altinn2Config,
     val maskinporten: Maskinporten,
-) {
+) : Altinn2Client {
     private val log = logger()
 
     @OptIn(ExperimentalSerializationApi::class)
@@ -78,7 +83,7 @@ class Altinn2Client(
         }
 
         install(MaskinportenPlugin) {
-            maskinporten = this@Altinn2Client.maskinporten
+            maskinporten = this@Altinn2ClientImpl.maskinporten
         }
 
         install(ContentNegotiation) {
@@ -100,7 +105,7 @@ class Altinn2Client(
      */
     @OptIn(ExperimentalCoroutinesApi::class)
     @WithSpan
-    suspend fun hentAltinn2Tilganger(fnr: String): Altinn2Tilganger {
+    override suspend fun hentAltinn2Tilganger(fnr: String): Altinn2Tilganger {
         val reportees: List<ReporteeResult> = tjenester.asFlow()
             .flowOn(Dispatchers.IO)
             .flatMapMerge { tjeneste ->
