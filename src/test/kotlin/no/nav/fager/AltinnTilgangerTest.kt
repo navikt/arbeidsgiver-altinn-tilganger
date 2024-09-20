@@ -32,7 +32,7 @@ class AltinnTilgangerTest {
 
     @Test
     fun `henter altinn tilganger`() = app.runTest {
-        app.altinnResponse(Post, "/accessmanagement/api/v1/resourceowner/authorizedparties") {
+        app.altinn3Response(Post, "/accessmanagement/api/v1/resourceowner/authorizedparties") {
             call.respondText(
                 """
                 [

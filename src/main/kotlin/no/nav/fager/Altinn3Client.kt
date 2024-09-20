@@ -3,6 +3,7 @@ package no.nav.fager
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.accept
@@ -13,10 +14,12 @@ import io.ktor.http.ContentType
 import io.ktor.http.appendPathSegments
 import io.ktor.http.contentType
 import io.ktor.http.takeFrom
+import io.ktor.network.sockets.SocketTimeoutException
 import io.ktor.serialization.kotlinx.json.json
 import io.opentelemetry.instrumentation.annotations.WithSpan
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import javax.net.ssl.SSLHandshakeException
 
 class Altinn3Config(
     val baseUrl: String,
@@ -33,23 +36,36 @@ class Altinn3Config(
     }
 }
 
+interface Altinn3Client{
+    suspend fun hentAuthorizedParties(fnr: String): List<AuthoririzedParty>
+}
+
 /** Swagger for api:
  * https://docs.altinn.studio/api/accessmanagement/resourceowneropenapi/#/Authorized%20Parties/post_resourceowner_authorizedparties
  *
  * Se også:
  * https://docs.altinn.studio/nb/authorization/guides/integrating-link-service/
  **/
-class Altinn3Client(
+class Altinn3ClientImpl(
     val altinn3Config: Altinn3Config,
     val maskinporten: Maskinporten,
-) {
+) : Altinn3Client {
     private val log = logger()
 
     private val httpClient = HttpClient(CIO) {
         expectSuccess = true
+        install(HttpRequestRetry) {
+            maxRetries = 3
+            retryOnExceptionIf { _, cause ->
+                cause is SocketTimeoutException ||
+                        cause is SSLHandshakeException
+            }
+
+            delayMillis { 250L }
+        }
 
         install(MaskinportenPlugin) {
-            maskinporten = this@Altinn3Client.maskinporten
+            maskinporten = this@Altinn3ClientImpl.maskinporten
         }
 
         install(ContentNegotiation) {
@@ -64,7 +80,7 @@ class Altinn3Client(
     }
 
     @WithSpan
-    suspend fun hentAuthorizedParties(fnr: String): List<AuthoririzedParty> = try {
+    override suspend fun hentAuthorizedParties(fnr: String): List<AuthoririzedParty> = try {
         val httpResponse = httpClient.post {
             url {
                 takeFrom(altinn3Config.baseUrl)

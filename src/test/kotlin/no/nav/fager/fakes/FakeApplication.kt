@@ -77,7 +77,7 @@ class FakeApplication(
         fakeAltinn3Api.assertNoAltinnErrors()
     }
 
-    fun altinnResponse(
+    fun altinn3Response(
         httpMethod: HttpMethod,
         path: String,
         handlePost: (suspend PipelineContext<Unit, ApplicationCall>.(Any) -> Unit)
