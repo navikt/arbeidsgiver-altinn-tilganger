@@ -247,12 +247,6 @@
             <version>1.6.4</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>io.mockk</groupId>
-            <artifactId>mockk-jvm</artifactId>
-            <version>1.13.12</version>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
     <build>
