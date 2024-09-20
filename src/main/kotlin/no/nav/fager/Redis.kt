@@ -45,39 +45,43 @@ class RedisConfig(
 }
 
 interface AltinnTilgangerRedisClient {
-    suspend fun get(fnr: String): AltinnTilgangerResultat?
-    suspend fun set(fnr: String, altinnTilganger: AltinnTilgangerResultat)
+    suspend fun get(key: String): AltinnTilgangerResultat?
+    suspend fun set(key: String, altinnTilganger: AltinnTilgangerResultat)
 }
 
 class AltinnTilgangerRedisClientImpl(redisConfig: RedisConfig) : AltinnTilgangerRedisClient {
     private val redisClient = redisConfig.createClient()
 
     @OptIn(ExperimentalLettuceCoroutinesApi::class)
-    override suspend fun get(fnr: String): AltinnTilgangerResultat? {
+    override suspend fun get(key: String): AltinnTilgangerResultat? {
         return redisClient.useConnect(AltinnTilgangerCacheCodec()) {
-            it.get(altinnTilgangerCacheKey(fnr))
+            it.get(key)
         }
-
     }
 
     @OptIn(ExperimentalLettuceCoroutinesApi::class)
-    override suspend fun set(fnr: String, altinnTilganger: AltinnTilgangerResultat) {
+    override suspend fun set(key: String, altinnTilganger: AltinnTilgangerResultat) {
         redisClient.useConnect(AltinnTilgangerCacheCodec()) {
             it.set(
-                altinnTilgangerCacheKey(fnr), altinnTilganger, SetArgs.Builder.ex(
+                key, altinnTilganger, SetArgs.Builder.ex(
                     Duration.ofMinutes(10)
                 )
             )
             altinnTilganger
         }
     }
+}
 
-    private fun altinnTilgangerCacheKey(fnr: String): String {
-        val fnrHash = sha256(fnr)
-        return "altinn-tilganger:$fnrHash"
+class CacheKeyProvider {
+    companion object {
+        fun altinnTilgangerCacheKey(fnr: String): String {
+            val fnrHash = sha256(fnr)
+            return "altinn-tilganger:$fnrHash"
+        }
+
+        private fun sha256(s: String) =
+            String(MessageDigest.getInstance("SHA-256").digest(s.toByteArray()), Charset.forName("UTF-8"))
     }
-
-    private fun sha256(s: String) = MessageDigest.getInstance("SHA-256").digest(s.toByteArray())
 }
 
 class AltinnTilgangerCacheCodec : RedisCodec<String, AltinnTilgangerResultat> {

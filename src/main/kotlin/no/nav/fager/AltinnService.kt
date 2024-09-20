@@ -17,13 +17,13 @@ class AltinnService(
     )
 
     suspend fun hentTilganger(fnr: String, scope: CoroutineScope): AltinnTilgangerResultat {
-        var altinnTilganger = redisClient.get(fnr)
+        var altinnTilganger = redisClient.get(CacheKeyProvider.altinnTilgangerCacheKey(fnr))
 
         if (altinnTilganger === null) {
             altinnTilganger = hentTilgangerFraAltinn(fnr, scope)
 
             if (!altinnTilganger.isError) { // Feil i altinn2 kall, ikke cache resultat
-                redisClient.set(fnr, altinnTilganger)
+                redisClient.set(CacheKeyProvider.altinnTilgangerCacheKey(fnr), altinnTilganger)
             }
         }
 
@@ -45,7 +45,7 @@ class AltinnService(
         authorizedParties: List<AuthoririzedParty>, altinn2Tilganger: Altinn2Tilganger
     ): List<AltinnTilgang> {
 
-        return authorizedParties.filter { it.organizationNumber != null && it.unitType != null } // er null for type=person
+        return authorizedParties.filter { it.organizationNumber != null && it.unitType != null }
             .map { party ->
                 AltinnTilgang(
                     orgNr = party.organizationNumber!!, // alle orgnr finnes i altinn3 pga includeAltinn2=true
