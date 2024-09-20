@@ -72,18 +72,6 @@ class AltinnTilgangerRedisClientImpl(redisConfig: RedisConfig) : AltinnTilganger
     }
 }
 
-class CacheKeyProvider {
-    companion object {
-        fun altinnTilgangerCacheKey(fnr: String): String {
-            val fnrHash = sha256(fnr)
-            return "altinn-tilganger:$fnrHash"
-        }
-
-        private fun sha256(s: String) =
-            String(MessageDigest.getInstance("SHA-256").digest(s.toByteArray()), Charset.forName("UTF-8"))
-    }
-}
-
 class AltinnTilgangerCacheCodec : RedisCodec<String, AltinnTilgangerResultat> {
     private val charset: Charset = Charset.forName("UTF-8")
 
@@ -101,9 +89,13 @@ class AltinnTilgangerCacheCodec : RedisCodec<String, AltinnTilgangerResultat> {
         }
     }
 
-    override fun encodeKey(key: String): ByteBuffer {
-        return charset.encode(key)
+    override fun encodeKey(fnr: String): ByteBuffer {
+        val fnrHash = sha256(fnr)
+        return charset.encode("altinn-tilganger:$fnrHash")
     }
+
+    private fun sha256(s: String) =
+        String(MessageDigest.getInstance("SHA-256").digest(s.toByteArray()), charset)
 
     @OptIn(ExperimentalSerializationApi::class)
     override fun encodeValue(value: AltinnTilgangerResultat?): ByteBuffer {

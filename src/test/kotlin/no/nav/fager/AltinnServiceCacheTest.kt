@@ -40,13 +40,12 @@ class AltinnServiceCacheTest {
         val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient)
 
         val fnr = "16120101181"
-        val cacheKey = CacheKeyProvider.altinnTilgangerCacheKey(fnr)
         altinnService.hentTilganger(fnr, this)
 
-        assertTrue(altinnRedisClient.getCallCountWithArgs(altinnRedisClient::get.name, cacheKey) == 1)
+        assertTrue(altinnRedisClient.getCallCountWithArgs(altinnRedisClient::get.name, fnr) == 1)
         assertTrue(
             altinnRedisClient.getCallCountWithArgs(
-                altinnRedisClient::set.name, cacheKey,
+                altinnRedisClient::set.name, fnr,
                 AltinnService.AltinnTilgangerResultat(
                     isError = false,
                     altinnTilganger = listOf(
@@ -100,10 +99,9 @@ class AltinnServiceCacheTest {
         val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient)
 
         val fnr = "16120101181"
-        val cacheKey = CacheKeyProvider.altinnTilgangerCacheKey(fnr)
         altinnService.hentTilganger(fnr, this)
 
-        assertTrue(altinnRedisClient.getCallCountWithArgs(altinnRedisClient::get.name, cacheKey) == 1)
+        assertTrue(altinnRedisClient.getCallCountWithArgs(altinnRedisClient::get.name, fnr) == 1)
         assertTrue(altinnRedisClient.getCallCount(altinnRedisClient::set.name) == 0)
 
         assertTrue(altinn3Client.getCallCount(altinn3Client::hentAuthorizedParties.name) == 0)
@@ -142,10 +140,9 @@ class AltinnServiceCacheTest {
         val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient)
 
         val fnr = "16120101181"
-        val cacheKey = CacheKeyProvider.altinnTilgangerCacheKey(fnr)
         altinnService.hentTilganger(fnr, this)
 
-        assertTrue(altinnRedisClient.getCallCountWithArgs(altinnRedisClient::get.name, cacheKey) == 1)
+        assertTrue(altinnRedisClient.getCallCountWithArgs(altinnRedisClient::get.name, fnr) == 1)
         assertTrue(altinnRedisClient.getCallCount(altinnRedisClient::set.name) == 0)
 
         assertTrue(altinn3Client.getCallCountWithArgs(altinn3Client::hentAuthorizedParties.name, fnr) == 1)
@@ -186,15 +183,12 @@ class AltinnServiceCacheTest {
         val fnr1 = "16120101181"
         val fnr2 = "26903848935"
 
-        val cacheKey1 = CacheKeyProvider.altinnTilgangerCacheKey(fnr1)
-        val cacheKey2 = CacheKeyProvider.altinnTilgangerCacheKey(fnr2)
-
         altinnService.hentTilganger(fnr1, this)
         altinnService.hentTilganger(fnr2, this)
 
         assertTrue(altinnRedisClient.getCallCount(altinnRedisClient::get.name) == 2)
-        assertTrue(altinnRedisClient.getCallCountWithArgs(altinnRedisClient::get.name, cacheKey1) == 1)
-        assertTrue(altinnRedisClient.getCallCountWithArgs(altinnRedisClient::get.name, cacheKey2) == 1)
+        assertTrue(altinnRedisClient.getCallCountWithArgs(altinnRedisClient::get.name, fnr1) == 1)
+        assertTrue(altinnRedisClient.getCallCountWithArgs(altinnRedisClient::get.name, fnr2) == 1)
 
 
     }

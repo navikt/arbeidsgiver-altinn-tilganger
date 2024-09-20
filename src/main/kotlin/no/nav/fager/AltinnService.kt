@@ -17,13 +17,13 @@ class AltinnService(
     )
 
     suspend fun hentTilganger(fnr: String, scope: CoroutineScope): AltinnTilgangerResultat {
-        var altinnTilganger = redisClient.get(CacheKeyProvider.altinnTilgangerCacheKey(fnr))
+        var altinnTilganger = redisClient.get(fnr)
 
         if (altinnTilganger === null) {
             altinnTilganger = hentTilgangerFraAltinn(fnr, scope)
 
             if (!altinnTilganger.isError) { // Feil i altinn2 kall, ikke cache resultat
-                redisClient.set(CacheKeyProvider.altinnTilgangerCacheKey(fnr), altinnTilganger)
+                redisClient.set(fnr, altinnTilganger)
             }
         }
 
