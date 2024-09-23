@@ -71,7 +71,9 @@ class AltinnTilgangerRedisClientImpl(redisConfig: RedisConfig) : AltinnTilganger
         }
     }
 }
-
+/*
+Denne Codecen er spesifikk for AltinnTilgangerResultat. Fødselsnummer hashes med sha256
+*/
 class AltinnTilgangerCacheCodec : RedisCodec<String, AltinnTilgangerResultat> {
     private val charset: Charset = Charset.forName("UTF-8")
 
