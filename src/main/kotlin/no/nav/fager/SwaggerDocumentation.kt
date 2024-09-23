@@ -3,13 +3,9 @@ package no.nav.fager
 import io.github.smiley4.ktorswaggerui.SwaggerUI
 import io.github.smiley4.ktorswaggerui.data.AuthScheme
 import io.github.smiley4.ktorswaggerui.data.AuthType
-import io.github.smiley4.schemakenerator.serialization.processKotlinxSerialization
-import io.github.smiley4.schemakenerator.swagger.compileReferencingRoot
-import io.github.smiley4.schemakenerator.swagger.generateSwaggerSchema
-import io.github.smiley4.schemakenerator.swagger.handleCoreAnnotations
-import io.ktor.http.HttpHeaders
-import io.ktor.server.application.Application
-import io.ktor.server.application.install
+import io.github.smiley4.ktorswaggerui.data.SchemaConfigData
+import io.ktor.http.*
+import io.ktor.server.application.*
 
 fun Application.swaggerDocumentation() {
     install(SwaggerUI) {
@@ -108,27 +104,43 @@ fun Application.swaggerDocumentation() {
             }
         }
         schemas {
-            generator = { type ->
-                type
-                    .processKotlinxSerialization()
-                    .generateSwaggerSchema { }
-                    .handleCoreAnnotations()
-                    .compileReferencingRoot()
-            }
+            generator = SchemaConfigData.DEFAULT.generator
         }
         examples {
-            example("Stor virksomhet") {
-                value = AltinnOrganisasjon(
-                    organisasjonsnummer = "1111111",
-                    navn = "Foobar inc",
-                    antallAnsatt = 3100,
-                )
-            }
-            example("Liten cafe") {
-                value = AltinnOrganisasjon(
-                    organisasjonsnummer = "22222",
-                    navn = "På hjørne",
-                    antallAnsatt = 2,
+            example("tilganger_success") {
+                value = AltinnTilgangerResponse(
+                    isError = false,
+                    hierarki = listOf(
+                        AltinnTilgang(
+                            orgNr = "987654321",
+                            name = "Organissjon 1",
+                            organizationForm = "ORGL",
+                            altinn3Tilganger = setOf(),
+                            altinn2Tilganger = setOf(),
+                            underenheter = listOf(
+                                AltinnTilgang(
+                                    orgNr = "123456789",
+                                    name = "Organissjon 2",
+                                    organizationForm = "BEDR",
+                                    altinn3Tilganger = setOf("tilgang1", "tilgang2"),
+                                    altinn2Tilganger = setOf("serviceCode:serviceEdition"),
+                                    underenheter = emptyList(),
+                                )
+                            ),
+                        )
+                    ),
+                    orgNrTilTilganger = mapOf(
+                        "123456789" to setOf(
+                            "serviceCode:serviceEdition",
+                            "tilgang1",
+                            "tilgang2",
+                        ),
+                    ),
+                    tilgangTilOrgNr = mapOf(
+                        "serviceCode:serviceEdition" to setOf("123456789"),
+                        "tilgang1" to setOf("123456789"),
+                        "tilgang2" to setOf("123456789"),
+                    )
                 )
             }
         }
