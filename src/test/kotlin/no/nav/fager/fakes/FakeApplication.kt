@@ -10,8 +10,8 @@ import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
 import io.ktor.util.pipeline.PipelineContext
 import kotlinx.coroutines.runBlocking
+import no.nav.fager.RedisConfig
 import no.nav.fager.ktorConfig
-import no.nav.fager.localRedisConfig
 
 
 class FakeApplication(
@@ -29,7 +29,7 @@ class FakeApplication(
                 altinn2Config = fakeAltinn2Api.config(),
                 authConfig = oauth2MockServer,
                 maskinportenConfig = fakeMaskinporten.config(),
-                redisConfig = localRedisConfig,
+                redisConfig = RedisConfig.local(),
             )
         })
     }

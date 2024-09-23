@@ -5,48 +5,32 @@ import io.github.smiley4.ktorswaggerui.dsl.routing.get
 import io.github.smiley4.ktorswaggerui.dsl.routing.post
 import io.github.smiley4.ktorswaggerui.routing.openApiSpec
 import io.github.smiley4.ktorswaggerui.routing.swaggerUI
-import io.github.smiley4.schemakenerator.core.annotations.Default
 import io.github.smiley4.schemakenerator.core.annotations.Description
 import io.github.smiley4.schemakenerator.core.annotations.Example
-import io.github.smiley4.schemakenerator.core.annotations.Title
-import io.ktor.http.ContentType
-import io.ktor.http.HttpHeaders
-import io.ktor.http.HttpStatusCode
-import io.ktor.serialization.kotlinx.json.json
-import io.ktor.server.application.Application
-import io.ktor.server.application.call
-import io.ktor.server.application.install
-import io.ktor.server.auth.Principal
-import io.ktor.server.auth.authenticate
-import io.ktor.server.auth.authentication
-import io.ktor.server.auth.jwt.jwt
-import io.ktor.server.auth.principal
-import io.ktor.server.cio.CIO
-import io.ktor.server.engine.embeddedServer
-import io.ktor.server.metrics.micrometer.MicrometerMetrics
-import io.ktor.server.plugins.callid.CallId
-import io.ktor.server.plugins.callid.callIdMdc
-import io.ktor.server.plugins.callloging.CallLogging
-import io.ktor.server.plugins.compression.Compression
-import io.ktor.server.plugins.compression.deflate
-import io.ktor.server.plugins.compression.gzip
-import io.ktor.server.plugins.compression.minimumSize
-import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.server.plugins.defaultheaders.DefaultHeaders
-import io.ktor.server.plugins.statuspages.StatusPages
-import io.ktor.server.request.path
-import io.ktor.server.request.receive
-import io.ktor.server.response.respond
-import io.ktor.server.response.respondRedirect
-import io.ktor.server.response.respondText
-import io.ktor.server.routing.route
-import io.ktor.server.routing.routing
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
+import io.ktor.http.*
+import io.ktor.serialization.kotlinx.json.*
+import io.ktor.server.application.*
+import io.ktor.server.auth.*
+import io.ktor.server.auth.jwt.*
+import io.ktor.server.cio.*
+import io.ktor.server.engine.*
+import io.ktor.server.metrics.micrometer.*
+import io.ktor.server.plugins.callid.*
+import io.ktor.server.plugins.callloging.*
+import io.ktor.server.plugins.compression.*
+import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.plugins.statuspages.*
+import io.ktor.server.request.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
 import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.slf4j.event.Level
 import java.net.URI
+import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.time.ExperimentalTime
 
@@ -77,7 +61,6 @@ data class AuthConfig(
     }
 }
 
-@OptIn(ExperimentalLettuceCoroutinesApi::class)
 fun Application.ktorConfig(
     altinn3Config: Altinn3Config,
     altinn2Config: Altinn2Config,
@@ -87,7 +70,7 @@ fun Application.ktorConfig(
 ) {
     val log = logger()
 
-    log.info(SECURE, "hello secure log")
+    log.info(SECURE, "Secure logging enabled")
 
     install(Compression) {
         gzip {
@@ -97,11 +80,6 @@ fun Application.ktorConfig(
             priority = 10.0
             minimumSize(1024) // condition
         }
-    }
-    install(DefaultHeaders) {
-        // header("commit", "1234")
-        // header("image", "")
-        header("X-Engine", "Ktor") // will send this header with each response
     }
 
     install(StatusPages) {
@@ -131,24 +109,47 @@ fun Application.ktorConfig(
             }
 
             validate { credential ->
-                InloggetBrukerPrincipal(fnr = credential.getClaim("pid", String::class)!!)
+                InloggetBrukerPrincipal(
+                    fnr = credential.getClaim("pid", String::class)!!,
+                    clientId = credential.getClaim("client_id", String::class)!!,
+                )
             }
         }
     }
+
     install(CallLogging) {
         level = Level.INFO
         filter { call -> !call.request.path().startsWith("/internal/") }
-        callIdMdc("call-id")
-
-        if (System.getenv("NAIS_CLUSTER_NAME") != null) {
+        System.getenv("NAIS_CLUSTER_NAME")?.let {
             disableDefaultColors()
         }
-    }
-    install(CallId) {
-        header(HttpHeaders.XRequestId)
-        verify { callId: String ->
-            callId.isNotEmpty()
+        mdc("method") { call ->
+            call.request.httpMethod.value
         }
+        mdc("host") { call ->
+            call.request.header("host")
+        }
+        mdc("path") { call ->
+            call.request.path()
+        }
+        mdc("clientId") { call ->
+            call.principal<InloggetBrukerPrincipal>()?.clientId
+        }
+        callIdMdc("x_correlation_id")
+    }
+
+    install(CallId) {
+        retrieveFromHeader(HttpHeaders.XRequestId)
+        retrieveFromHeader(HttpHeaders.XCorrelationId)
+        retrieveFromHeader("call-id")
+        retrieveFromHeader("callId")
+        retrieveFromHeader("call_id")
+
+        generate {
+            UUID.randomUUID().toString()
+        }
+
+        replyToHeader(HttpHeaders.XCorrelationId)
     }
 
     val appMicrometerRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
@@ -210,22 +211,6 @@ fun Application.ktorConfig(
             swaggerUI("/api.json")
         }
 
-        post("/SetCache") {
-            val keyValue = call.receive<SetBody>()
-            val response = redisClient.useConnect { api ->
-                api.set(keyValue.key, keyValue.value)
-            }
-            call.respond(GetValue(response))
-        }
-
-        post("/GetCache") {
-            val key = call.receive<GetKey>().key
-            val response = redisClient.useConnect { api ->
-                api.get(key)
-            }
-            call.respond(GetValue(response))
-        }
-
         authenticate {
             val altinn3Client = Altinn3ClientImpl(
                 altinn3Config = altinn3Config,
@@ -241,7 +226,18 @@ fun Application.ktorConfig(
             val altinnService = AltinnService(altinn2Client, altinn3Client, altinnTilgangerRedisClient)
 
             post("/altinn-tilganger", {
-                // TODO: document Bearer Auth
+                description = "Hent tilganger fra Altinn for innlogget bruker."
+                request {
+                    // todo document optional callid header
+                }
+                response {
+                    HttpStatusCode.OK to {
+                        description = "Successful Request"
+                        body<AltinnTilgangerResponse> {
+                            exampleRef("Successful Respons", "tilganger_success")
+                        }
+                    }
+                }
             }) {
                 val fnr = call.principal<InloggetBrukerPrincipal>()!!.fnr
                 val tilganger = altinnService.hentTilganger(fnr, this)
@@ -253,133 +249,50 @@ fun Application.ktorConfig(
                 )
             }
 
-            post("/json/kotlinx-serialization", {
-                summary = "en kort beskrivesle"
-                description = """
-                    en lang beskrivelse.
-                    This is our new endpoint. We can use markdown here: 
-                    This text is *italics*. This is **bold**.
-                    
-                    Man kan ha avsnitt.
-                    # overskrift?
-                    ## underoverskrift?
-                    Og [lenker](https://nrk.no).
-                    
-                    Og 
-                    ```
-                    fun foo(): Int {
-                        return 0
-                    }
-                    ```
-                """.trimIndent()
-
-                request {
-//                    headerParameter<String>("authorization")
-                    pathParameter<Int>("count")
-                    body<AltinnOrganisasjon> {
-                        description = "En organisasjon som input"
-                    }
-                }
-
-                response {
-                    HttpStatusCode.OK to {
-                        description = "Successful Request"
-                        body<AltinnOrganisasjon> {
-                            description = "the response"
-                            mediaTypes(ContentType.Application.Json)
-                            example("possible return value") {
-                                value = AltinnOrganisasjon(
-                                    organisasjonsnummer = "11223344",
-                                    antallAnsatt = 32,
-                                    navn = "Ivarsen AS",
-                                )
-                            }
-                            example("another possible return value") {
-                                value = AltinnOrganisasjon(
-                                    organisasjonsnummer = "99999999",
-                                    antallAnsatt = 11,
-                                    navn = "Gunnar AS",
-                                )
-                            }
-                            exampleRef("Liten cafe")
-                            exampleRef("Stor virksomhet")
-                        }
-                    }
-                }
-            }) {
-                val body = call.receive<AltinnOrganisasjon>()
-                println(body)
-                call.respond<AltinnOrganisasjon>(body)
+            get("/whoami") {
+                val clientId = call.principal<InloggetBrukerPrincipal>()!!.clientId
+                call.respondText(Json.encodeToString(mapOf("clientId" to clientId)))
             }
         }
     }
 }
 
-@Serializable
-@Title("Altinn organisasjon")
-@Description(
-    """
-Dette represneterer en organisasjon i altinn.
-
-Dett er et avsnitt, en [lenke](https://nav.no) og litt kode `asf`.
-"""
-)
-data class AltinnOrganisasjon(
-    val organisasjonsnummer: String,
-
-    @Description("Navnet på virksomheten.")
-    @Example("Ivar Aasen AS")
-    @Default("Default navn")
-    val navn: String,
-
-    @Description("Antall ansatte i virksomheten")
-    @Example("444")
-    @Default("123")
-    val antallAnsatt: Int,
-
-
-    val someOtherNumber: Int? = 0,
-
-    val innloggetBrukerPrincipal: InloggetBrukerPrincipal? = null,
-)
 
 @Serializable
 class InloggetBrukerPrincipal(
     val fnr: String,
+    val clientId: String,
 ) : Principal
 
-@Serializable
-data class SetBody(
-    val key: String,
-    val value: String,
-)
 
-@Serializable
-data class GetKey(
-    val key: String,
-)
-
-@Serializable
-data class GetValue(
-    val value: String?,
-)
-
-
+@Description("Brukerens tilganger til Altinn 2 og Altinn 3 for en organisasjon")
 @Serializable
 data class AltinnTilgang(
+    @Description("Organisasjonsnummer")
+    @Example("11223344")
     val orgNr: String,
+    @Description("Tilganger til Altinn 3")
     val altinn3Tilganger: Set<String>,
+    @Description("Tilganger til Altinn 2")
     val altinn2Tilganger: Set<String>,
+    @Description("list av underenheter til denne organisasjonen hvor brukeren har tilganger")
     val underenheter: List<AltinnTilgang>,
+    @Description("Navn på organisasjonen")
     val name: String,
+    @Description("Organisasjonsform. se https://www.brreg.no/bedrift/organisasjonsformer/")
+    @Example("BEDR")
     val organizationForm: String,
 )
 
 @Serializable
 data class AltinnTilgangerResponse(
+    @Description("Om det var en feil ved henting av tilganger. Dersom denne er true kan det bety at ikke alle tilganger er hentet.")
     val isError: Boolean,
+    @Description("Organisasjonshierarkiet med brukerens tilganger")
     val hierarki: List<AltinnTilgang>,
+    @Description("Map fra organisasjonsnummer til tilganger. Convenience for å slå opp tilganger på orgnummer.")
     val orgNrTilTilganger: Map<String, Set<String>>,
+    @Description("Map fra tilgang til organisasjonsnummer. Convenience for å slå opp orgnummer på tilgang.")
     val tilgangTilOrgNr: Map<String, Set<String>>,
 ) {
     companion object {

@@ -40,26 +40,16 @@ class AuthTest {
     }
 
     @Test
-    fun `json serialize reject unauthenticated call`() = app.runTest {
-        client.post("/json/kotlinx-serialization") {
-            setBody(""" """.trimIndent())
-        }.apply {
+    fun `rejects unauthenticated call`() = app.runTest {
+        client.get("/whoami").apply {
             assertEquals(HttpStatusCode.Unauthorized, status)
         }
     }
 
     @Test
-    fun `json serialize accepts authenticated call`() = app.runTest {
-        client.post("/json/kotlinx-serialization") {
+    fun `accepts authenticated call`() = app.runTest {
+        client.get("/whoami") {
             authorization(subject = "acr-high-11111111111")
-            contentType(ContentType.Application.Json)
-            setBody(
-                """{
-                    "organisasjonsnummer": "",
-                    "navn": "",
-                    "antallAnsatt": 1
-                }""".trimIndent()
-            )
         }.apply {
             assertEquals(HttpStatusCode.OK, status)
         }
@@ -69,34 +59,18 @@ class AuthTest {
     * Vi ønsker egentlig 403 - Forbidden men vi vet ikke helt hvordan vi får det til i JWT
      */
     @Test
-    fun `json serialize reject low authenticated call`() = app.runTest {
-        client.post("/json/kotlinx-serialization") {
+    fun `rejects low authenticated call`() = app.runTest {
+        client.get("/whoami") {
             authorization(subject = "acr-low-33333333333")
-            contentType(ContentType.Application.Json)
-            setBody(
-                """{
-                    "organisasjonsnummer": "",
-                    "navn": "",
-                    "antallAnsatt": 1
-                }""".trimIndent()
-            )
         }.apply {
             assertEquals(HttpStatusCode.Unauthorized, status)
         }
     }
 
     @Test
-    fun `json serialize reject other autience call`() = app.runTest {
-        client.post("/json/kotlinx-serialization") {
+    fun `rejects other autience call`() = app.runTest {
+        client.get("/whoami") {
             authorization("wrong-audience-44444444444")
-            contentType(ContentType.Application.Json)
-            setBody(
-                """{
-                    "organisasjonsnummer": "",
-                    "navn": "",
-                    "antallAnsatt": 1
-                }""".trimIndent()
-            )
         }.apply {
             assertEquals(HttpStatusCode.Unauthorized, status)
         }

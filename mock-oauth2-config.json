@@ -13,6 +13,7 @@
             "aud": [
               "local:fager:arbeidsgiver-altinn-tilganger"
             ],
+            "client_id": "local:test",
             "acr": "idporten-loa-high"
           }
         },
@@ -24,6 +25,7 @@
             "aud": [
               "local:fager:arbeidsgiver-altinn-tilganger"
             ],
+            "client_id": "local:test",
             "acr": "idporten-loa-high"
           }
         },
@@ -35,6 +37,7 @@
             "aud": [
               "local:fager:arbeidsgiver-altinn-tilganger"
             ],
+            "client_id": "local:test",
             "acr": "idporten-loa-low"
           }
         },
@@ -46,6 +49,7 @@
             "aud": [
               "distant:fager:arbeidsgiver-altinn-tilganger"
             ],
+            "client_id": "local:test",
             "acr": "idporten-loa-high"
           }
         }
