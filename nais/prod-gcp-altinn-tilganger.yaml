@@ -1,0 +1,73 @@
+apiVersion: nais.io/v1alpha1
+kind: Application
+metadata:
+  name: arbeidsgiver-altinn-tilganger
+  namespace: fager
+  labels:
+    team: fager
+spec:
+  image: {{{ image }}}
+
+  liveness:
+    path: /internal/isalive
+
+  readiness:
+    path: /internal/isready
+
+  prometheus:
+    enabled: true
+    path: /internal/prometheus
+
+  observability:
+    autoInstrumentation:
+      enabled: true
+      runtime: java
+
+  resources:
+    requests:
+      memory: 512Mi
+    limits:
+      memory: 1024Mi
+
+  env:
+    - name: JAVA_OPTS
+      value: "-XX:+UseParallelGC -XX:MaxRAMPercentage=75.0 -XX:ActiveProcessorCount=2"
+    - name: ALTINN_3_API_BASE_URL
+      value: https://platform.altinn.no
+    - name: ALTINN_2_BASE_URL
+      value: https://www.altinn.no
+
+  envFrom:
+    - secret: altinn-tilganger
+  
+  tokenx:
+    enabled: true
+
+  maskinporten:
+    enabled: true
+    scopes:
+      consumes:
+        - name: "altinn:accessmanagement/authorizedparties.resourceowner"
+        - name: "altinn:serviceowner/reportees"
+
+  accessPolicy:
+    inbound:
+      rules:
+        - application: tokenx-token-generator
+          namespace: aura
+          cluster: prod-gcp
+        - application: notifikasjon-bruker-api
+        - application: min-side-arbeidsgiver-api
+        - application: permitteringsskjema-api
+          namespace: permittering-og-nedbemanning
+    outbound:
+      external:
+        - host: platform.altinn.no
+        - host: www.altinn.no
+
+  secureLogs:
+    enabled: true
+
+  redis:
+    - instance: tilganger
+      access: readwrite
