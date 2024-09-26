@@ -2,11 +2,8 @@ package no.nav.fager
 
 import com.auth0.jwk.JwkProviderBuilder
 import io.github.smiley4.ktorswaggerui.dsl.routing.get
-import io.github.smiley4.ktorswaggerui.dsl.routing.post
 import io.github.smiley4.ktorswaggerui.routing.openApiSpec
 import io.github.smiley4.ktorswaggerui.routing.swaggerUI
-import io.github.smiley4.schemakenerator.core.annotations.Description
-import io.github.smiley4.schemakenerator.core.annotations.Example
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
@@ -165,8 +162,6 @@ fun Application.ktorConfig(
 
     swaggerDocumentation()
 
-    val redisClient = redisConfig.createClient()
-
     @OptIn(ExperimentalTime::class)
     val maskinportenA3 = Maskinporten(
         maskinportenConfig = maskinportenConfig,
@@ -211,44 +206,21 @@ fun Application.ktorConfig(
             swaggerUI("/api.json")
         }
 
+        routeAltinnTilganger(
+            AltinnService(
+                altinn2Client = Altinn2ClientImpl(
+                    altinn2Config = altinn2Config,
+                    maskinporten = maskinportenA2,
+                ),
+                altinn3Client = Altinn3ClientImpl(
+                    altinn3Config = altinn3Config,
+                    maskinporten = maskinportenA3,
+                ),
+                redisClient = AltinnTilgangerRedisClientImpl(redisConfig)
+            )
+        )
+
         authenticate {
-            val altinn3Client = Altinn3ClientImpl(
-                altinn3Config = altinn3Config,
-                maskinporten = maskinportenA3,
-            )
-            val altinn2Client = Altinn2ClientImpl(
-                altinn2Config = altinn2Config,
-                maskinporten = maskinportenA2,
-            )
-
-            val altinnTilgangerRedisClient = AltinnTilgangerRedisClientImpl(redisConfig)
-
-            val altinnService = AltinnService(altinn2Client, altinn3Client, altinnTilgangerRedisClient)
-
-            post("/altinn-tilganger", {
-                description = "Hent tilganger fra Altinn for innlogget bruker."
-                request {
-                    // todo document optional callid header
-                }
-                response {
-                    HttpStatusCode.OK to {
-                        description = "Successful Request"
-                        body<AltinnTilgangerResponse> {
-                            exampleRef("Successful Respons", "tilganger_success")
-                        }
-                    }
-                }
-            }) {
-                val fnr = call.principal<InloggetBrukerPrincipal>()!!.fnr
-                val tilganger = altinnService.hentTilganger(fnr, this)
-
-                call.respond(
-                    AltinnTilgangerResponse.fromResult(
-                        tilganger
-                    )
-                )
-            }
-
             get("/whoami") {
                 val clientId = call.principal<InloggetBrukerPrincipal>()!!.clientId
                 call.respondText(Json.encodeToString(mapOf("clientId" to clientId)))
@@ -263,59 +235,3 @@ class InloggetBrukerPrincipal(
     val fnr: String,
     val clientId: String,
 ) : Principal
-
-
-@Description("Brukerens tilganger til Altinn 2 og Altinn 3 for en organisasjon")
-@Serializable
-data class AltinnTilgang(
-    @Description("Organisasjonsnummer")
-    @Example("11223344")
-    val orgNr: String,
-    @Description("Tilganger til Altinn 3")
-    val altinn3Tilganger: Set<String>,
-    @Description("Tilganger til Altinn 2")
-    val altinn2Tilganger: Set<String>,
-    @Description("list av underenheter til denne organisasjonen hvor brukeren har tilganger")
-    val underenheter: List<AltinnTilgang>,
-    @Description("Navn på organisasjonen")
-    val name: String,
-    @Description("Organisasjonsform. se https://www.brreg.no/bedrift/organisasjonsformer/")
-    @Example("BEDR")
-    val organizationForm: String,
-)
-
-@Serializable
-data class AltinnTilgangerResponse(
-    @Description("Om det var en feil ved henting av tilganger. Dersom denne er true kan det bety at ikke alle tilganger er hentet.")
-    val isError: Boolean,
-    @Description("Organisasjonshierarkiet med brukerens tilganger")
-    val hierarki: List<AltinnTilgang>,
-    @Description("Map fra organisasjonsnummer til tilganger. Convenience for å slå opp tilganger på orgnummer.")
-    val orgNrTilTilganger: Map<String, Set<String>>,
-    @Description("Map fra tilgang til organisasjonsnummer. Convenience for å slå opp orgnummer på tilgang.")
-    val tilgangTilOrgNr: Map<String, Set<String>>,
-) {
-    companion object {
-        fun fromResult(
-            resultat: AltinnService.AltinnTilgangerResultat
-        ): AltinnTilgangerResponse {
-            val orgNrTilTilganger: Map<String, Set<String>> =
-                resultat.altinnTilganger.flatMap { it.underenheter }
-                    .associate {
-                        it.orgNr to it.altinn2Tilganger + it.altinn3Tilganger
-                    }
-
-            val tilgangToOrgNr = orgNrTilTilganger.flatMap { (orgNr, tjenester) ->
-                tjenester.map { it to orgNr }
-            }.groupBy({ it.first }, { it.second }).mapValues {  it.value.toSet() }
-
-
-            return AltinnTilgangerResponse(
-                isError = resultat.isError,
-                hierarki = resultat.altinnTilganger,
-                orgNrTilTilganger = orgNrTilTilganger,
-                tilgangTilOrgNr = tilgangToOrgNr,
-            )
-        }
-    }
-}
