@@ -76,7 +76,7 @@ jobs:
 
       - uses: nais/attest-sign@v1
         env:
-          TRIVY_JAVA_DB_REPOSITORY: "public.ecr.aws/v2/aquasecurity/trivy-java-db:1"
+          TRIVY_JAVA_DB_REPOSITORY: "public.ecr.aws/aquasecurity/trivy-java-db:1"
         with:
           image_ref: ${{ needs.build.outputs.image }}@${{ needs.build.outputs.digest }}
           sbom: bom.json
