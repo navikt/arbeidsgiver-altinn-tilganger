@@ -9,21 +9,17 @@ import com.nimbusds.jose.crypto.RSASSASigner
 import com.nimbusds.jose.jwk.RSAKey
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.engine.cio.CIO
-import io.ktor.client.plugins.api.createClientPlugin
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.request.accept
-import io.ktor.client.request.bearerAuth
-import io.ktor.client.request.forms.submitForm
-import io.ktor.client.statement.bodyAsText
-import io.ktor.http.ContentType
-import io.ktor.http.isSuccess
-import io.ktor.http.parameters
-import io.ktor.serialization.kotlinx.json.json
+import io.ktor.client.*
+import io.ktor.client.call.*
+import io.ktor.client.engine.cio.*
+import io.ktor.client.plugins.api.*
+import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.client.request.*
+import io.ktor.client.request.forms.*
+import io.ktor.client.statement.*
+import io.ktor.http.*
+import io.ktor.serialization.kotlinx.json.*
 import io.micrometer.core.instrument.Gauge
-import io.opentelemetry.api.metrics.LongGaugeBuilder
 import io.opentelemetry.instrumentation.annotations.WithSpan
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -36,7 +32,7 @@ import no.nav.fager.infrastruktur.Service
 import no.nav.fager.infrastruktur.logger
 import java.time.Instant
 import java.util.*
-import java.util.function.ToDoubleFunction
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.*
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -112,13 +108,11 @@ class Maskinporten(
         fun expiresIn(): Duration = expiresAt - timeSource.markNow()
     }
 
-    @Volatile
-    private var cache: Cache? = null
-
+    private val cache = AtomicReference<Cache>(null)
 
     private val expiresInGauge =
         Gauge.builder("maskinporten.token.expiry.seconds", cache) {
-            it?.expiresIn()?.toDouble(DurationUnit.SECONDS) ?: -1.0
+            it.get()?.expiresIn()?.toDouble(DurationUnit.SECONDS) ?: -1.0
         }.tag("scope", scope).register(Metrics.meterRegistry)
 
 
@@ -170,11 +164,11 @@ class Maskinporten(
     }
 
     suspend fun refreshTokenIfNeeded(): Pair<Throwable?, Cache?> {
-        val cacheSnapshot = cache
+        val cacheSnapshot = cache.get()
         return if (cacheSnapshot == null || cacheSnapshot.expiresIn() < refreshThreshold) {
             when (val result = fetchToken()) {
                 is Either.Right -> {
-                    cache = result.value
+                    cache.set(result.value)
                     Pair(null, result.value)
                 }
 
@@ -233,7 +227,7 @@ class Maskinporten(
 
 
     fun accessToken(): String {
-        return requireNotNull(cache?.accessToken) {
+        return requireNotNull(cache.get()?.accessToken) {
             """
                 Maskinporten is not ready yet. Did you forget to connect Maskinporten::isReady into
                 the k8s' ready-endpoint?
@@ -241,7 +235,7 @@ class Maskinporten(
         }
     }
 
-    override fun isReady() = cache != null
+    override fun isReady() = cache.get() != null
 }
 
 @Serializable
