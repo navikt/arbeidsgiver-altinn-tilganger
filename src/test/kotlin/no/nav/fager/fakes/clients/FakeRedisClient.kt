@@ -8,12 +8,12 @@ class FakeRedisClient(
     private val getHandler: () -> AltinnService.AltinnTilgangerResultat? = { null },
 ) : AltinnTilgangerRedisClient, FakeClientBase() {
 
-    override suspend fun get(key: String): AltinnService.AltinnTilgangerResultat? {
-        addFunctionCall(this::get.name, key)
+    override suspend fun get(fnr: String): AltinnService.AltinnTilgangerResultat? {
+        addFunctionCall(this::get.name, fnr)
         return getHandler()
     }
 
-    override suspend fun set(key: String, altinnTilganger: AltinnService.AltinnTilgangerResultat) {
-        addFunctionCall(this::set.name, key, altinnTilganger)
+    override suspend fun set(fnr: String, altinnTilganger: AltinnService.AltinnTilgangerResultat) {
+        addFunctionCall(this::set.name, fnr, altinnTilganger)
     }
 }

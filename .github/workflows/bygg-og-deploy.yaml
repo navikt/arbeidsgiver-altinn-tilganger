@@ -47,6 +47,7 @@ jobs:
         id: gar-push
         with:
           team: fager
+          tag: ${{ github.sha }}
           salsa: false
           project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
           identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
@@ -82,6 +83,7 @@ jobs:
           sbom: bom.json
 
   deploy-dev:
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     needs: [ build ]
     runs-on: ubuntu-latest
     permissions:
@@ -92,5 +94,20 @@ jobs:
         name: Deploy dev-gcp
         env:
           VAR: image=${{ needs.build.outputs.image }}
-          RESOURCE: nais/dev-gcp.yaml,nais/dev-redis.yaml
+          RESOURCE: nais/dev-gcp-altinn-tilganger.yaml,nais/dev-gcp-redis.yaml
           CLUSTER: dev-gcp
+
+  deploy-prod:
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    needs: [ build ]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: nais/deploy/actions/deploy@v2
+        name: Deploy prod-gcp
+        env:
+          VAR: image=${{ needs.build.outputs.image }}
+          RESOURCE: nais/prod-gcp-altinn-tilganger.yaml,nais/prod-gcp-redis.yaml
+          CLUSTER: prod-gcp

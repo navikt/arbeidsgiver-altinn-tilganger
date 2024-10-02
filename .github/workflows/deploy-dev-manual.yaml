@@ -1,0 +1,27 @@
+name: Deploy dev manual
+on:
+  workflow_dispatch:
+
+jobs:
+  dev-deploy:
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: nais/login@v0
+        id: login
+        with:
+          project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
+          identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
+          team: fager
+
+      - uses: nais/deploy/actions/deploy@v2
+        name: Deploy dev-gcp
+        env:
+          VAR: ${{ steps.login.outputs.registry }}/arbeidsgiver-altinn-tilganger:${{ github.sha }}
+          RESOURCE: nais/dev-gcp-altinn-tilganger.yaml,nais/dev-gcp-redis.yaml
+          CLUSTER: dev-gcp
+
