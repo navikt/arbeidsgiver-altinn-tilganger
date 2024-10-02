@@ -40,7 +40,7 @@ class Altinn3Config(
 }
 
 interface Altinn3Client{
-    suspend fun hentAuthorizedParties(fnr: String): List<AuthoririzedParty>
+    suspend fun hentAuthorizedParties(fnr: String): List<AuthorizedParty>
 }
 
 /** Swagger for api:
@@ -83,7 +83,7 @@ class Altinn3ClientImpl(
     }
 
     @WithSpan
-    override suspend fun hentAuthorizedParties(fnr: String): List<AuthoririzedParty> = try {
+    override suspend fun hentAuthorizedParties(fnr: String): List<AuthorizedParty> = try {
         val httpResponse = httpClient.post {
             url {
                 takeFrom(altinn3Config.baseUrl)
@@ -110,11 +110,12 @@ class Altinn3ClientImpl(
 
 @Suppress("unused")
 @Serializable
-class AuthoririzedParty(
+class AuthorizedParty(
     val organizationNumber: String?,
     val name: String,
     val type: String?,
     val unitType: String?,
     val authorizedResources: Set<String>,
-    val subunits: List<AuthoririzedParty>
+    val isDeleted: Boolean,
+    val subunits: List<AuthorizedParty>
 )

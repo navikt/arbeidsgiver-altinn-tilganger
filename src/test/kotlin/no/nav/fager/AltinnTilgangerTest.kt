@@ -65,6 +65,22 @@ class AltinnTilgangerTest {
                         ],
                         "authorizedRoles": [],
                         "subunits": []
+                      },
+                      {
+                        "partyUuid": "7756eab6-119b-4691-8a8a-6f51a203aba7",
+                        "name": "SLEMMESTAD OG STAVERN REGNSKAP SLETTET",
+                        "organizationNumber": "910825999",
+                        "personId": null,
+                        "partyId": 50169333,
+                        "type": "Organization",
+                        "unitType": "BEDR",
+                        "isDeleted": true,
+                        "onlyHierarchyElementWithNoAccess": false,
+                        "authorizedResources": [
+                          "test-fager"
+                        ],
+                        "authorizedRoles": [],
+                        "subunits": []
                       }
                     ]
                   }
@@ -99,6 +115,7 @@ class AltinnTilgangerTest {
         }.body()
 
         assertEquals(true, tilganger.isError)
+        assertEquals(1, tilganger.hierarki[0].underenheter.size)
         assertEquals(setOf("test-fager"), tilganger.hierarki[0].underenheter[0].altinn3Tilganger)
         assertEquals(setOf("4936:1"), tilganger.hierarki[0].underenheter[0].altinn2Tilganger)
         assertEquals(setOf("910825496"), tilganger.tilgangTilOrgNr["4936:1"])

@@ -46,10 +46,10 @@ class AltinnService(
     }
 
     private fun mapToHierarchy(
-        authorizedParties: List<AuthoririzedParty>, altinn2Tilganger: Altinn2Tilganger
+        authorizedParties: List<AuthorizedParty>, altinn2Tilganger: Altinn2Tilganger
     ): List<AltinnTilgang> {
 
-        return authorizedParties.filter { it.organizationNumber != null && it.unitType != null }
+        return authorizedParties.filter { it.organizationNumber != null && it.unitType != null && !it.isDeleted }
             .map { party ->
                 AltinnTilgang(
                     orgNr = party.organizationNumber!!, // alle orgnr finnes i altinn3 pga includeAltinn2=true

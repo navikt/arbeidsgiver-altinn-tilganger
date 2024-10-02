@@ -27,13 +27,14 @@ class AltinnServiceCacheTest {
         }
         val altinn3Client = FakeAltinn3Client {
             listOf(
-                AuthoririzedParty(
+                AuthorizedParty(
                     name = "SLEMMESTAD OG STAVERN REGNSKAP",
                     organizationNumber = "910825496",
                     authorizedResources = setOf("test-fager"),
                     subunits = listOf(),
                     unitType = "BEDR",
-                    type = "Business"
+                    type = "Business",
+                    isDeleted = false,
                 )
             )
         }
@@ -86,13 +87,14 @@ class AltinnServiceCacheTest {
         }
         val altinn3Client = FakeAltinn3Client {
             listOf(
-                AuthoririzedParty(
+                AuthorizedParty(
                     name = "SLEMMESTAD OG STAVERN REGNSKAP",
                     organizationNumber = "910825496",
                     authorizedResources = setOf("test-fager"),
                     subunits = listOf(),
                     unitType = "BEDR",
-                    type = "Business"
+                    type = "Business",
+                    isDeleted = false,
                 )
             )
         }
@@ -127,13 +129,14 @@ class AltinnServiceCacheTest {
         }
         val altinn3Client = FakeAltinn3Client {
             listOf(
-                AuthoririzedParty(
+                AuthorizedParty(
                     name = "SLEMMESTAD OG STAVERN REGNSKAP",
                     organizationNumber = "910825496",
                     authorizedResources = setOf("test-fager"),
                     subunits = listOf(),
                     unitType = "BEDR",
-                    type = "Business"
+                    type = "Business",
+                    isDeleted = false,
                 )
             )
         }
@@ -168,13 +171,14 @@ class AltinnServiceCacheTest {
         }
         val altinn3Client = FakeAltinn3Client {
             listOf(
-                AuthoririzedParty(
+                AuthorizedParty(
                     name = "SLEMMESTAD OG STAVERN REGNSKAP",
                     organizationNumber = "910825496",
                     authorizedResources = setOf("test-fager"),
                     subunits = listOf(),
                     unitType = "BEDR",
-                    type = "Business"
+                    type = "Business",
+                    isDeleted = false,
                 )
             )
         }
