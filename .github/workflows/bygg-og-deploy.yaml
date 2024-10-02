@@ -40,8 +40,8 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-         name: ${{ github.sha }}.bom.json
-         path: target/bom.json
+          name: ${{ github.sha }}.bom.json
+          path: target/bom.json
 
       - uses: nais/docker-build-push@v0
         id: gar-push

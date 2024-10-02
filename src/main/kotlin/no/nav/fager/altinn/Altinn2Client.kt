@@ -27,6 +27,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import no.nav.fager.infrastruktur.basedOnEnv
 import no.nav.fager.maskinporten.Maskinporten
 import no.nav.fager.maskinporten.MaskinportenPlugin
 import no.nav.fager.infrastruktur.logger
@@ -251,17 +252,23 @@ private val tjenester = listOf(
         serviceEdition = "1",
         serviceName = "Tilskuddsbrev NAV-tiltak",
     ),
-    Altinn2TjenesteDefinisjon(
-        serviceCode = "5332",
-        serviceEdition = "1",
-        serviceName = "Tiltaksgjennomføring",
-        serviceEditionName = "Avtale om arbeidstrening (dev)",
-    ),
-    Altinn2TjenesteDefinisjon(
-        serviceCode = "5332",
-        serviceEdition = "2",
-        serviceName = "Tiltaksgjennomføring",
-        serviceEditionName = "Avtale om arbeidstrening (prod)",
+    basedOnEnv(
+        prod = {
+            Altinn2TjenesteDefinisjon(
+                serviceCode = "5332",
+                serviceEdition = "2",
+                serviceName = "Tiltaksgjennomføring",
+                serviceEditionName = "Avtale om arbeidstrening (prod)",
+            )
+        },
+        other = {
+            Altinn2TjenesteDefinisjon(
+                serviceCode = "5332",
+                serviceEdition = "1",
+                serviceName = "Tiltaksgjennomføring",
+                serviceEditionName = "Avtale om arbeidstrening (dev)",
+            )
+        }
     ),
     Altinn2TjenesteDefinisjon(
         serviceCode = "5384",
