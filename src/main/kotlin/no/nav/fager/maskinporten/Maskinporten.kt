@@ -22,6 +22,8 @@ import io.ktor.http.ContentType
 import io.ktor.http.isSuccess
 import io.ktor.http.parameters
 import io.ktor.serialization.kotlinx.json.json
+import io.micrometer.core.instrument.Gauge
+import io.opentelemetry.api.metrics.LongGaugeBuilder
 import io.opentelemetry.instrumentation.annotations.WithSpan
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -29,17 +31,15 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import no.nav.fager.infrastruktur.Metrics
 import no.nav.fager.infrastruktur.Service
 import no.nav.fager.infrastruktur.logger
 import java.time.Instant
 import java.util.*
-import kotlin.time.ComparableTimeMark
-import kotlin.time.Duration
+import java.util.function.ToDoubleFunction
+import kotlin.time.*
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.ExperimentalTime
-import kotlin.time.TimeSource
-import kotlin.time.toJavaDuration
 
 
 class MaskinportenConfig(
@@ -115,12 +115,20 @@ class Maskinporten(
     @Volatile
     private var cache: Cache? = null
 
+
+    private val expiresInGauge =
+        Gauge.builder("maskinporten.token.expiry.seconds", cache) {
+            it?.expiresIn()?.toDouble(DurationUnit.SECONDS) ?: -1.0
+        }.tag("scope", scope).register(Metrics.meterRegistry)
+
+
     private val refreshThreshold = 10.minutes
 
     init {
         backgroundCoroutineScope?.launch {
             while (true) {
                 val (error, currentToken) = refreshTokenIfNeeded()
+                expiresInGauge.value() // Trigger gauge update
                 when {
                     currentToken == null -> {
                         log.info("token med scope={} mangler. forsøk på å hente nytt feilet.", scope, error)
