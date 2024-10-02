@@ -8,9 +8,22 @@ import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.micrometer.core.instrument.Timer
 import kotlinx.serialization.Serializable
 import no.nav.fager.infrastruktur.InloggetBrukerPrincipal
 import no.nav.fager.altinn.AltinnTilgangerResponse.Companion.toResponse
+import no.nav.fager.infrastruktur.Metrics
+import no.nav.fager.infrastruktur.coRecord
+import java.util.concurrent.ConcurrentHashMap
+
+private val clientTaggedTimerTimer = ConcurrentHashMap<String, Timer>()
+private fun withTimer(clientId: String): Timer =
+    clientTaggedTimerTimer.computeIfAbsent(clientId) {
+        Timer.builder("altinn_tilganger_responsetid")
+            .tag("klientapp", it)
+            .publishPercentileHistogram()
+            .register(Metrics.meterRegistry)
+    }
 
 fun Route.routeAltinnTilganger(altinnService: AltinnService) {
     authenticate {
@@ -32,9 +45,11 @@ fun Route.routeAltinnTilganger(altinnService: AltinnService) {
             }
         }) {
             val fnr = call.principal<InloggetBrukerPrincipal>()!!.fnr
-            val tilganger = altinnService.hentTilganger(fnr, this)
-
-            call.respond(tilganger.toResponse())
+            val clientId = call.principal<InloggetBrukerPrincipal>()!!.clientId
+            withTimer(clientId).coRecord {
+                val tilganger = altinnService.hentTilganger(fnr, this)
+                call.respond(tilganger.toResponse())
+            }
         }
     }
 }
