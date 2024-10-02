@@ -1,7 +1,7 @@
 package no.nav.fager.fakes.clients
 
-import no.nav.fager.AltinnService
-import no.nav.fager.AltinnTilgangerRedisClient
+import no.nav.fager.altinn.AltinnService
+import no.nav.fager.redis.AltinnTilgangerRedisClient
 import no.nav.fager.fakes.FakeClientBase
 
 class FakeRedisClient(

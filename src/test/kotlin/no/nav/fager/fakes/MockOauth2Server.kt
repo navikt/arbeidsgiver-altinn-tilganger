@@ -12,7 +12,7 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import no.nav.fager.AuthConfig
+import no.nav.fager.infrastruktur.AuthConfig
 
 val oauth2MockServer = AuthConfig(
     clientId = "local:fager:arbeidsgiver-altinn-tilganger",

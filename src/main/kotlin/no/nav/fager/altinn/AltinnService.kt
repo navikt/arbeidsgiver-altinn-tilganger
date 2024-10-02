@@ -1,10 +1,12 @@
-package no.nav.fager
+package no.nav.fager.altinn
 
 import io.micrometer.core.instrument.Counter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.serialization.Serializable
-import no.nav.fager.Metrics.meterRegistry
+import no.nav.fager.redis.AltinnTilgangerRedisClient
+import no.nav.fager.infrastruktur.Metrics
+import no.nav.fager.infrastruktur.coRecord
 
 
 class AltinnService(
@@ -13,9 +15,9 @@ class AltinnService(
     private val redisClient: AltinnTilgangerRedisClient
 ) {
 
-    private val timer = meterRegistry.timer("altinnservice.hentTilgangerFraAltinn")
-    private val cacheHit = Counter.builder("altinnservice.cache").tag("result", "hit").register(meterRegistry)
-    private val cacheMiss = Counter.builder("altinnservice.cache").tag("result", "miss").register(meterRegistry)
+    private val timer = Metrics.meterRegistry.timer("altinnservice.hentTilgangerFraAltinn")
+    private val cacheHit = Counter.builder("altinnservice.cache").tag("result", "hit").register(Metrics.meterRegistry)
+    private val cacheMiss = Counter.builder("altinnservice.cache").tag("result", "miss").register(Metrics.meterRegistry)
 
     suspend fun hentTilganger(fnr: String, scope: CoroutineScope) =
         redisClient.get(fnr)?.also {

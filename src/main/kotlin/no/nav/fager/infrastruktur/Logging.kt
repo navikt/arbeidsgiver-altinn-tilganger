@@ -1,4 +1,4 @@
-package no.nav.fager
+package no.nav.fager.infrastruktur
 
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger

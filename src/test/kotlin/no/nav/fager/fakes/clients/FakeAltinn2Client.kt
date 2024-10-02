@@ -1,7 +1,7 @@
 package no.nav.fager.fakes.clients
 
-import no.nav.fager.Altinn2Client
-import no.nav.fager.Altinn2Tilganger
+import no.nav.fager.altinn.Altinn2Client
+import no.nav.fager.altinn.Altinn2Tilganger
 import no.nav.fager.fakes.FakeClientBase
 
 class FakeAltinn2Client(

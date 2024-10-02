@@ -16,7 +16,7 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import io.ktor.util.pipeline.PipelineContext
 import kotlinx.coroutines.runBlocking
-import no.nav.fager.Altinn2Config
+import no.nav.fager.altinn.Altinn2Config
 import org.slf4j.event.Level
 import kotlin.test.fail
 

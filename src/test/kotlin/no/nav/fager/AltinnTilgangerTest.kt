@@ -12,6 +12,7 @@ import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.call
 import io.ktor.server.response.respondText
 import kotlinx.serialization.json.Json
+import no.nav.fager.altinn.AltinnTilgangerResponse
 import no.nav.fager.fakes.FakeApplication
 import no.nav.fager.fakes.authorization
 import kotlin.test.Test

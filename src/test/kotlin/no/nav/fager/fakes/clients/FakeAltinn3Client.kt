@@ -1,7 +1,7 @@
 package no.nav.fager.fakes.clients
 
-import no.nav.fager.Altinn3Client
-import no.nav.fager.AuthoririzedParty
+import no.nav.fager.altinn.Altinn3Client
+import no.nav.fager.altinn.AuthoririzedParty
 import no.nav.fager.fakes.FakeClientBase
 
 class FakeAltinn3Client(

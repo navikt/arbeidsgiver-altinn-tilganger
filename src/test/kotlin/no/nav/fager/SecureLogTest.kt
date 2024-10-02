@@ -1,6 +1,8 @@
 package no.nav.fager
 
 import junit.framework.TestCase.assertTrue
+import no.nav.fager.infrastruktur.SECURE
+import no.nav.fager.infrastruktur.logger
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 import kotlin.test.Test

@@ -1,11 +1,11 @@
 package no.nav.fager
 
 import kotlinx.coroutines.test.runTest
+import no.nav.fager.altinn.*
 import no.nav.fager.fakes.clients.FakeAltinn2Client
 import no.nav.fager.fakes.clients.FakeAltinn3Client
 import no.nav.fager.fakes.clients.FakeRedisClient
 import kotlin.test.Test
-import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class AltinnServiceCacheTest {

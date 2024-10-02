@@ -1,4 +1,4 @@
-package no.nav.fager
+package no.nav.fager.redis
 
 import io.lettuce.core.*
 import io.lettuce.core.api.coroutines
@@ -7,7 +7,7 @@ import io.lettuce.core.codec.RedisCodec
 import io.lettuce.core.codec.StringCodec
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import no.nav.fager.AltinnService.AltinnTilgangerResultat
+import no.nav.fager.altinn.AltinnService.AltinnTilgangerResultat
 import java.nio.ByteBuffer
 import java.security.MessageDigest
 import java.time.Duration

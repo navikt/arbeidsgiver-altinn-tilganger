@@ -1,4 +1,4 @@
-package no.nav.fager
+package no.nav.fager.doc
 
 import io.github.smiley4.ktorswaggerui.SwaggerUI
 import io.github.smiley4.ktorswaggerui.data.AuthScheme
@@ -6,6 +6,8 @@ import io.github.smiley4.ktorswaggerui.data.AuthType
 import io.github.smiley4.ktorswaggerui.data.SchemaConfigData
 import io.ktor.http.*
 import io.ktor.server.application.*
+import no.nav.fager.altinn.AltinnTilgang
+import no.nav.fager.altinn.AltinnTilgangerResponse
 
 fun Application.swaggerDocumentation() {
     install(SwaggerUI) {

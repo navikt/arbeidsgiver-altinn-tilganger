@@ -1,4 +1,4 @@
-package no.nav.fager
+package no.nav.fager.maskinporten
 
 import arrow.core.Either
 import arrow.core.raise.either
@@ -29,6 +29,8 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import no.nav.fager.infrastruktur.Service
+import no.nav.fager.infrastruktur.logger
 import java.time.Instant
 import java.util.*
 import kotlin.time.ComparableTimeMark
@@ -84,7 +86,7 @@ class Maskinporten(
 
     /** Kun nødvendig for test-kode. */
     private val timeSource: TimeSource.WithComparableMarks = TimeSource.Monotonic,
-) {
+) : Service {
     private val log = logger()
 
     /* Implementasjon basert på nais-doc:
@@ -112,8 +114,6 @@ class Maskinporten(
 
     @Volatile
     private var cache: Cache? = null
-
-    val isReady: Boolean get() = cache != null
 
     private val refreshThreshold = 10.minutes
 
@@ -232,6 +232,8 @@ class Maskinporten(
            """.trimIndent()
         }
     }
+
+    override fun isReady() = cache != null
 }
 
 @Serializable

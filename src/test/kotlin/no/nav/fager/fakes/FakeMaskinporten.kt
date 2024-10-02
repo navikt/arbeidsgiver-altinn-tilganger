@@ -15,7 +15,7 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import kotlinx.coroutines.runBlocking
-import no.nav.fager.MaskinportenConfig
+import no.nav.fager.maskinporten.MaskinportenConfig
 import org.slf4j.event.Level
 import java.util.concurrent.atomic.AtomicInteger
 

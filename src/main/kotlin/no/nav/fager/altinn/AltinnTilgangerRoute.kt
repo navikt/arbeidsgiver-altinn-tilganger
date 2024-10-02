@@ -1,4 +1,4 @@
-package no.nav.fager
+package no.nav.fager.altinn
 
 import io.github.smiley4.ktorswaggerui.dsl.routing.post
 import io.github.smiley4.schemakenerator.core.annotations.Description
@@ -9,7 +9,8 @@ import io.ktor.server.auth.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.Serializable
-import no.nav.fager.AltinnTilgangerResponse.Companion.toResponse
+import no.nav.fager.infrastruktur.InloggetBrukerPrincipal
+import no.nav.fager.altinn.AltinnTilgangerResponse.Companion.toResponse
 
 fun Route.routeAltinnTilganger(altinnService: AltinnService) {
     authenticate {

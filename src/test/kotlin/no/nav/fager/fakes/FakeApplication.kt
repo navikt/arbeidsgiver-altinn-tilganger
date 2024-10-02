@@ -10,7 +10,7 @@ import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
 import io.ktor.util.pipeline.PipelineContext
 import kotlinx.coroutines.runBlocking
-import no.nav.fager.RedisConfig
+import no.nav.fager.redis.RedisConfig
 import no.nav.fager.ktorConfig
 
 

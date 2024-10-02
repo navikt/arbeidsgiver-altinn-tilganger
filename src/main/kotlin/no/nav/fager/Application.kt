@@ -20,11 +20,22 @@ import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.micrometer.prometheus.PrometheusConfig
-import io.micrometer.prometheus.PrometheusMeterRegistry
-import kotlinx.serialization.Serializable
+import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics
+import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics
+import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics
+import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics
+import io.micrometer.core.instrument.binder.logging.LogbackMetrics
+import io.micrometer.core.instrument.binder.system.FileDescriptorMetrics
+import io.micrometer.core.instrument.binder.system.ProcessorMetrics
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import no.nav.fager.altinn.*
+import no.nav.fager.doc.swaggerDocumentation
+import no.nav.fager.infrastruktur.*
+import no.nav.fager.maskinporten.Maskinporten
+import no.nav.fager.maskinporten.MaskinportenConfig
+import no.nav.fager.redis.AltinnTilgangerRedisClientImpl
+import no.nav.fager.redis.RedisConfig
 import org.slf4j.event.Level
 import java.net.URI
 import java.util.*
@@ -42,20 +53,6 @@ fun main() {
         )
     })
         .start(wait = true)
-}
-
-data class AuthConfig(
-    val clientId: String,
-    val issuer: String,
-    val jwksUri: String,
-) {
-    companion object {
-        fun nais() = AuthConfig(
-            clientId = System.getenv("TOKEN_X_CLIENT_ID"),
-            issuer = System.getenv("TOKEN_X_ISSUER"),
-            jwksUri = System.getenv("TOKEN_X_JWKS_URI"),
-        )
-    }
 }
 
 fun Application.ktorConfig(
@@ -149,10 +146,18 @@ fun Application.ktorConfig(
         replyToHeader(HttpHeaders.XCorrelationId)
     }
 
-    val appMicrometerRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
-
     install(MicrometerMetrics) {
         registry = Metrics.meterRegistry
+
+        meterBinders = listOf(
+            ClassLoaderMetrics(),
+            JvmMemoryMetrics(),
+            JvmGcMetrics(),
+            ProcessorMetrics(),
+            JvmThreadMetrics(),
+            FileDescriptorMetrics(),
+            LogbackMetrics()
+        )
     }
 
     install(ContentNegotiation) {
@@ -166,26 +171,35 @@ fun Application.ktorConfig(
         maskinportenConfig = maskinportenConfig,
         scope = "altinn:accessmanagement/authorizedparties.resourceowner",
         backgroundCoroutineScope = this,
-    )
+    ).also {
+        Health.services.add(it)
+    }
 
     @OptIn(ExperimentalTime::class)
     val maskinportenA2 = Maskinporten(
         maskinportenConfig = maskinportenConfig,
         scope = "altinn:serviceowner/reportees",
         backgroundCoroutineScope = this,
-    )
+    ).also {
+        Health.services.add(it)
+    }
 
     routing {
         route("internal") {
             get("prometheus") {
-                call.respond<String>(appMicrometerRegistry.scrape())
+                call.respond<String>(Metrics.meterRegistry.scrape())
             }
             get("isalive") {
-                call.respondText("I'm alive")
+                call.respond(
+                    if (Health.alive)
+                        HttpStatusCode.OK
+                    else
+                        HttpStatusCode.ServiceUnavailable
+                )
             }
             get("isready") {
                 call.respond(
-                    if (maskinportenA3.isReady && maskinportenA2.isReady)
+                    if (Health.ready)
                         HttpStatusCode.OK
                     else
                         HttpStatusCode.ServiceUnavailable
@@ -228,9 +242,3 @@ fun Application.ktorConfig(
     }
 }
 
-
-@Serializable
-class InloggetBrukerPrincipal(
-    val fnr: String,
-    val clientId: String,
-) : Principal

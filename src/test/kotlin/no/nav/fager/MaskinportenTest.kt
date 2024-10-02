@@ -13,6 +13,10 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.testTimeSource
 import no.nav.fager.fakes.FakeMaskinporten
+import no.nav.fager.maskinporten.Maskinporten
+import no.nav.fager.maskinporten.MaskinportenConfig
+import no.nav.fager.maskinporten.MaskinportenPlugin
+import no.nav.fager.maskinporten.TokenEndpointResponse
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

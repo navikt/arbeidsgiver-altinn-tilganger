@@ -8,11 +8,11 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import no.nav.fager.Altinn2Config
-import no.nav.fager.Altinn3Config
-import no.nav.fager.AuthConfig
-import no.nav.fager.MaskinportenConfig
-import no.nav.fager.RedisConfig
+import no.nav.fager.altinn.Altinn2Config
+import no.nav.fager.altinn.Altinn3Config
+import no.nav.fager.infrastruktur.AuthConfig
+import no.nav.fager.maskinporten.MaskinportenConfig
+import no.nav.fager.redis.RedisConfig
 import no.nav.fager.ktorConfig
 import java.util.concurrent.TimeUnit
 

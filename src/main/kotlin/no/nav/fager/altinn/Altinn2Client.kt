@@ -1,4 +1,4 @@
-package no.nav.fager
+package no.nav.fager.altinn
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -27,6 +27,9 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import no.nav.fager.maskinporten.Maskinporten
+import no.nav.fager.maskinporten.MaskinportenPlugin
+import no.nav.fager.infrastruktur.logger
 import javax.net.ssl.SSLHandshakeException
 
 class Altinn2Config(

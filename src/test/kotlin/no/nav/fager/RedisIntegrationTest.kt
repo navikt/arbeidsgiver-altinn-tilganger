@@ -1,6 +1,10 @@
 package no.nav.fager
 
 import kotlinx.coroutines.runBlocking
+import no.nav.fager.altinn.AltinnService
+import no.nav.fager.altinn.AltinnTilgang
+import no.nav.fager.redis.AltinnTilgangerRedisClientImpl
+import no.nav.fager.redis.RedisConfig
 import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
