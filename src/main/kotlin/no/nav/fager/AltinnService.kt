@@ -1,8 +1,10 @@
 package no.nav.fager
 
+import io.micrometer.core.instrument.Counter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.serialization.Serializable
+import no.nav.fager.Metrics.meterRegistry
 
 
 class AltinnService(
@@ -11,26 +13,26 @@ class AltinnService(
     private val redisClient: AltinnTilgangerRedisClient
 ) {
 
-    @Serializable
-    data class AltinnTilgangerResultat(
-        val isError: Boolean, val altinnTilganger: List<AltinnTilgang>
-    )
+    private val timer = meterRegistry.timer("altinnservice.hentTilgangerFraAltinn")
+    private val cacheHit = Counter.builder("altinnservice.cache").tag("result", "hit").register(meterRegistry)
+    private val cacheMiss = Counter.builder("altinnservice.cache").tag("result", "miss").register(meterRegistry)
 
-    suspend fun hentTilganger(fnr: String, scope: CoroutineScope): AltinnTilgangerResultat {
-        var altinnTilganger = redisClient.get(fnr)
-
-        if (altinnTilganger === null) {
-            altinnTilganger = hentTilgangerFraAltinn(fnr, scope)
-
-            if (!altinnTilganger.isError) { // Feil i altinn2 kall, ikke cache resultat
-                redisClient.set(fnr, altinnTilganger)
+    suspend fun hentTilganger(fnr: String, scope: CoroutineScope) =
+        redisClient.get(fnr)?.also {
+            cacheHit.increment()
+        } ?: run {
+            cacheMiss.increment()
+            hentTilgangerFraAltinn(fnr, scope).also {
+                if (!it.isError) {
+                    redisClient.set(fnr, it)
+                }
             }
         }
 
-        return altinnTilganger
-    }
-
-    private suspend fun hentTilgangerFraAltinn(fnr: String, scope: CoroutineScope): AltinnTilgangerResultat {
+    private suspend fun hentTilgangerFraAltinn(
+        fnr: String,
+        scope: CoroutineScope,
+    ) = timer.coRecord {
         val altinn2TilgangerJob = scope.async { altinn2Client.hentAltinn2Tilganger(fnr) }
         val altinn3TilgangerJob = scope.async { altinn3Client.hentAuthorizedParties(fnr) }
 
@@ -38,7 +40,7 @@ class AltinnService(
         val altinn2Tilganger = altinn2TilgangerJob.await()
         val altinn3Tilganger = altinn3TilgangerJob.await()
 
-        return AltinnTilgangerResultat(altinn2Tilganger.isError, mapToHierarchy(altinn3Tilganger, altinn2Tilganger))
+        AltinnTilgangerResultat(altinn2Tilganger.isError, mapToHierarchy(altinn3Tilganger, altinn2Tilganger))
     }
 
     private fun mapToHierarchy(
@@ -58,4 +60,9 @@ class AltinnService(
                 )
             }
     }
+
+    @Serializable
+    data class AltinnTilgangerResultat(
+        val isError: Boolean, val altinnTilganger: List<AltinnTilgang>
+    )
 }

@@ -152,8 +152,7 @@ fun Application.ktorConfig(
     val appMicrometerRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
 
     install(MicrometerMetrics) {
-        registry = appMicrometerRegistry
-        // ...
+        registry = Metrics.meterRegistry
     }
 
     install(ContentNegotiation) {

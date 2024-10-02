@@ -5,13 +5,14 @@ import no.nav.fager.fakes.clients.FakeAltinn2Client
 import no.nav.fager.fakes.clients.FakeAltinn3Client
 import no.nav.fager.fakes.clients.FakeRedisClient
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class AltinnServiceCacheTest {
     @Test
     fun `cache entry settes`() = runTest {
         val altinnRedisClient = FakeRedisClient()
-        val altinn2Client = FakeAltinn2Client({
+        val altinn2Client = FakeAltinn2Client {
             Altinn2Tilganger(
                 isError = false,
                 orgNrTilTjenester = mapOf(
@@ -23,8 +24,8 @@ class AltinnServiceCacheTest {
                     )
                 )
             )
-        })
-        val altinn3Client = FakeAltinn3Client({
+        }
+        val altinn3Client = FakeAltinn3Client {
             listOf(
                 AuthoririzedParty(
                     name = "SLEMMESTAD OG STAVERN REGNSKAP",
@@ -35,7 +36,7 @@ class AltinnServiceCacheTest {
                     type = "Business"
                 )
             )
-        })
+        }
 
         val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient)
 
@@ -69,8 +70,8 @@ class AltinnServiceCacheTest {
 
     @Test
     fun `cache entry eksisterer, klienter kalles ikke`() = runTest {
-        val altinnRedisClient = FakeRedisClient({ AltinnService.AltinnTilgangerResultat(false, listOf()) })
-        val altinn2Client = FakeAltinn2Client({
+        val altinnRedisClient = FakeRedisClient { AltinnService.AltinnTilgangerResultat(false, listOf()) }
+        val altinn2Client = FakeAltinn2Client {
             Altinn2Tilganger(
                 isError = false,
                 orgNrTilTjenester = mapOf(
@@ -82,8 +83,8 @@ class AltinnServiceCacheTest {
                     )
                 )
             )
-        })
-        val altinn3Client = FakeAltinn3Client({
+        }
+        val altinn3Client = FakeAltinn3Client {
             listOf(
                 AuthoririzedParty(
                     name = "SLEMMESTAD OG STAVERN REGNSKAP",
@@ -94,7 +95,7 @@ class AltinnServiceCacheTest {
                     type = "Business"
                 )
             )
-        })
+        }
 
         val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient)
 
@@ -111,7 +112,7 @@ class AltinnServiceCacheTest {
     @Test
     fun `cache entry settes ikke på grunn av feil i altinn2 respons`() = runTest {
         val altinnRedisClient = FakeRedisClient()
-        val altinn2Client = FakeAltinn2Client({
+        val altinn2Client = FakeAltinn2Client {
             Altinn2Tilganger(
                 isError = true,
                 orgNrTilTjenester = mapOf(
@@ -123,8 +124,8 @@ class AltinnServiceCacheTest {
                     )
                 )
             )
-        })
-        val altinn3Client = FakeAltinn3Client({
+        }
+        val altinn3Client = FakeAltinn3Client {
             listOf(
                 AuthoririzedParty(
                     name = "SLEMMESTAD OG STAVERN REGNSKAP",
@@ -135,7 +136,7 @@ class AltinnServiceCacheTest {
                     type = "Business"
                 )
             )
-        })
+        }
 
         val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient)
 
@@ -152,7 +153,7 @@ class AltinnServiceCacheTest {
     @Test
     fun `cache treffes men ikke på tvers av fnr`() = runTest {
         val altinnRedisClient = FakeRedisClient()
-        val altinn2Client = FakeAltinn2Client({
+        val altinn2Client = FakeAltinn2Client {
             Altinn2Tilganger(
                 isError = false,
                 orgNrTilTjenester = mapOf(
@@ -164,8 +165,8 @@ class AltinnServiceCacheTest {
                     )
                 )
             )
-        })
-        val altinn3Client = FakeAltinn3Client({
+        }
+        val altinn3Client = FakeAltinn3Client {
             listOf(
                 AuthoririzedParty(
                     name = "SLEMMESTAD OG STAVERN REGNSKAP",
@@ -176,7 +177,7 @@ class AltinnServiceCacheTest {
                     type = "Business"
                 )
             )
-        })
+        }
 
         val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient)
 
