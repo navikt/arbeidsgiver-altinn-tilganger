@@ -30,8 +30,6 @@ spec:
       memory: 1024Mi
 
   env:
-    - name: JAVA_OPTS
-      value: "-XX:+UseParallelGC -XX:MaxRAMPercentage=75.0 -XX:ActiveProcessorCount=2"
     - name: ALTINN_3_API_BASE_URL
       value: https://platform.altinn.no
     - name: ALTINN_2_BASE_URL
