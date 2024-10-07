@@ -67,6 +67,20 @@ class AltinnTilgangerTest {
                         "subunits": []
                       },
                       {
+                        "partyUuid": "8656bbb6-119b-4691-8a8a-6f51a203bba7",
+                        "name": "SLEMMESTAD OG STAVERN REGNSKAP 2",
+                        "organizationNumber": "910825554",
+                        "personId": null,
+                        "partyId": 50169035,
+                        "type": "Organization",
+                        "unitType": "BEDR",
+                        "isDeleted": false,
+                        "onlyHierarchyElementWithNoAccess": false,
+                        "authorizedResources": [],
+                        "authorizedRoles": [],
+                        "subunits": []
+                      },
+                      {
                         "partyUuid": "7756eab6-119b-4691-8a8a-6f51a203aba7",
                         "name": "SLEMMESTAD OG STAVERN REGNSKAP SLETTET",
                         "organizationNumber": "910825999",
@@ -88,24 +102,39 @@ class AltinnTilgangerTest {
                 """.trimIndent(), ContentType.Application.Json
             )
         }
+        val altinn2Responses = mutableListOf(
+            """
+            [
+                {
+                    "Name": "SLEMMESTAD OG STAVERN REGNSKAP",
+                    "Type": "Business",
+                    "OrganizationNumber": "910825496",
+                    "ParentOrganizationNumber": "810825472",
+                    "OrganizationForm": "BEDR",
+                    "Status": "Active"
+                }
+            ]
+            """,
+            """
+            [
+                {
+                    "Name": "SLEMMESTAD OG STAVERN REGNSKAP 2",
+                    "Type": "Business",
+                    "OrganizationNumber": "910825554",
+                    "ParentOrganizationNumber": "810825472",
+                    "OrganizationForm": "BEDR",
+                    "Status": "Active"
+                }
+            ]
+            """,
+        )
         app.altinn2Response(Get, "/api/serviceowner/reportees") {
-            if (call.request.queryParameters["serviceCode"] == "4936")
+            if (call.request.queryParameters["serviceCode"] == "4936") {
                 call.respondText(
-                    """
-                    [
-                        {
-                            "Name": "SLEMMESTAD OG STAVERN REGNSKAP",
-                            "Type": "Business",
-                            "OrganizationNumber": "910825496",
-                            "ParentOrganizationNumber": "810825472",
-                            "OrganizationForm": "BEDR",
-                            "Status": "Active"
-                        }
-                    ]
-                    """.trimIndent(), ContentType.Application.Json
+                    altinn2Responses.removeFirst(), ContentType.Application.Json
                 )
+            }
         }
-
 
         val tilganger: AltinnTilgangerResponse = client.post("/altinn-tilganger") {
             authorization(subject = "acr-high-11111111111")
@@ -115,11 +144,12 @@ class AltinnTilgangerTest {
         }.body()
 
         assertEquals(true, tilganger.isError)
-        assertEquals(1, tilganger.hierarki[0].underenheter.size)
+        assertEquals(2, tilganger.hierarki[0].underenheter.size)
         assertEquals(setOf("test-fager"), tilganger.hierarki[0].underenheter[0].altinn3Tilganger)
         assertEquals(setOf("4936:1"), tilganger.hierarki[0].underenheter[0].altinn2Tilganger)
-        assertEquals(setOf("910825496"), tilganger.tilgangTilOrgNr["4936:1"])
+        assertEquals(setOf("910825496", "910825554"), tilganger.tilgangTilOrgNr["4936:1"])
         assertEquals(setOf("test-fager", "4936:1"), tilganger.orgNrTilTilganger["910825496"])
+        assertEquals(setOf("4936:1"), tilganger.orgNrTilTilganger["910825554"])
     }
 
 }

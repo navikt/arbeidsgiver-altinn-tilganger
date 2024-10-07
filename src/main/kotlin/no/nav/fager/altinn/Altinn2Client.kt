@@ -144,43 +144,53 @@ class Altinn2ClientImpl(
      *    ](https://docs.nais.io/observability/reference/auto-config/?h=auto#sanitizing-sensitive-data).
      *    Vi har verifisert i grafana at nais faktisk maskerer fødselsnummeret.
      **/
-    private suspend fun hentReportees(fnr: String, serviceCode: String, serviceEdition: String): ReporteeResult = try {
-        val httpResponse = httpClient.get {
-            url {
-                takeFrom(altinn2Config.baseUrl)
-                appendPathSegments("/api/serviceowner/reportees")
+    private suspend fun hentReportees(fnr: String, serviceCode: String, serviceEdition: String): ReporteeResult {
+        val reportees = mutableListOf<Altinn2Reportee>()
+        return try {
+            var hasMore = true
+            while (hasMore) {
+                httpClient.get {
+                    url {
+                        takeFrom(altinn2Config.baseUrl)
+                        appendPathSegments("/api/serviceowner/reportees")
 
-                parameters.append("subject", fnr)
-                parameters.append("serviceCode", serviceCode)
-                parameters.append("serviceEdition", serviceEdition)
-                parameters.append("\$filter", "Type ne 'Person' and Status eq 'Active'")
+                        parameters.append("subject", fnr)
+                        parameters.append("serviceCode", serviceCode)
+                        parameters.append("serviceEdition", serviceEdition)
+                        parameters.append("\$top", "500")
+                        parameters.append("\$skip", "${reportees.size}")
+                        parameters.append("\$filter", "Type ne 'Person' and Status eq 'Active'")
+                    }
+                    accept(ContentType.Application.Json)
+                    contentType(ContentType.Application.Json)
+                    header("ApiKey", altinn2Config.apiKey)
+                }.body<List<Altinn2Reportee>>().let {
+                    hasMore = it.isNotEmpty()
+                    reportees.addAll(it)
+                }
             }
-            accept(ContentType.Application.Json)
-            contentType(ContentType.Application.Json)
-            header("ApiKey", altinn2Config.apiKey)
-        }
 
-        val reportees = httpResponse.body<List<Altinn2Reportee>>()
-        ReporteeResult(
-            serviceCode = serviceCode,
-            serviceEdition = serviceEdition,
-            reportees = reportees,
-            isError = false,
-        )
-    } catch (e: Exception) {
-        log.info(
-            "reportee for service code:edition {}:{} kastet exception {}",
-            serviceCode,
-            serviceEdition,
-            e::class.qualifiedName,
-            e
-        )
-        ReporteeResult(
-            serviceCode = serviceCode,
-            serviceEdition = serviceEdition,
-            reportees = listOf(),
-            isError = true,
-        )
+            ReporteeResult(
+                serviceCode = serviceCode,
+                serviceEdition = serviceEdition,
+                reportees = reportees,
+                isError = false,
+            )
+        } catch (e: Exception) {
+            log.warn(
+                "reportee for service code:edition {}:{} kastet exception {}",
+                serviceCode,
+                serviceEdition,
+                e::class.qualifiedName,
+                e
+            )
+            ReporteeResult(
+                serviceCode = serviceCode,
+                serviceEdition = serviceEdition,
+                reportees = reportees,
+                isError = true,
+            )
+        }
     }
 }
 
