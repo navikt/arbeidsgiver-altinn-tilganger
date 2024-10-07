@@ -18,6 +18,7 @@ import io.ktor.serialization.kotlinx.json.json
 import io.opentelemetry.instrumentation.annotations.WithSpan
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.flow
@@ -80,7 +81,8 @@ class Altinn2ClientImpl(
             maxRetries = 3
             retryOnExceptionIf { _, cause ->
                 cause is SocketTimeoutException ||
-                        cause is SSLHandshakeException
+                        cause is SSLHandshakeException ||
+                        cause is ClosedReceiveChannelException
             }
 
             delayMillis { 250L }
@@ -164,7 +166,7 @@ class Altinn2ClientImpl(
                     accept(ContentType.Application.Json)
                     contentType(ContentType.Application.Json)
                     header("ApiKey", altinn2Config.apiKey)
-                }.body<List<Altinn2Reportee>>().let {
+                }.bodyOrEmptyHvisAltinnProfilMangler().let {
                     hasMore = it.isNotEmpty()
                     reportees.addAll(it)
                 }
@@ -193,6 +195,16 @@ class Altinn2ClientImpl(
         }
     }
 }
+
+/**
+ * Altinn2 kaster en klient feil dersom innlogget bruker ikke har profil i altinn.
+ */
+private suspend fun io.ktor.client.statement.HttpResponse.bodyOrEmptyHvisAltinnProfilMangler() =
+    if (status.value == 400 && status.description.contains("User profile")) {
+        emptyList()
+    } else {
+        body<List<Altinn2Reportee>>()
+    }
 
 private class ReporteeResult(
     val serviceCode: String,
@@ -236,11 +248,23 @@ private val tjenester = listOf(
         serviceEdition = "87",
         serviceName = "Endre bankkontonummer for refusjoner fra NAV til arbeidsgiver",
     ),
-    Altinn2TjenesteDefinisjon(
-        serviceCode = "3403",
-        serviceEdition = "2",
-        serviceName = "Sykefraværsstatistikk for IA-virksomheter",
-        serviceEditionName = "Sykefraværsstatistikk for virksomheter",
+    basedOnEnv(
+        prod = {
+            Altinn2TjenesteDefinisjon(
+                serviceCode = "3403",
+                serviceEdition = "2",
+                serviceName = "Sykefraværsstatistikk for IA-virksomheter",
+                serviceEditionName = "Sykefraværsstatistikk for virksomheter",
+            )
+        },
+        other = {
+            Altinn2TjenesteDefinisjon(
+                serviceCode = "3403",
+                serviceEdition = "1",
+                serviceName = "Sykefraværsstatistikk for IA-virksomheter",
+                serviceEditionName = "Sykefraværsstatistikk for virksomheter TT02",
+            )
+        }
     ),
     Altinn2TjenesteDefinisjon(
         serviceCode = "4826",

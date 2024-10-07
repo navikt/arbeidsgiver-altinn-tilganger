@@ -2,3 +2,7 @@
 
 https://altinn.no/api/metadata?language=1033&%24top=2000&%24filter=ServiceOwnerCode%20eq%20%27NAV%27
 Accept: application/json
+
+###
+https://tt02.altinn.no/api/metadata?language=1033&%24top=2000&%24filter=ServiceOwnerCode%20eq%20%27NAV%27
+Accept: application/json
