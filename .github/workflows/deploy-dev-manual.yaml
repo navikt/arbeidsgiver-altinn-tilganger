@@ -21,7 +21,7 @@ jobs:
       - uses: nais/deploy/actions/deploy@v2
         name: Deploy dev-gcp
         env:
-          VAR: ${{ steps.login.outputs.registry }}/arbeidsgiver-altinn-tilganger:${{ github.sha }}
+          VAR: image=${{ steps.login.outputs.registry }}/arbeidsgiver-altinn-tilganger:${{ github.sha }}
           RESOURCE: nais/dev-gcp-altinn-tilganger.yaml,nais/dev-gcp-redis.yaml
           CLUSTER: dev-gcp
 
