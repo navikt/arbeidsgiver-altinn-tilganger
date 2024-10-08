@@ -3,16 +3,13 @@ package no.nav.fager.altinn
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
-import io.ktor.client.plugins.HttpRequestRetry
+import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.accept
 import io.ktor.client.request.get
 import io.ktor.client.request.header
-import io.ktor.http.ContentType
-import io.ktor.http.appendPathSegments
-import io.ktor.http.contentType
-import io.ktor.http.takeFrom
+import io.ktor.http.*
 import io.ktor.network.sockets.SocketTimeoutException
 import io.ktor.serialization.kotlinx.json.json
 import io.opentelemetry.instrumentation.annotations.WithSpan
@@ -166,7 +163,7 @@ class Altinn2ClientImpl(
                     accept(ContentType.Application.Json)
                     contentType(ContentType.Application.Json)
                     header("ApiKey", altinn2Config.apiKey)
-                }.bodyOrEmptyHvisAltinnProfilMangler().let {
+                }.body<List<Altinn2Reportee>>().let {
                     hasMore = it.isNotEmpty()
                     reportees.addAll(it)
                 }
@@ -179,32 +176,36 @@ class Altinn2ClientImpl(
                 isError = false,
             )
         } catch (e: Exception) {
-            log.warn(
-                "reportee for service code:edition {}:{} kastet exception {}",
-                serviceCode,
-                serviceEdition,
-                e::class.qualifiedName,
-                e
-            )
-            ReporteeResult(
-                serviceCode = serviceCode,
-                serviceEdition = serviceEdition,
-                reportees = reportees,
-                isError = true,
-            )
+            return if (e.manglerAltinnProfil()) {
+                ReporteeResult(
+                    serviceCode = serviceCode,
+                    serviceEdition = serviceEdition,
+                    reportees = emptyList(),
+                    isError = false,
+                )
+            } else {
+                log.warn(
+                    "reportee for service code:edition {}:{} kastet exception {}",
+                    serviceCode,
+                    serviceEdition,
+                    e::class.qualifiedName,
+                    e
+                )
+                ReporteeResult(
+                    serviceCode = serviceCode,
+                    serviceEdition = serviceEdition,
+                    reportees = reportees,
+                    isError = true,
+                )
+            }
         }
     }
+
 }
 
-/**
- * Altinn2 kaster en klient feil dersom innlogget bruker ikke har profil i altinn.
- */
-private suspend fun io.ktor.client.statement.HttpResponse.bodyOrEmptyHvisAltinnProfilMangler() =
-    if (status.value == 400 && status.description.contains("User profile")) {
-        emptyList()
-    } else {
-        body<List<Altinn2Reportee>>()
-    }
+private fun Exception.manglerAltinnProfil() = this is ClientRequestException
+        && response.status == HttpStatusCode.BadRequest
+        && response.status.description.contains("User profile")
 
 private class ReporteeResult(
     val serviceCode: String,
