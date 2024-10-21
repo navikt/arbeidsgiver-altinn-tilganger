@@ -61,6 +61,8 @@ spec:
         - application: min-side-arbeidsgiver-api
         - application: permitteringsskjema-api
           namespace: permittering-og-nedbemanning
+        - application: mulighetsrommet-api
+          namespace: team-mulighetsrommet
     outbound:
       external:
         - host: platform.tt02.altinn.no
