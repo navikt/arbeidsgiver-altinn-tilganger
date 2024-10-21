@@ -39,10 +39,35 @@ class AltinnService(
         val altinn3TilgangerJob = scope.async { altinn3Client.hentAuthorizedParties(fnr) }
 
         /* Ingen try-catch rundt .await() siden begge klientene håndterer alle exceptions internt. */
-        val altinn2Tilganger = altinn2TilgangerJob.await()
-        val altinn3Tilganger = altinn3TilgangerJob.await()
+        var altinn2Tilganger = altinn2TilgangerJob.await()
+        val altinn3Tilganger = altinn3TilgangerJob.await() //lage guard?
+
+        val mappedAltinn2Tilganger: MutableMap<String, List<Altinn2Tjeneste>> = mutableMapOf()
+        for (altinn3Tilgang in altinn3Tilganger) { // for hver altinn3 ressurs må vi berike med gamle altinn2 tjenester
+            mappedAltinn2Tilganger += altinn2TilgangerFraAltinn3(altinn3Tilgang)
+        }
+
+        altinn2Tilganger = Altinn2Tilganger(
+            altinn2Tilganger.isError,
+            mappedAltinn2Tilganger + altinn2Tilganger.orgNrTilTjenester
+        ) // ved like duplikate entries vil det som hentes fra Altinn2 trumfe det vi manuelt mapper fra Altinn3
 
         AltinnTilgangerResultat(altinn2Tilganger.isError, mapToHierarchy(altinn3Tilganger, altinn2Tilganger))
+    }
+
+    private fun altinn2TilgangerFraAltinn3(
+        organisasjon: AuthorizedParty,
+        orgNrTilAltinn2Tjenester: MutableMap<String, List<Altinn2Tjeneste>> = mutableMapOf()
+    ): MutableMap<String, List<Altinn2Tjeneste>> {
+        for (ressurs in organisasjon.authorizedResources) {
+            val altinn2Tjenester = Altinn3TilAltinn2Map[ressurs]
+            if (altinn2Tjenester !== null && organisasjon.organizationNumber !== null)
+                orgNrTilAltinn2Tjenester[organisasjon.organizationNumber] = altinn2Tjenester
+        }
+        for (underOrganisasjon in organisasjon.subunits)
+            altinn2TilgangerFraAltinn3(underOrganisasjon, orgNrTilAltinn2Tjenester)
+
+        return orgNrTilAltinn2Tjenester
     }
 
     private fun mapToHierarchy(
@@ -66,5 +91,12 @@ class AltinnService(
     @Serializable
     data class AltinnTilgangerResultat(
         val isError: Boolean, val altinnTilganger: List<AltinnTilgang>
+    )
+
+    /*Mapper altinn ressurser til én eller flere gamle altinn 2 tilganger.*/
+    private val Altinn3TilAltinn2Map: Map<String, List<Altinn2Tjeneste>> = mapOf(
+        Pair(
+            "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-skjemaer", listOf(Altinn2Tjeneste("5810", "1"))
+        )
     )
 }
