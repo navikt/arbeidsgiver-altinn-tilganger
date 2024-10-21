@@ -16,8 +16,8 @@ import no.nav.fager.infrastruktur.AuthConfig
 
 val oauth2MockServer = AuthConfig(
     clientId = "local:fager:arbeidsgiver-altinn-tilganger",
-    issuer = "http://localhost:9000/tokenx",
-    jwksUri = "http://localhost:9000/tokenx/jwks",
+    issuer = "http://localhost:9001/tokenx",
+    jwksUri = "http://localhost:9001/tokenx/jwks",
 )
 
 /** Add authorization token for the given user.
@@ -33,7 +33,7 @@ suspend fun HttpRequestBuilder.authorization(subject: String) {
             })
         }
     }
-    val response = client.post("http://localhost:9000/tokenx/token") {
+    val response = client.post("http://localhost:9001/tokenx/token") {
         header("content-type", "application/x-www-form-urlencoded")
         setBody("""grant_type=client_credentials&client_id=1234&client_secret=1234&sub=$subject""".trimIndent())
     }

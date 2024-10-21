@@ -75,6 +75,7 @@ class FakeApplication(
     fun runTest(body: suspend TestContext.() -> Unit) = runBlocking {
         testContext!!.body()
         fakeAltinn3Api.assertNoAltinnErrors()
+        fakeAltinn2Api.assertNoAltinnErrors()
     }
 
     fun altinn3Response(

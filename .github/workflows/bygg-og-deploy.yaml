@@ -24,8 +24,8 @@ jobs:
       # mock-oauth2-server needs config from repo to start, so run it manually
       - run: >-
           /usr/bin/docker run -d
-          -p 9000:9000
-          -e "SERVER_PORT=9000"
+          -p 9001:9001
+          -e "SERVER_PORT=9001"
           -e "JSON_CONFIG_PATH=./mock-oauth2-config.json"
           -v "./mock-oauth2-config.json":"/mock-oauth2-config.json"
           $(yq '.services.oauth.image' docker-compose.yaml)

@@ -131,7 +131,7 @@ class AltinnTilgangerTest {
         app.altinn2Response(Get, "/api/serviceowner/reportees") {
             if (call.request.queryParameters["serviceCode"] == "4936") {
                 call.respondText(
-                    altinn2Responses.removeFirst(), ContentType.Application.Json
+                    altinn2Responses.removeFirstOrNull() ?: "[]", ContentType.Application.Json
                 )
             }
         }
