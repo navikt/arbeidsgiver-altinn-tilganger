@@ -12,9 +12,10 @@ import no.nav.fager.infrastruktur.coRecord
 class AltinnService(
     private val altinn2Client: Altinn2Client,
     private val altinn3Client: Altinn3Client,
-    private val redisClient: AltinnTilgangerRedisClient
+    private val redisClient: AltinnTilgangerRedisClient,
+    altinn3TilAltinn2MapProvider: Altinn3TilAltinn2MapProvider
 ) {
-
+    private val altinn3TilAltinn2Map = altinn3TilAltinn2MapProvider.getMap()
     private val timer = Metrics.meterRegistry.timer("altinnservice.hentTilgangerFraAltinn")
     private val cacheHit = Counter.builder("altinnservice.cache").tag("result", "hit").register(Metrics.meterRegistry)
     private val cacheMiss = Counter.builder("altinnservice.cache").tag("result", "miss").register(Metrics.meterRegistry)
@@ -40,7 +41,7 @@ class AltinnService(
 
         /* Ingen try-catch rundt .await() siden begge klientene håndterer alle exceptions internt. */
         var altinn2Tilganger = altinn2TilgangerJob.await()
-        val altinn3Tilganger = altinn3TilgangerJob.await() //lage guard?
+        val altinn3Tilganger = altinn3TilgangerJob.await()
 
         val mappedAltinn2Tilganger: MutableMap<String, List<Altinn2Tjeneste>> = mutableMapOf()
         for (altinn3Tilgang in altinn3Tilganger) { // for hver altinn3 ressurs må vi berike med gamle altinn2 tjenester
@@ -60,7 +61,7 @@ class AltinnService(
         orgNrTilAltinn2Tjenester: MutableMap<String, List<Altinn2Tjeneste>> = mutableMapOf()
     ): MutableMap<String, List<Altinn2Tjeneste>> {
         for (ressurs in organisasjon.authorizedResources) {
-            val altinn2Tjenester = Altinn3TilAltinn2Map[ressurs]
+            val altinn2Tjenester = altinn3TilAltinn2Map[ressurs]
             if (altinn2Tjenester !== null && organisasjon.organizationNumber !== null)
                 orgNrTilAltinn2Tjenester[organisasjon.organizationNumber] = altinn2Tjenester
         }
@@ -93,10 +94,20 @@ class AltinnService(
         val isError: Boolean, val altinnTilganger: List<AltinnTilgang>
     )
 
-    /*Mapper altinn ressurser til én eller flere gamle altinn 2 tilganger.*/
-    private val Altinn3TilAltinn2Map: Map<String, List<Altinn2Tjeneste>> = mapOf(
-        Pair(
-            "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-skjemaer", listOf(Altinn2Tjeneste("5810", "1"))
+}
+
+/*Mapper altinn ressurser til én eller flere gamle altinn 2 tilganger.*/
+interface Altinn3TilAltinn2MapProvider {
+    fun getMap(): Map<String, List<Altinn2Tjeneste>>
+}
+
+class Altinn3TilAltinn2MapProviderImpl : Altinn3TilAltinn2MapProvider {
+    override fun getMap(): Map<String, List<Altinn2Tjeneste>> {
+        return mapOf(
+            Pair(
+                "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-skjemaer",
+                listOf(Altinn2Tjeneste("5810", "1"))
+            )
         )
-    )
+    }
 }
