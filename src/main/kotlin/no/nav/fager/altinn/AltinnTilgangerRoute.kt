@@ -68,10 +68,10 @@ data class AltinnTilgang(
     @Description("list av underenheter til denne organisasjonen hvor brukeren har tilganger")
     val underenheter: List<AltinnTilgang>,
     @Description("Navn på organisasjonen")
-    val name: String,
+    val navn: String,
     @Description("Organisasjonsform. se https://www.brreg.no/bedrift/organisasjonsformer/")
     @Example("BEDR")
-    val organizationForm: String,
+    val organisasjonsform: String,
 )
 
 @Serializable

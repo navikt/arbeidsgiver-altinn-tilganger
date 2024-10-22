@@ -60,8 +60,8 @@ class AltinnServiceTest {
                             altinn3Tilganger = setOf("test-fager"),
                             altinn2Tilganger = setOf("4936:1"),
                             underenheter = listOf(),
-                            name = "SLEMMESTAD OG STAVERN REGNSKAP",
-                            organizationForm = "BEDR"
+                            navn = "SLEMMESTAD OG STAVERN REGNSKAP",
+                            organisasjonsform = "BEDR"
                         )
                     )
                 )

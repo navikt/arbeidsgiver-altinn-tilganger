@@ -35,12 +35,12 @@ private val altinnTilganger = AltinnService.AltinnTilgangerResultat(
                     altinn3Tilganger = setOf("test-fager"),
                     altinn2Tilganger = setOf("4936:1"),
                     underenheter = listOf(),
-                    name = "Donald Duck & Co Avd. Andebyen",
-                    organizationForm = "BEDR"
+                    navn = "Donald Duck & Co Avd. Andebyen",
+                    organisasjonsform = "BEDR"
                 )
             ),
-            name = "Donald Duck & Co",
-            organizationForm = "AS"
+            navn = "Donald Duck & Co",
+            organisasjonsform = "AS"
         )
     )
 )

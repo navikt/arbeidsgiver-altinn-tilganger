@@ -78,8 +78,8 @@ class AltinnService(
             .map { party ->
                 AltinnTilgang(
                     orgNr = party.organizationNumber!!, // alle orgnr finnes i altinn3 pga includeAltinn2=true
-                    name = party.name,
-                    organizationForm = party.unitType!!,
+                    navn = party.name,
+                    organisasjonsform = party.unitType!!,
                     altinn3Tilganger = party.authorizedResources,
                     altinn2Tilganger = altinn2Tilganger.orgNrTilTjenester[party.organizationNumber]?.map { """${it.serviceCode}:${it.serviceEdition}""" }
                         ?.toSet() ?: emptySet(),

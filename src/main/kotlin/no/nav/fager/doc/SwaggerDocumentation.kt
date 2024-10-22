@@ -115,15 +115,15 @@ fun Application.swaggerDocumentation() {
                     hierarki = listOf(
                         AltinnTilgang(
                             orgNr = "987654321",
-                            name = "Organissjon 1",
-                            organizationForm = "ORGL",
+                            navn = "Organissjon 1",
+                            organisasjonsform = "ORGL",
                             altinn3Tilganger = setOf(),
                             altinn2Tilganger = setOf(),
                             underenheter = listOf(
                                 AltinnTilgang(
                                     orgNr = "123456789",
-                                    name = "Organissjon 2",
-                                    organizationForm = "BEDR",
+                                    navn = "Organissjon 2",
+                                    organisasjonsform = "BEDR",
                                     altinn3Tilganger = setOf("tilgang1", "tilgang2"),
                                     altinn2Tilganger = setOf("serviceCode:serviceEdition"),
                                     underenheter = emptyList(),
