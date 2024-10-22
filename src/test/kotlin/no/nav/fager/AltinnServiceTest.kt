@@ -1,13 +1,11 @@
 package no.nav.fager
 
-import io.ktor.http.ContentType
-import io.ktor.http.HttpMethod.Companion.Post
-import io.ktor.server.application.call
-import io.ktor.server.response.respondText
 import kotlinx.coroutines.test.runTest
-import no.nav.fager.AltinnTilgangerTest.Companion.app
-import no.nav.fager.altinn.*
-import no.nav.fager.fakes.FakeAltinn3TilAltinn2MapProvider
+import no.nav.fager.altinn.Altinn2Tilganger
+import no.nav.fager.altinn.Altinn2Tjeneste
+import no.nav.fager.altinn.AltinnService
+import no.nav.fager.altinn.AltinnTilgang
+import no.nav.fager.altinn.AuthorizedParty
 import no.nav.fager.fakes.clients.FakeAltinn2Client
 import no.nav.fager.fakes.clients.FakeAltinn3Client
 import no.nav.fager.fakes.clients.FakeRedisClient
@@ -45,7 +43,7 @@ class AltinnServiceTest {
             )
         }
 
-        val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, FakeAltinn3TilAltinn2MapProvider())
+        val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, emptyMap())
 
         val fnr = "16120101181"
         altinnService.hentTilganger(fnr, this)
@@ -106,8 +104,7 @@ class AltinnServiceTest {
         }
 
 
-
-        val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, FakeAltinn3TilAltinn2MapProvider())
+        val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, emptyMap())
 
         val fnr = "16120101181"
         altinnService.hentTilganger(fnr, this)
@@ -149,7 +146,7 @@ class AltinnServiceTest {
             )
         }
 
-        val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, FakeAltinn3TilAltinn2MapProvider())
+        val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, emptyMap())
 
         val fnr = "16120101181"
         altinnService.hentTilganger(fnr, this)
@@ -191,7 +188,7 @@ class AltinnServiceTest {
             )
         }
 
-        val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, FakeAltinn3TilAltinn2MapProvider())
+        val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, emptyMap())
 
         val fnr1 = "16120101181"
         val fnr2 = "26903848935"
@@ -207,7 +204,49 @@ class AltinnServiceTest {
     }
 
     @Test
-    fun `henter altinn 3 ressurser og beriker med altinn 2 tjenester`() = runTest {
+    fun `Beriker mappede altinn 2 tjenester fra altinn 3 ressurs`() = runTest {
+        val altinnRedisClient = FakeRedisClient()
+        val altinn2Client = FakeAltinn2Client {
+            Altinn2Tilganger(
+                isError = false,
+                orgNrTilTjenester = emptyMap()
+            )
+        }
+
+        val altinn3Client = FakeAltinn3Client {
+            listOf(
+                AuthorizedParty(
+                    name = "ET ANNET REGNSKAP",
+                    organizationNumber = "111111111",
+                    authorizedResources = setOf("test-fager"),
+                    subunits = listOf(),
+                    unitType = "BEDR",
+                    type = "Business",
+                    isDeleted = false,
+                ),
+            )
+        }
+        val altinn3TilAltinn2Map = mapOf(
+            Pair(
+                "test-fager",
+                listOf(Altinn2Tjeneste("5810", "1"))
+            )
+        )
+
+        val fnr = "16120101181"
+        val altinnService =
+            AltinnService(altinn2Client, altinn3Client, altinnRedisClient, altinn3TilAltinn2Map)
+
+        val tilganger = altinnService.hentTilganger(fnr, this)
+
+        assertTrue(tilganger.altinnTilganger.count() == 1)
+        assertTrue(tilganger.altinnTilganger.first { it.orgNr == "111111111" }.altinn2Tilganger.count() == 1)
+        assertTrue(tilganger.altinnTilganger.first { it.orgNr == "111111111" }.altinn2Tilganger.first() == "5810:1")
+    }
+
+
+    @Test
+    fun `Altinn 2 respons velges over lokal Altinn 2 mapping ved duplikate tjenester`() = runTest {
         val altinnRedisClient = FakeRedisClient()
         val altinn2Client = FakeAltinn2Client {
             Altinn2Tilganger(
@@ -244,9 +283,16 @@ class AltinnServiceTest {
                 ),
             )
         }
+        val altinn3TilAltinn2Map = mapOf(
+            Pair(
+                "test-fager",
+                listOf(Altinn2Tjeneste("5810", "1"))
+            )
+        )
+
         val fnr = "16120101181"
         val altinnService =
-            AltinnService(altinn2Client, altinn3Client, altinnRedisClient, FakeAltinn3TilAltinn2MapProvider())
+            AltinnService(altinn2Client, altinn3Client, altinnRedisClient, altinn3TilAltinn2Map)
 
         val tilganger = altinnService.hentTilganger(fnr, this)
         assertTrue(tilganger.altinnTilganger.count() == 2)

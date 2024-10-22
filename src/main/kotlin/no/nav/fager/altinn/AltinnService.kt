@@ -13,9 +13,8 @@ class AltinnService(
     private val altinn2Client: Altinn2Client,
     private val altinn3Client: Altinn3Client,
     private val redisClient: AltinnTilgangerRedisClient,
-    altinn3TilAltinn2MapProvider: Altinn3TilAltinn2MapProvider
+    private val altinn3TilAltinn2Map: Map<String, List<Altinn2Tjeneste>>
 ) {
-    private val altinn3TilAltinn2Map = altinn3TilAltinn2MapProvider.getMap()
     private val timer = Metrics.meterRegistry.timer("altinnservice.hentTilgangerFraAltinn")
     private val cacheHit = Counter.builder("altinnservice.cache").tag("result", "hit").register(Metrics.meterRegistry)
     private val cacheMiss = Counter.builder("altinnservice.cache").tag("result", "miss").register(Metrics.meterRegistry)
@@ -93,21 +92,4 @@ class AltinnService(
     data class AltinnTilgangerResultat(
         val isError: Boolean, val altinnTilganger: List<AltinnTilgang>
     )
-
-}
-
-/*Mapper altinn ressurser til én eller flere gamle altinn 2 tilganger.*/
-interface Altinn3TilAltinn2MapProvider {
-    fun getMap(): Map<String, List<Altinn2Tjeneste>>
-}
-
-class Altinn3TilAltinn2MapProviderImpl : Altinn3TilAltinn2MapProvider {
-    override fun getMap(): Map<String, List<Altinn2Tjeneste>> {
-        return mapOf(
-            Pair(
-                "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-skjemaer",
-                listOf(Altinn2Tjeneste("5810", "1"))
-            )
-        )
-    }
 }
