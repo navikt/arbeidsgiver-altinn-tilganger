@@ -77,7 +77,7 @@ class AltinnService(
         return authorizedParties.filter { it.organizationNumber != null && it.unitType != null && !it.isDeleted }
             .map { party ->
                 AltinnTilgang(
-                    orgNr = party.organizationNumber!!, // alle orgnr finnes i altinn3 pga includeAltinn2=true
+                    orgnr = party.organizationNumber!!, // alle orgnr finnes i altinn3 pga includeAltinn2=true
                     navn = party.name,
                     organisasjonsform = party.unitType!!,
                     altinn3Tilganger = party.authorizedResources,

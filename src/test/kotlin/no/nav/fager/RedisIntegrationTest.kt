@@ -26,12 +26,12 @@ private val altinnTilganger = AltinnService.AltinnTilgangerResultat(
     isError = false,
     altinnTilganger = listOf(
         AltinnTilgang(
-            orgNr = "1",
+            orgnr = "1",
             altinn3Tilganger = setOf("test-fager"),
             altinn2Tilganger = setOf("4936:1"),
             underenheter = listOf(
                 AltinnTilgang(
-                    orgNr = "2",
+                    orgnr = "2",
                     altinn3Tilganger = setOf("test-fager"),
                     altinn2Tilganger = setOf("4936:1"),
                     underenheter = listOf(),

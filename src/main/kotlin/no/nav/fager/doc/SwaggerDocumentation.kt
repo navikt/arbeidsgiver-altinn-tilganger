@@ -114,14 +114,14 @@ fun Application.swaggerDocumentation() {
                     isError = false,
                     hierarki = listOf(
                         AltinnTilgang(
-                            orgNr = "987654321",
+                            orgnr = "987654321",
                             navn = "Organissjon 1",
                             organisasjonsform = "ORGL",
                             altinn3Tilganger = setOf(),
                             altinn2Tilganger = setOf(),
                             underenheter = listOf(
                                 AltinnTilgang(
-                                    orgNr = "123456789",
+                                    orgnr = "123456789",
                                     navn = "Organissjon 2",
                                     organisasjonsform = "BEDR",
                                     altinn3Tilganger = setOf("tilgang1", "tilgang2"),

@@ -56,7 +56,7 @@ class AltinnServiceTest {
                     isError = false,
                     altinnTilganger = listOf(
                         AltinnTilgang(
-                            orgNr = "910825496",
+                            orgnr = "910825496",
                             altinn3Tilganger = setOf("test-fager"),
                             altinn2Tilganger = setOf("4936:1"),
                             underenheter = listOf(),
@@ -240,8 +240,8 @@ class AltinnServiceTest {
         val tilganger = altinnService.hentTilganger(fnr, this)
 
         assertTrue(tilganger.altinnTilganger.count() == 1)
-        assertTrue(tilganger.altinnTilganger.first { it.orgNr == "111111111" }.altinn2Tilganger.count() == 1)
-        assertTrue(tilganger.altinnTilganger.first { it.orgNr == "111111111" }.altinn2Tilganger.first() == "5810:1")
+        assertTrue(tilganger.altinnTilganger.first { it.orgnr == "111111111" }.altinn2Tilganger.count() == 1)
+        assertTrue(tilganger.altinnTilganger.first { it.orgnr == "111111111" }.altinn2Tilganger.first() == "5810:1")
     }
 
 
@@ -296,9 +296,9 @@ class AltinnServiceTest {
 
         val tilganger = altinnService.hentTilganger(fnr, this)
         assertTrue(tilganger.altinnTilganger.count() == 2)
-        assertTrue(tilganger.altinnTilganger.first { it.orgNr == "910825496" }.altinn2Tilganger.count() == 1)
-        assertTrue(tilganger.altinnTilganger.first { it.orgNr == "910825496" }.altinn2Tilganger.first() == "4936:1")
-        assertTrue(tilganger.altinnTilganger.first { it.orgNr == "111111111" }.altinn2Tilganger.count() == 1)
-        assertTrue(tilganger.altinnTilganger.first { it.orgNr == "111111111" }.altinn2Tilganger.first() == "5810:1")
+        assertTrue(tilganger.altinnTilganger.first { it.orgnr == "910825496" }.altinn2Tilganger.count() == 1)
+        assertTrue(tilganger.altinnTilganger.first { it.orgnr == "910825496" }.altinn2Tilganger.first() == "4936:1")
+        assertTrue(tilganger.altinnTilganger.first { it.orgnr == "111111111" }.altinn2Tilganger.count() == 1)
+        assertTrue(tilganger.altinnTilganger.first { it.orgnr == "111111111" }.altinn2Tilganger.first() == "5810:1")
     }
 }
