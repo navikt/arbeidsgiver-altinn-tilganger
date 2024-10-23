@@ -79,7 +79,7 @@ fun Application.ktorConfig(
 
     install(StatusPages) {
         exception<Throwable> { call, cause ->
-            log.info("Unexpected exception at ktor-toplevel: {}", cause.javaClass.canonicalName, cause)
+            log.error("Unexpected exception at ktor-toplevel: {}", cause.javaClass.canonicalName, cause)
             call.respond(HttpStatusCode.InternalServerError)
         }
     }
