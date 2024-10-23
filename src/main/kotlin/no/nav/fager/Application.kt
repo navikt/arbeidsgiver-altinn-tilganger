@@ -174,18 +174,14 @@ fun Application.ktorConfig(
         maskinportenConfig = maskinportenConfig,
         scope = "altinn:accessmanagement/authorizedparties.resourceowner",
         backgroundCoroutineScope = this,
-    ).also {
-        Health.services.add(it)
-    }
+    ).also { Health.register(it) }
 
     @OptIn(ExperimentalTime::class)
     val maskinportenA2 = Maskinporten(
         maskinportenConfig = maskinportenConfig,
         scope = "altinn:serviceowner/reportees",
         backgroundCoroutineScope = this,
-    ).also {
-        Health.services.add(it)
-    }
+    ).also { Health.register(it) }
 
     routing {
         route("internal") {

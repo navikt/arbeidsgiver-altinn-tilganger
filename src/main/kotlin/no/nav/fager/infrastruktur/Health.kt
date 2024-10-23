@@ -11,7 +11,11 @@ interface Service {
 object Health {
     private val log = logger()
 
-    val services = mutableListOf<Service>()
+    private val services = mutableListOf<Service>()
+
+    fun register(service: Service) {
+        services.add(service)
+    }
 
     val alive
         get() = services.all { it.isAlive() }
@@ -26,8 +30,8 @@ object Health {
 
     init {
         val shutdownTimeout = basedOnEnv(
-            prod = { Duration.ofSeconds(0) },
-            dev = { Duration.ofSeconds(0) },
+            prod = { Duration.ofSeconds(20) },
+            dev = { Duration.ofSeconds(20) },
             other = { Duration.ofMillis(0) },
         )
 
@@ -35,6 +39,11 @@ object Health {
             override fun run() {
                 terminatingAtomic.set(true)
                 log.info("shutdown signal received")
+                try {
+                    sleep(shutdownTimeout.toMillis())
+                } catch (e: Exception) {
+                    // nothing to do
+                }
             }
         })
     }
