@@ -1,6 +1,9 @@
 name: Test, bygg, deploy
 on:
   push:
+    paths-ignore:
+      - nais/dev-gcp-redis.yaml
+      - nais/prod-gcp-redis.yaml
   workflow_dispatch:
   schedule:
     - cron: '0 6 * * 1' # bygg nytt image hver mandag morgen
@@ -92,7 +95,7 @@ jobs:
         name: Deploy dev-gcp
         env:
           VAR: image=${{ needs.build.outputs.image }}
-          RESOURCE: nais/dev-gcp-altinn-tilganger.yaml,nais/dev-gcp-redis.yaml
+          RESOURCE: nais/dev-gcp-altinn-tilganger.yaml
           CLUSTER: dev-gcp
 
   deploy-prod:
@@ -107,5 +110,5 @@ jobs:
         name: Deploy prod-gcp
         env:
           VAR: image=${{ needs.build.outputs.image }}
-          RESOURCE: nais/prod-gcp-altinn-tilganger.yaml,nais/prod-gcp-redis.yaml
+          RESOURCE: nais/prod-gcp-altinn-tilganger.yaml
           CLUSTER: prod-gcp
