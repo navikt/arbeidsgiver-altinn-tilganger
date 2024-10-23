@@ -12,9 +12,9 @@ import no.nav.fager.infrastruktur.coRecord
 class AltinnService(
     private val altinn2Client: Altinn2Client,
     private val altinn3Client: Altinn3Client,
-    private val redisClient: AltinnTilgangerRedisClient
+    private val redisClient: AltinnTilgangerRedisClient,
+    private val altinn3TilAltinn2Map: Map<String, List<Altinn2Tjeneste>>
 ) {
-
     private val timer = Metrics.meterRegistry.timer("altinnservice.hentTilgangerFraAltinn")
     private val cacheHit = Counter.builder("altinnservice.cache").tag("result", "hit").register(Metrics.meterRegistry)
     private val cacheMiss = Counter.builder("altinnservice.cache").tag("result", "miss").register(Metrics.meterRegistry)
@@ -39,10 +39,35 @@ class AltinnService(
         val altinn3TilgangerJob = scope.async { altinn3Client.hentAuthorizedParties(fnr) }
 
         /* Ingen try-catch rundt .await() siden begge klientene håndterer alle exceptions internt. */
-        val altinn2Tilganger = altinn2TilgangerJob.await()
+        var altinn2Tilganger = altinn2TilgangerJob.await()
         val altinn3Tilganger = altinn3TilgangerJob.await()
 
+        val mappedAltinn2Tilganger: MutableMap<String, List<Altinn2Tjeneste>> = mutableMapOf()
+        for (altinn3Tilgang in altinn3Tilganger) { // for hver altinn3 ressurs må vi berike med gamle altinn2 tjenester
+            mappedAltinn2Tilganger += altinn2TilgangerFraAltinn3(altinn3Tilgang)
+        }
+
+        altinn2Tilganger = Altinn2Tilganger(
+            altinn2Tilganger.isError,
+            mappedAltinn2Tilganger + altinn2Tilganger.orgNrTilTjenester
+        ) // ved like duplikate entries vil det som hentes fra Altinn2 trumfe det vi manuelt mapper fra Altinn3
+
         AltinnTilgangerResultat(altinn2Tilganger.isError, mapToHierarchy(altinn3Tilganger, altinn2Tilganger))
+    }
+
+    private fun altinn2TilgangerFraAltinn3(
+        organisasjon: AuthorizedParty,
+        orgNrTilAltinn2Tjenester: MutableMap<String, List<Altinn2Tjeneste>> = mutableMapOf()
+    ): MutableMap<String, List<Altinn2Tjeneste>> {
+        for (ressurs in organisasjon.authorizedResources) {
+            val altinn2Tjenester = altinn3TilAltinn2Map[ressurs]
+            if (altinn2Tjenester !== null && organisasjon.organizationNumber !== null)
+                orgNrTilAltinn2Tjenester[organisasjon.organizationNumber] = altinn2Tjenester
+        }
+        for (underOrganisasjon in organisasjon.subunits)
+            altinn2TilgangerFraAltinn3(underOrganisasjon, orgNrTilAltinn2Tjenester)
+
+        return orgNrTilAltinn2Tjenester
     }
 
     private fun mapToHierarchy(
@@ -52,9 +77,9 @@ class AltinnService(
         return authorizedParties.filter { it.organizationNumber != null && it.unitType != null && !it.isDeleted }
             .map { party ->
                 AltinnTilgang(
-                    orgNr = party.organizationNumber!!, // alle orgnr finnes i altinn3 pga includeAltinn2=true
-                    name = party.name,
-                    organizationForm = party.unitType!!,
+                    orgnr = party.organizationNumber!!, // alle orgnr finnes i altinn3 pga includeAltinn2=true
+                    navn = party.name,
+                    organisasjonsform = party.unitType!!,
                     altinn3Tilganger = party.authorizedResources,
                     altinn2Tilganger = altinn2Tilganger.orgNrTilTjenester[party.organizationNumber]?.map { """${it.serviceCode}:${it.serviceEdition}""" }
                         ?.toSet() ?: emptySet(),

@@ -232,7 +232,8 @@ fun Application.ktorConfig(
                     altinn3Config = altinn3Config,
                     maskinporten = maskinportenA3,
                 ),
-                redisClient = AltinnTilgangerRedisClientImpl(redisConfig)
+                redisClient = AltinnTilgangerRedisClientImpl(redisConfig),
+                altinn3TilAltinn2Map = Altinn3TilAltinn2Tilganger.MAP
             )
         )
 

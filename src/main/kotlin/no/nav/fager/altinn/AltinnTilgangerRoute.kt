@@ -60,7 +60,7 @@ fun Route.routeAltinnTilganger(altinnService: AltinnService) {
 data class AltinnTilgang(
     @Description("Organisasjonsnummer")
     @Example("11223344")
-    val orgNr: String,
+    val orgnr: String,
     @Description("Tilganger til Altinn 3")
     val altinn3Tilganger: Set<String>,
     @Description("Tilganger til Altinn 2")
@@ -68,11 +68,16 @@ data class AltinnTilgang(
     @Description("list av underenheter til denne organisasjonen hvor brukeren har tilganger")
     val underenheter: List<AltinnTilgang>,
     @Description("Navn på organisasjonen")
-    val name: String,
+    val navn: String,
     @Description("Organisasjonsform. se https://www.brreg.no/bedrift/organisasjonsformer/")
     @Example("BEDR")
-    val organizationForm: String,
+    val organisasjonsform: String,
 )
+{
+    val orgNr = orgnr
+    val name = navn
+    val organizationForm = organisasjonsform
+}
 
 @Serializable
 data class AltinnTilgangerResponse(
@@ -90,7 +95,7 @@ data class AltinnTilgangerResponse(
             val orgNrTilTilganger: Map<String, Set<String>> =
                 this.altinnTilganger.flatMap { it.underenheter }
                     .associate {
-                        it.orgNr to it.altinn2Tilganger + it.altinn3Tilganger
+                        it.orgnr to it.altinn2Tilganger + it.altinn3Tilganger
                     }
 
             val tilgangToOrgNr = orgNrTilTilganger.flatMap { (orgNr, tjenester) ->
