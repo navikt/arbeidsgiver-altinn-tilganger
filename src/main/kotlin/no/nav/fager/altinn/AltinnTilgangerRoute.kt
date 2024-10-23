@@ -3,6 +3,7 @@ package no.nav.fager.altinn
 import io.github.smiley4.ktorswaggerui.dsl.routing.post
 import io.github.smiley4.schemakenerator.core.annotations.Description
 import io.github.smiley4.schemakenerator.core.annotations.Example
+import io.github.smiley4.schemakenerator.core.annotations.Deprecated
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -74,8 +75,14 @@ data class AltinnTilgang(
     val organisasjonsform: String,
 )
 {
+    @Deprecated
+    @Description("Feltet er utgått, og vil bli fjernet uten forvarsel. Bruk orgnr istedenfor")
     val orgNr = orgnr
+    @Deprecated
+    @Description("Feltet er utgått, og vil bli fjernet uten forvarsel. Bruk navn istedenfor")
     val name = navn
+    @Deprecated
+    @Description("Feltet er utgått, og vil bli fjernet uten forvarsel. Bruk organisasjonsform istedenfor")
     val organizationForm = organisasjonsform
 }
 
