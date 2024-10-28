@@ -194,7 +194,9 @@ fun Application.ktorConfig(
     )
 
     val resourceRegistry = ResourceRegistry(
-        altinn3Client, this
+        altinn3Client,
+        redisConfig,
+        this
     ).also { Health.register(it) }
 
     routing {

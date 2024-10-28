@@ -10,9 +10,9 @@ class FakeAltinn3Client(
     private val resourceRegistry_PolicySubjectsHandler: (resourceId: String) -> List<PolicySubject> = { listOf() },
 ) : Altinn3Client, FakeClientBase() {
 
-    override suspend fun resourceOwner_AuthorizedParties(fnr: String): List<AuthorizedParty> {
+    override suspend fun resourceOwner_AuthorizedParties(fnr: String): Result<List<AuthorizedParty>> {
         addFunctionCall(this::resourceOwner_AuthorizedParties.name, fnr)
-        return resourceOwner_AuthorizedPartiesHandler()
+        return Result.success(resourceOwner_AuthorizedPartiesHandler())
     }
 
     override suspend fun resourceRegistry_PolicySubjects(resourceId: String): Result<List<PolicySubject>> {

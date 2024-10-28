@@ -5,8 +5,8 @@ import no.nav.fager.altinn.*
 import no.nav.fager.fakes.clients.FakeAltinn2Client
 import no.nav.fager.fakes.clients.FakeAltinn3Client
 import no.nav.fager.fakes.clients.FakeRedisClient
+import no.nav.fager.redis.RedisConfig
 import kotlin.test.Test
-import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -49,7 +49,7 @@ class AltinnServiceTest {
                     value = "lede",
                 )
             )
-        }), null).also {
+        }), RedisConfig.local(), null).also {
             it.updatePolicySubjectsForKnownResources()
         }
 
@@ -121,7 +121,7 @@ class AltinnServiceTest {
                     value = "lede",
                 )
             )
-        }), null).also {
+        }), RedisConfig.local(), null).also {
             it.updatePolicySubjectsForKnownResources()
         }
 
@@ -175,7 +175,7 @@ class AltinnServiceTest {
                     value = "lede",
                 )
             )
-        }), null).also {
+        }), RedisConfig.local(), null).also {
             it.updatePolicySubjectsForKnownResources()
         }
 
@@ -229,7 +229,7 @@ class AltinnServiceTest {
                     value = "lede",
                 )
             )
-        }), null).also {
+        }), RedisConfig.local(), null).also {
             it.updatePolicySubjectsForKnownResources()
         }
 
@@ -280,7 +280,7 @@ class AltinnServiceTest {
                     value = "lede",
                 )
             )
-        }), null).also {
+        }), RedisConfig.local(), null).also {
             it.updatePolicySubjectsForKnownResources()
         }
 
@@ -343,7 +343,7 @@ class AltinnServiceTest {
                     value = "lede",
                 )
             )
-        }), null).also {
+        }), RedisConfig.local(), null).also {
             it.updatePolicySubjectsForKnownResources()
         }
 
