@@ -39,14 +39,20 @@ class AltinnService(
         val altinn3TilgangerJob = scope.async { altinn3Client.resourceOwner_AuthorizedParties(fnr) }
 
         val altinn2Tilganger = altinn2TilgangerJob.await()
-        val altinn3Tilganger = altinn3TilgangerJob.await()
-            .addAuthorizedResourcesRecursive { party ->
-                // adds all resources from the resource registry for the roles the party has
-                // this must be done prior to mapping to Altinn2 services
-                party.authorizedRolesAsUrn.flatMap { // TODO: replace with party.authorizedRoles.flatMap when api returns urns
-                    resourceRegistry.getResourceIdForPolicySubject(it)
-                }.toSet()
-            }
+        val altinn3TilgangerResult = altinn3TilgangerJob.await()
+        val altinn3Tilganger = altinn3TilgangerResult.fold(
+            onSuccess = { altinn3tilganger ->
+                altinn3tilganger.addAuthorizedResourcesRecursive { party ->
+                    // adds all resources from the resource registry for the roles the party has
+                    // this must be done prior to mapping to Altinn2 services
+                    party.authorizedRolesAsUrn.flatMap { // TODO: replace with party.authorizedRoles.flatMap when api returns urns
+                        resourceRegistry.getResourceIdForPolicySubject(it)
+                    }.toSet()
+                }
+            },
+            onFailure = { emptyList() }
+        )
+
 
         val orgnrTilAltinn2Mapped = altinn3Tilganger.flatMap {
             flatten(it) { party ->
@@ -54,7 +60,7 @@ class AltinnService(
                     null
                 } else {
                     party.organizationNumber to party.authorizedResources.mapNotNull { resource ->
-                        resourceRegistry.resourceToAltinn2Tjeneste[resource]
+                        resourceRegistry.resourceIdToAltinn2Tjeneste[resource]
                     }.flatten()
                 }
             }
@@ -63,7 +69,7 @@ class AltinnService(
         }
 
         AltinnTilgangerResultat(
-            altinn2Tilganger.isError,
+            altinn2Tilganger.isError || altinn3TilgangerResult.isFailure,
             mapToHierarchy(
                 altinn3Tilganger,
                 Altinn2Tilganger(

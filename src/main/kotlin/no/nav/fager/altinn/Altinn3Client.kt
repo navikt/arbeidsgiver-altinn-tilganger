@@ -33,7 +33,7 @@ class Altinn3Config(
 }
 
 interface Altinn3Client {
-    suspend fun resourceOwner_AuthorizedParties(fnr: String): List<AuthorizedParty>
+    suspend fun resourceOwner_AuthorizedParties(fnr: String): Result<List<AuthorizedParty>>
 
     suspend fun resourceRegistry_PolicySubjects(resourceId: String): Result<List<PolicySubject>>
 }
@@ -74,7 +74,7 @@ class Altinn3ClientImpl(
     }
 
     @WithSpan
-    override suspend fun resourceOwner_AuthorizedParties(fnr: String): List<AuthorizedParty> = try {
+    override suspend fun resourceOwner_AuthorizedParties(fnr: String): Result<List<AuthorizedParty>> = runCatching {
         val httpResponse = httpClient.post {
             url {
                 takeFrom(altinn3Config.baseUrl)
@@ -94,9 +94,6 @@ class Altinn3ClientImpl(
         }
 
         httpResponse.body()
-    } catch (e: Exception) {
-        log.error("POST /authorized_parties kastet exception {}", e::class.qualifiedName, e)
-        emptyList() // TODO: dette er nok ikke så lurt. I praksis skjuler vi underliggende feil for bruker. dette bør heller føre til altinnError=true
     }
 
     override suspend fun resourceRegistry_PolicySubjects(resourceId: String) = runCatching {
