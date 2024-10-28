@@ -5,6 +5,7 @@ import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.cio.CIOEngineConfig
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.http.*
+import io.ktor.http.HttpMethod.Companion.Get
 import io.ktor.http.HttpMethod.Companion.Post
 import io.ktor.server.application.*
 import io.ktor.server.cio.CIO
@@ -26,7 +27,7 @@ class FakeApplication(
     private val fakeAltinn3Api = FakeApi().also {
         it.stubs[
             // når det kommer flere ressurser i KnownResources, må det legges til flere svar eller støtte for wildcards i fakeapi
-            Post to "/resourceregistry/api/v1/resource/nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-skjemaer/policy/subjects"
+            Get to "/resourceregistry/api/v1/resource/nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-skjemaer/policy/subjects"
         ] = {
             call.respondText(
                 //language=json

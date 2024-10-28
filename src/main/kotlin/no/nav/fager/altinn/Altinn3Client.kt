@@ -97,7 +97,7 @@ class Altinn3ClientImpl(
     }
 
     override suspend fun resourceRegistry_PolicySubjects(resourceId: String) = runCatching {
-        val httpResponse = httpClient.post {
+        val httpResponse = httpClient.get {
             url {
                 takeFrom(altinn3Config.baseUrl)
                 appendPathSegments("/resourceregistry/api/v1/resource/$resourceId/policy/subjects")
