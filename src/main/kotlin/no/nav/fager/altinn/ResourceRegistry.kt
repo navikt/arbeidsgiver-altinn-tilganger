@@ -60,8 +60,6 @@ class ResourceRegistry(
 
     suspend fun updatePolicySubjectsForKnownResources() {
         val results = KnownResources.map { resource ->
-            // TODO: try lookup in redis first and only call altinn3Client if not found and cache result
-            //resource to altinn3Client.resourceRegistry_PolicySubjects(resource.resourceId)
             resource to runCatching { cache.get(resource.resourceId) }
         }
 
@@ -71,7 +69,7 @@ class ResourceRegistry(
                     policySubjectsPerResourceId[resource.resourceId] = policySubjects
                 },
                 onFailure = { error ->
-                    log.error("Failed to fetch policy subjects for resource ${resource.resourceId}", error)
+                    log.error("Feil ved henting av policy subjects for ${resource.resourceId}", error)
                 }
             )
         }
