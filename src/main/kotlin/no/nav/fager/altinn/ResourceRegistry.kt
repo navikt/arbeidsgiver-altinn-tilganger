@@ -34,7 +34,7 @@ class ResourceRegistry(
 
     private val cache = RedisLoadingCache(
         name = "resource-registry",
-        redisConfig = redisConfig,
+        redisClient = redisConfig.createClient(),
         codec = createCodec<List<PolicySubject>>(),
         loader = { s -> altinn3Client.resourceRegistry_PolicySubjects(s).getOrThrow() }
     )

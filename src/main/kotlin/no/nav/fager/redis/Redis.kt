@@ -109,13 +109,12 @@ suspend fun <T : Any> RedisClient.useConnection(
 }
 
 class RedisLoadingCache<T : Any>(
-    redisConfig: RedisConfig,
     private val name: String,
+    private val redisClient: RedisClient,
     private val codec: RedisCodec<String, T>,
     private val loader: suspend (String) -> T,
     private val cacheTTL: Duration? = Duration.ofMinutes(10),
 ) {
-    private val redisClient = redisConfig.createClient()
     private val cacheHit = Counter.builder(name).tag("result", "hit").register(Metrics.meterRegistry)
     private val cacheMiss = Counter.builder(name).tag("result", "miss").register(Metrics.meterRegistry)
 

@@ -237,8 +237,8 @@ fun Application.ktorConfig(
             AltinnService(
                 altinn2Client = altinn2Client,
                 altinn3Client = altinn3Client,
-                redisClient = AltinnTilgangerRedisClientImpl(redisConfig),
                 resourceRegistry = resourceRegistry,
+                redisClient = AltinnTilgangerRedisClientImpl(redisConfig),
             )
         )
 
