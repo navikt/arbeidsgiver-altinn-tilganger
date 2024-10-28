@@ -13,7 +13,7 @@ class AltinnService(
     private val altinn2Client: Altinn2Client,
     private val altinn3Client: Altinn3Client,
     private val redisClient: AltinnTilgangerRedisClient,
-    private val altinn3TilAltinn2Map: Map<String, List<Altinn2Tjeneste>>
+    private val resourceRegistry: ResourceRegistry,
 ) {
     private val timer = Metrics.meterRegistry.timer("altinnservice.hentTilgangerFraAltinn")
     private val cacheHit = Counter.builder("altinnservice.cache").tag("result", "hit").register(Metrics.meterRegistry)
@@ -36,55 +36,65 @@ class AltinnService(
         scope: CoroutineScope,
     ) = timer.coRecord {
         val altinn2TilgangerJob = scope.async { altinn2Client.hentAltinn2Tilganger(fnr) }
-        val altinn3TilgangerJob = scope.async { altinn3Client.hentAuthorizedParties(fnr) }
+        val altinn3TilgangerJob = scope.async { altinn3Client.resourceOwner_AuthorizedParties(fnr) }
 
-        /* Ingen try-catch rundt .await() siden begge klientene håndterer alle exceptions internt. */
-        var altinn2Tilganger = altinn2TilgangerJob.await()
+        val altinn2Tilganger = altinn2TilgangerJob.await()
         val altinn3Tilganger = altinn3TilgangerJob.await()
+            .addAuthorizedResourcesRecursive { party ->
+                // adds all resources from the resource registry for the roles the party has
+                // this must be done prior to mapping to Altinn2 services
+                party.authorizedRolesAsUrn.flatMap { // TODO: replace with party.authorizedRoles.flatMap when api returns urns
+                    resourceRegistry.getResourceIdForPolicySubject(it)
+                }.toSet()
+            }
 
-        val mappedAltinn2Tilganger: MutableMap<String, List<Altinn2Tjeneste>> = mutableMapOf()
-        for (altinn3Tilgang in altinn3Tilganger) { // for hver altinn3 ressurs må vi berike med gamle altinn2 tjenester
-            mappedAltinn2Tilganger += altinn2TilgangerFraAltinn3(altinn3Tilgang)
+        val orgnrTilAltinn2Mapped = altinn3Tilganger.flatMap {
+            flatten(it) { party ->
+                if (party.organizationNumber == null || party.unitType == null || party.isDeleted) {
+                    null
+                } else {
+                    party.organizationNumber to party.authorizedResources.mapNotNull { resource ->
+                        resourceRegistry.resourceToAltinn2Tjeneste[resource]
+                    }.flatten()
+                }
+            }
+        }.associate {
+            it.first to it.second + (altinn2Tilganger.orgNrTilTjenester[it.first] ?: emptyList())
         }
 
-        altinn2Tilganger = Altinn2Tilganger(
+        AltinnTilgangerResultat(
             altinn2Tilganger.isError,
-            mappedAltinn2Tilganger + altinn2Tilganger.orgNrTilTjenester
-        ) // ved like duplikate entries vil det som hentes fra Altinn2 trumfe det vi manuelt mapper fra Altinn3
-
-        AltinnTilgangerResultat(altinn2Tilganger.isError, mapToHierarchy(altinn3Tilganger, altinn2Tilganger))
-    }
-
-    private fun altinn2TilgangerFraAltinn3(
-        organisasjon: AuthorizedParty,
-        orgNrTilAltinn2Tjenester: MutableMap<String, List<Altinn2Tjeneste>> = mutableMapOf()
-    ): MutableMap<String, List<Altinn2Tjeneste>> {
-        for (ressurs in organisasjon.authorizedResources) {
-            val altinn2Tjenester = altinn3TilAltinn2Map[ressurs]
-            if (altinn2Tjenester !== null && organisasjon.organizationNumber !== null)
-                orgNrTilAltinn2Tjenester[organisasjon.organizationNumber] = altinn2Tjenester
-        }
-        for (underOrganisasjon in organisasjon.subunits)
-            altinn2TilgangerFraAltinn3(underOrganisasjon, orgNrTilAltinn2Tjenester)
-
-        return orgNrTilAltinn2Tjenester
+            mapToHierarchy(
+                altinn3Tilganger,
+                Altinn2Tilganger(
+                    altinn2Tilganger.isError,
+                    orgnrTilAltinn2Mapped
+                )
+            )
+        )
     }
 
     private fun mapToHierarchy(
-        authorizedParties: List<AuthorizedParty>, altinn2Tilganger: Altinn2Tilganger
+        authorizedParties: List<AuthorizedParty>,
+        altinn2Tilganger: Altinn2Tilganger
     ): List<AltinnTilgang> {
 
-        return authorizedParties.filter { it.organizationNumber != null && it.unitType != null && !it.isDeleted }
-            .map { party ->
-                AltinnTilgang(
-                    orgnr = party.organizationNumber!!, // alle orgnr finnes i altinn3 pga includeAltinn2=true
-                    navn = party.name,
-                    organisasjonsform = party.unitType!!,
-                    altinn3Tilganger = party.authorizedResources,
-                    altinn2Tilganger = altinn2Tilganger.orgNrTilTjenester[party.organizationNumber]?.map { """${it.serviceCode}:${it.serviceEdition}""" }
-                        ?.toSet() ?: emptySet(),
-                    underenheter = mapToHierarchy(party.subunits, altinn2Tilganger),
-                )
+        return authorizedParties
+            .mapNotNull { party ->
+                if (party.organizationNumber == null || party.unitType == null || party.isDeleted) {
+                    null
+                } else {
+                    AltinnTilgang(
+                        orgnr = party.organizationNumber, // alle orgnr finnes i altinn3 pga includeAltinn2=true
+                        navn = party.name,
+                        organisasjonsform = party.unitType,
+                        altinn3Tilganger = party.authorizedResources,
+                        altinn2Tilganger = altinn2Tilganger.orgNrTilTjenester[party.organizationNumber]?.map {
+                            """${it.serviceCode}:${it.serviceEdition}"""
+                        }?.toSet() ?: emptySet(),
+                        underenheter = mapToHierarchy(party.subunits, altinn2Tilganger),
+                    )
+                }
             }
     }
 
@@ -93,3 +103,27 @@ class AltinnService(
         val isError: Boolean, val altinnTilganger: List<AltinnTilgang>
     )
 }
+
+private fun AuthorizedParty.addAuthorizedResourcesRecursive(
+    addResources: (AuthorizedParty) -> Set<String>
+): AuthorizedParty = AuthorizedParty(
+    organizationNumber = organizationNumber,
+    name = name,
+    type = type,
+    unitType = unitType,
+    authorizedResources = authorizedResources + addResources(this),
+    authorizedRoles = authorizedRoles,
+    isDeleted = isDeleted,
+    subunits = subunits.map { it.addAuthorizedResourcesRecursive(addResources) }
+)
+
+private fun List<AuthorizedParty>.addAuthorizedResourcesRecursive(
+    addResources: (AuthorizedParty) -> Set<String>
+): List<AuthorizedParty> = map { it.addAuthorizedResourcesRecursive(addResources) }
+
+private fun <T> flatten(
+    party: AuthorizedParty,
+    mapFn: (AuthorizedParty) -> T?
+): List<T> = listOfNotNull(
+    mapFn(party)
+) + party.subunits.flatMap { flatten(it, mapFn) }

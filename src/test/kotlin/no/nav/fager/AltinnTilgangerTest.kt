@@ -2,7 +2,7 @@ package no.nav.fager
 
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.request.post
+import io.ktor.client.request.*
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod.Companion.Get
@@ -16,8 +16,11 @@ import kotlinx.serialization.json.Json
 import no.nav.fager.altinn.AltinnTilgangerResponse
 import no.nav.fager.fakes.FakeApplication
 import no.nav.fager.fakes.authorization
+import org.junit.Before
+import org.junit.BeforeClass
 import org.skyscreamer.jsonassert.JSONAssert
 import org.skyscreamer.jsonassert.JSONCompareMode
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -80,7 +83,9 @@ class AltinnTilgangerTest {
                         "isDeleted": false,
                         "onlyHierarchyElementWithNoAccess": false,
                         "authorizedResources": [],
-                        "authorizedRoles": [],
+                        "authorizedRoles": [
+                          "DAGL"
+                        ],
                         "subunits": []
                       },
                       {
@@ -131,6 +136,7 @@ class AltinnTilgangerTest {
             ]
             """,
         )
+
         app.altinn2Response(Get, "/api/serviceowner/reportees") {
             if (call.request.queryParameters["serviceCode"] == "4936") {
                 call.respondText(
@@ -152,7 +158,22 @@ class AltinnTilgangerTest {
         assertEquals(setOf("4936:1"), tilganger.hierarki[0].underenheter[0].altinn2Tilganger)
         assertEquals(setOf("910825496", "910825554"), tilganger.tilgangTilOrgNr["4936:1"])
         assertEquals(setOf("test-fager", "4936:1"), tilganger.orgNrTilTilganger["910825496"])
-        assertEquals(setOf("4936:1"), tilganger.orgNrTilTilganger["910825554"])
+        assertEquals(
+            setOf(
+                "4936:1",
+                "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-skjemaer",
+                "5810:1",
+            ),
+            tilganger.orgNrTilTilganger["910825554"]
+        )
+        assertEquals(
+            setOf("910825554"),
+            tilganger.tilgangTilOrgNr["nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-skjemaer"]
+        )
+        assertEquals(
+            setOf("910825554"),
+            tilganger.tilgangTilOrgNr["5810:1"]
+        )
     }
 
     @Test
