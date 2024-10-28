@@ -49,7 +49,7 @@ interface AltinnTilgangerRedisClient {
 }
 
 class AltinnTilgangerRedisClientImpl(redisConfig: RedisConfig) : AltinnTilgangerRedisClient {
-    private val codec = AltinnTilgangerCacheCodec() // TODO: use createCodec<AltinnTilgangerResultat>()
+    private val codec = createCodec<AltinnTilgangerResultat>()
     private val redisClient = redisConfig.createClient()
 
     @OptIn(ExperimentalLettuceCoroutinesApi::class)
@@ -72,25 +72,6 @@ class AltinnTilgangerRedisClientImpl(redisConfig: RedisConfig) : AltinnTilganger
             altinnTilganger
         }
     }
-}
-
-class AltinnTilgangerCacheCodec : RedisCodec<String, AltinnTilgangerResultat> {
-    private val stringCodec = StringCodec.UTF8
-
-    override fun decodeKey(bytes: ByteBuffer): String = stringCodec.decodeKey(bytes)
-
-    override fun decodeValue(bytes: ByteBuffer): AltinnTilgangerResultat =
-        stringCodec.decodeValue(bytes).let {
-            Json.decodeFromString(it)
-        }
-
-    override fun encodeKey(key: String): ByteBuffer = stringCodec.encodeKey(key)
-
-    override fun encodeValue(value: AltinnTilgangerResultat): ByteBuffer =
-        Json.encodeToString(value).let {
-            stringCodec.encodeValue(it)
-        }
-
 }
 
 inline fun <reified T> createCodec(): RedisCodec<String, T> {
