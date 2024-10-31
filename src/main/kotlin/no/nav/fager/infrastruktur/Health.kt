@@ -3,24 +3,25 @@ package no.nav.fager.infrastruktur
 import java.time.Duration
 import java.util.concurrent.atomic.AtomicBoolean
 
-interface RequiresReady {
+interface Service {
     fun isReady(): Boolean
+    fun isAlive(): Boolean = true
 }
 
 object Health {
     private val log = logger()
 
-    private val reaquiredServices = mutableListOf<RequiresReady>()
+    private val services = mutableListOf<Service>()
 
-    fun register(requiresReady: RequiresReady) {
-        reaquiredServices.add(requiresReady)
+    fun register(service: Service) {
+        services.add(service)
     }
 
     val alive
-        get() = true
+        get() = services.all { it.isAlive() }
 
     val ready
-        get() = reaquiredServices.all { it.isReady() }
+        get() = services.all { it.isReady() }
 
     private val terminatingAtomic = AtomicBoolean(false)
 

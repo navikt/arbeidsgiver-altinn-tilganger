@@ -14,9 +14,3 @@ Accept: application/json
 
 https://platform.tt02.altinn.no/resourceregistry/api/v1/resource/search?Id=nav_
 Accept: application/json
-
-### resource registry policy
-### https://docs.altinn.studio/api/resourceregistry/spec/#/Resource/get_resource__id__policy_subjects
-
-https://platform.tt02.altinn.no/resourceregistry/api/v1/resource/nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-skjemaer/policy/subjects
-Accept: application/json

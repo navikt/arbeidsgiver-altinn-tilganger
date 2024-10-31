@@ -184,8 +184,11 @@ class Altinn2ClientImpl(
                     isError = false,
                 )
             } else {
-                log.error(
-                    "reportee for service $serviceCode:$serviceEdition kastet exception ${e::class.qualifiedName}",
+                log.warn(
+                    "reportee for service code:edition {}:{} kastet exception {}",
+                    serviceCode,
+                    serviceEdition,
+                    e::class.qualifiedName,
                     e
                 )
                 ReporteeResult(

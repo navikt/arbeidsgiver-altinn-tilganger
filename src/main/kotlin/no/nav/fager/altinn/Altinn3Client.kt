@@ -1,20 +1,27 @@
 package no.nav.fager.altinn
 
-import io.ktor.client.*
-import io.ktor.client.call.*
-import io.ktor.client.engine.cio.*
-import io.ktor.client.plugins.*
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.client.plugins.logging.*
-import io.ktor.client.request.*
-import io.ktor.http.*
-import io.ktor.network.sockets.*
-import io.ktor.serialization.kotlinx.json.*
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.HttpRequestRetry
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.logging.Logging
+import io.ktor.client.request.accept
+import io.ktor.client.request.header
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.appendPathSegments
+import io.ktor.http.contentType
+import io.ktor.http.takeFrom
+import io.ktor.network.sockets.SocketTimeoutException
+import io.ktor.serialization.kotlinx.json.json
 import io.opentelemetry.instrumentation.annotations.WithSpan
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import no.nav.fager.infrastruktur.logger
 import no.nav.fager.maskinporten.Maskinporten
+import no.nav.fager.maskinporten.MaskinportenPlugin
+import no.nav.fager.infrastruktur.logger
 import javax.net.ssl.SSLHandshakeException
 
 class Altinn3Config(
@@ -32,10 +39,8 @@ class Altinn3Config(
     }
 }
 
-interface Altinn3Client {
-    suspend fun resourceOwner_AuthorizedParties(fnr: String): Result<List<AuthorizedParty>>
-
-    suspend fun resourceRegistry_PolicySubjects(resourceId: String): Result<List<PolicySubject>>
+interface Altinn3Client{
+    suspend fun hentAuthorizedParties(fnr: String): List<AuthorizedParty>
 }
 
 /** Swagger for api:
@@ -62,6 +67,10 @@ class Altinn3ClientImpl(
             delayMillis { 250L }
         }
 
+        install(MaskinportenPlugin) {
+            maskinporten = this@Altinn3ClientImpl.maskinporten
+        }
+
         install(ContentNegotiation) {
             json(Json { ignoreUnknownKeys = true })
         }
@@ -74,7 +83,7 @@ class Altinn3ClientImpl(
     }
 
     @WithSpan
-    override suspend fun resourceOwner_AuthorizedParties(fnr: String): Result<List<AuthorizedParty>> = runCatching {
+    override suspend fun hentAuthorizedParties(fnr: String): List<AuthorizedParty> = try {
         val httpResponse = httpClient.post {
             url {
                 takeFrom(altinn3Config.baseUrl)
@@ -83,7 +92,6 @@ class Altinn3ClientImpl(
             }
             accept(ContentType.Application.Json)
             contentType(ContentType.Application.Json)
-            bearerAuth(maskinporten.accessToken())
             header("ocp-apim-subscription-key", altinn3Config.ocpApimSubscriptionKey)
             setBody(
                 mapOf(
@@ -94,22 +102,13 @@ class Altinn3ClientImpl(
         }
 
         httpResponse.body()
-    }
-
-    override suspend fun resourceRegistry_PolicySubjects(resourceId: String) = runCatching {
-        val httpResponse = httpClient.get {
-            url {
-                takeFrom(altinn3Config.baseUrl)
-                appendPathSegments("/resourceregistry/api/v1/resource/$resourceId/policy/subjects")
-            }
-            accept(ContentType.Application.Json)
-            contentType(ContentType.Application.Json)
-        }
-
-        httpResponse.body<PolicySubjectResponseWrapper>().data
+    } catch (e: Exception) {
+        log.info("POST /authorized_parties kastet exception {}", e::class.qualifiedName, e)
+        emptyList()
     }
 }
 
+@Suppress("unused")
 @Serializable
 class AuthorizedParty(
     val organizationNumber: String?,
@@ -117,17 +116,6 @@ class AuthorizedParty(
     val type: String?,
     val unitType: String?,
     val authorizedResources: Set<String>,
-    val authorizedRoles: Set<String>,
     val isDeleted: Boolean,
     val subunits: List<AuthorizedParty>
-) {
-    /**
-     * in current api authorizedRoles is a list of  LEDE/DAGL etc, an upper case variant og PolicySubject.value
-     * in v2 this will be a PolicySubjectUrn. So this is a temporary method to convert to urn.
-     * this method should be removed when v2 is in place.
-     */
-    val authorizedRolesAsUrn: Set<String>
-        get() = authorizedRoles.map { "urn:altinn:rolecode:${it.lowercase()}" }.toSet()
-}
-
-
+)

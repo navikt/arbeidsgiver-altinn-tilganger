@@ -1,13 +1,15 @@
 package no.nav.fager
 
 import kotlinx.coroutines.test.runTest
-import no.nav.fager.altinn.*
+import no.nav.fager.altinn.Altinn2Tilganger
+import no.nav.fager.altinn.Altinn2Tjeneste
+import no.nav.fager.altinn.AltinnService
+import no.nav.fager.altinn.AltinnTilgang
+import no.nav.fager.altinn.AuthorizedParty
 import no.nav.fager.fakes.clients.FakeAltinn2Client
 import no.nav.fager.fakes.clients.FakeAltinn3Client
 import no.nav.fager.fakes.clients.FakeRedisClient
-import no.nav.fager.redis.RedisConfig
 import kotlin.test.Test
-import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class AltinnServiceTest {
@@ -27,33 +29,21 @@ class AltinnServiceTest {
                 )
             )
         }
-        val altinn3Client = FakeAltinn3Client(resourceOwner_AuthorizedPartiesHandler = {
+        val altinn3Client = FakeAltinn3Client {
             listOf(
                 AuthorizedParty(
                     name = "SLEMMESTAD OG STAVERN REGNSKAP",
                     organizationNumber = "910825496",
                     authorizedResources = setOf("test-fager"),
-                    authorizedRoles = setOf(),
                     subunits = listOf(),
                     unitType = "BEDR",
                     type = "Business",
                     isDeleted = false,
                 )
             )
-        })
-        val resourceRegistry = ResourceRegistry(FakeAltinn3Client(), RedisConfig.local(), null).also {
-            it.updatePolicySubjectsForKnownResources {
-                listOf(
-                    PolicySubject(
-                        urn = "urn:altinn:rolecode:lede",
-                        type = "urn:altinn:rolecode",
-                        value = "lede",
-                    )
-                )
-            }
         }
 
-        val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, resourceRegistry)
+        val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, emptyMap())
 
         val fnr = "16120101181"
         altinnService.hentTilganger(fnr, this)
@@ -78,7 +68,7 @@ class AltinnServiceTest {
             ) == 1
         )
 
-        assertTrue(altinn3Client.getCallCountWithArgs(altinn3Client::resourceOwner_AuthorizedParties.name, fnr) == 1)
+        assertTrue(altinn3Client.getCallCountWithArgs(altinn3Client::hentAuthorizedParties.name, fnr) == 1)
         assertTrue(altinn2Client.getCallCountWithArgs(altinn2Client::hentAltinn2Tilganger.name, fnr) == 1)
     }
 
@@ -99,33 +89,22 @@ class AltinnServiceTest {
                 )
             )
         }
-        val altinn3Client = FakeAltinn3Client(resourceOwner_AuthorizedPartiesHandler = {
+        val altinn3Client = FakeAltinn3Client {
             listOf(
                 AuthorizedParty(
                     name = "SLEMMESTAD OG STAVERN REGNSKAP",
                     organizationNumber = "910825496",
                     authorizedResources = setOf("test-fager"),
-                    authorizedRoles = setOf(),
                     subunits = listOf(),
                     unitType = "BEDR",
                     type = "Business",
                     isDeleted = false,
                 )
             )
-        })
-        val resourceRegistry = ResourceRegistry(FakeAltinn3Client(), RedisConfig.local(), null).also {
-            it.updatePolicySubjectsForKnownResources {
-                listOf(
-                    PolicySubject(
-                        urn = "urn:altinn:rolecode:lede",
-                        type = "urn:altinn:rolecode",
-                        value = "lede",
-                    )
-                )
-            }
         }
 
-        val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, resourceRegistry)
+
+        val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, emptyMap())
 
         val fnr = "16120101181"
         altinnService.hentTilganger(fnr, this)
@@ -133,7 +112,7 @@ class AltinnServiceTest {
         assertTrue(altinnRedisClient.getCallCountWithArgs(altinnRedisClient::get.name, fnr) == 1)
         assertTrue(altinnRedisClient.getCallCount(altinnRedisClient::set.name) == 0)
 
-        assertTrue(altinn3Client.getCallCount(altinn3Client::resourceOwner_AuthorizedParties.name) == 0)
+        assertTrue(altinn3Client.getCallCount(altinn3Client::hentAuthorizedParties.name) == 0)
         assertTrue(altinn2Client.getCallCount(altinn2Client::hentAltinn2Tilganger.name) == 0)
     }
 
@@ -153,33 +132,21 @@ class AltinnServiceTest {
                 )
             )
         }
-        val altinn3Client = FakeAltinn3Client(resourceOwner_AuthorizedPartiesHandler = {
+        val altinn3Client = FakeAltinn3Client {
             listOf(
                 AuthorizedParty(
                     name = "SLEMMESTAD OG STAVERN REGNSKAP",
                     organizationNumber = "910825496",
                     authorizedResources = setOf("test-fager"),
-                    authorizedRoles = setOf(),
                     subunits = listOf(),
                     unitType = "BEDR",
                     type = "Business",
                     isDeleted = false,
                 )
             )
-        })
-        val resourceRegistry = ResourceRegistry(FakeAltinn3Client(), RedisConfig.local(), null).also {
-            it.updatePolicySubjectsForKnownResources {
-                listOf(
-                    PolicySubject(
-                        urn = "urn:altinn:rolecode:lede",
-                        type = "urn:altinn:rolecode",
-                        value = "lede",
-                    )
-                )
-            }
         }
 
-        val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, resourceRegistry)
+        val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, emptyMap())
 
         val fnr = "16120101181"
         altinnService.hentTilganger(fnr, this)
@@ -187,7 +154,7 @@ class AltinnServiceTest {
         assertTrue(altinnRedisClient.getCallCountWithArgs(altinnRedisClient::get.name, fnr) == 1)
         assertTrue(altinnRedisClient.getCallCount(altinnRedisClient::set.name) == 0)
 
-        assertTrue(altinn3Client.getCallCountWithArgs(altinn3Client::resourceOwner_AuthorizedParties.name, fnr) == 1)
+        assertTrue(altinn3Client.getCallCountWithArgs(altinn3Client::hentAuthorizedParties.name, fnr) == 1)
         assertTrue(altinn2Client.getCallCountWithArgs(altinn2Client::hentAltinn2Tilganger.name, fnr) == 1)
     }
 
@@ -207,33 +174,21 @@ class AltinnServiceTest {
                 )
             )
         }
-        val altinn3Client = FakeAltinn3Client(resourceOwner_AuthorizedPartiesHandler = {
+        val altinn3Client = FakeAltinn3Client {
             listOf(
                 AuthorizedParty(
                     name = "SLEMMESTAD OG STAVERN REGNSKAP",
                     organizationNumber = "910825496",
                     authorizedResources = setOf("test-fager"),
-                    authorizedRoles = setOf(),
                     subunits = listOf(),
                     unitType = "BEDR",
                     type = "Business",
                     isDeleted = false,
                 )
             )
-        })
-        val resourceRegistry = ResourceRegistry(FakeAltinn3Client(), RedisConfig.local(), null).also {
-            it.updatePolicySubjectsForKnownResources {
-                listOf(
-                    PolicySubject(
-                        urn = "urn:altinn:rolecode:lede",
-                        type = "urn:altinn:rolecode",
-                        value = "lede",
-                    )
-                )
-            }
         }
 
-        val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, resourceRegistry)
+        val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, emptyMap())
 
         val fnr1 = "16120101181"
         val fnr2 = "26903848935"
@@ -258,35 +213,30 @@ class AltinnServiceTest {
             )
         }
 
-        val altinn3Client = FakeAltinn3Client(resourceOwner_AuthorizedPartiesHandler = {
+        val altinn3Client = FakeAltinn3Client {
             listOf(
                 AuthorizedParty(
                     name = "ET ANNET REGNSKAP",
                     organizationNumber = "111111111",
-                    authorizedResources = setOf("nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-skjemaer"),
-                    authorizedRoles = setOf(),
+                    authorizedResources = setOf("test-fager"),
                     subunits = listOf(),
                     unitType = "BEDR",
                     type = "Business",
                     isDeleted = false,
                 ),
             )
-        })
-        val resourceRegistry = ResourceRegistry(FakeAltinn3Client(), RedisConfig.local(), null).also {
-            it.updatePolicySubjectsForKnownResources {
-                listOf(
-                    PolicySubject(
-                        urn = "urn:altinn:rolecode:lede",
-                        type = "urn:altinn:rolecode",
-                        value = "lede",
-                    )
-                )
-            }
         }
-
-        val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, resourceRegistry)
+        val altinn3TilAltinn2Map = mapOf(
+            Pair(
+                "test-fager",
+                listOf(Altinn2Tjeneste("5810", "1"))
+            )
+        )
 
         val fnr = "16120101181"
+        val altinnService =
+            AltinnService(altinn2Client, altinn3Client, altinnRedisClient, altinn3TilAltinn2Map)
+
         val tilganger = altinnService.hentTilganger(fnr, this)
 
         assertTrue(tilganger.altinnTilganger.count() == 1)
@@ -296,7 +246,7 @@ class AltinnServiceTest {
 
 
     @Test
-    fun `Altinn 2 tilganger inkluderes sammen med tilganger mappet fra altinn 3 ressurser`() = runTest {
+    fun `Altinn 2 respons velges over lokal Altinn 2 mapping ved duplikate tjenester`() = runTest {
         val altinnRedisClient = FakeRedisClient()
         val altinn2Client = FakeAltinn2Client {
             Altinn2Tilganger(
@@ -311,13 +261,12 @@ class AltinnServiceTest {
                 )
             )
         }
-        val altinn3Client = FakeAltinn3Client(resourceOwner_AuthorizedPartiesHandler = {
+        val altinn3Client = FakeAltinn3Client {
             listOf(
                 AuthorizedParty(
                     name = "SLEMMESTAD OG STAVERN REGNSKAP",
                     organizationNumber = "910825496",
-                    authorizedResources = setOf("nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-skjemaer"),
-                    authorizedRoles = setOf(),
+                    authorizedResources = setOf("test-fager"),
                     subunits = listOf(),
                     unitType = "BEDR",
                     type = "Business",
@@ -326,42 +275,30 @@ class AltinnServiceTest {
                 AuthorizedParty(
                     name = "ET ANNET REGNSKAP",
                     organizationNumber = "111111111",
-                    authorizedResources = setOf(),
-                    authorizedRoles = setOf("LEDE"),
+                    authorizedResources = setOf("test-fager"),
                     subunits = listOf(),
                     unitType = "BEDR",
                     type = "Business",
                     isDeleted = false,
                 ),
             )
-        })
-        val resourceRegistry = ResourceRegistry(FakeAltinn3Client(), RedisConfig.local(), null).also {
-            it.updatePolicySubjectsForKnownResources {
-                listOf(
-                    PolicySubject(
-                        urn = "urn:altinn:rolecode:lede",
-                        type = "urn:altinn:rolecode",
-                        value = "lede",
-                    )
-                )
-            }
         }
-
+        val altinn3TilAltinn2Map = mapOf(
+            Pair(
+                "test-fager",
+                listOf(Altinn2Tjeneste("5810", "1"))
+            )
+        )
 
         val fnr = "16120101181"
-        val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, resourceRegistry)
+        val altinnService =
+            AltinnService(altinn2Client, altinn3Client, altinnRedisClient, altinn3TilAltinn2Map)
 
         val tilganger = altinnService.hentTilganger(fnr, this)
-        assertEquals(2, tilganger.altinnTilganger.size)
-
-        tilganger.altinnTilganger.first { it.orgnr == "910825496" }.let { slemmestad ->
-            // 4936:1 fra altinn2, 5810:1 fra altinn3 resource basert på altinn3 til altinn 2 mapping
-            assertEquals(setOf("4936:1", "5810:1"), slemmestad.altinn2Tilganger)
-        }
-
-        tilganger.altinnTilganger.first { it.orgnr == "111111111" }.let { annet ->
-            // 5810:1 fra altinn3 role(LEDE) basert på altinn3 til altinn 2 mapping
-            assertEquals(setOf("5810:1"), annet.altinn2Tilganger)
-        }
+        assertTrue(tilganger.altinnTilganger.count() == 2)
+        assertTrue(tilganger.altinnTilganger.first { it.orgnr == "910825496" }.altinn2Tilganger.count() == 1)
+        assertTrue(tilganger.altinnTilganger.first { it.orgnr == "910825496" }.altinn2Tilganger.first() == "4936:1")
+        assertTrue(tilganger.altinnTilganger.first { it.orgnr == "111111111" }.altinn2Tilganger.count() == 1)
+        assertTrue(tilganger.altinnTilganger.first { it.orgnr == "111111111" }.altinn2Tilganger.first() == "5810:1")
     }
 }
