@@ -132,5 +132,12 @@ class RedisLoadingCache<T : Any>(
             }
         } ?: throw IllegalStateException("Failed to get value from cache")
     }
+
+    @OptIn(ExperimentalLettuceCoroutinesApi::class)
+    suspend fun update(key: String): T = redisClient.useConnection(codec) { connection ->
+        loader(key).also {
+            connection.set(key, it, SetArgs.Builder.ex(cacheTTL))
+        }
+    } ?: throw IllegalStateException("Failed to update value from loader")
 }
 

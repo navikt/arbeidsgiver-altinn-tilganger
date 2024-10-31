@@ -10,7 +10,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-class AltinnRequiresReadyTest {
+class AltinnServiceTest {
     @Test
     fun `cache entry settes`() = runTest {
         val altinnRedisClient = FakeRedisClient()
@@ -41,16 +41,16 @@ class AltinnRequiresReadyTest {
                 )
             )
         })
-        val resourceRegistry = ResourceRegistry(FakeAltinn3Client(resourceRegistry_PolicySubjectsHandler = {
-            listOf(
-                PolicySubject(
-                    urn = "urn:altinn:rolecode:lede",
-                    type = "urn:altinn:rolecode",
-                    value = "lede",
+        val resourceRegistry = ResourceRegistry(FakeAltinn3Client(), RedisConfig.local(), null).also {
+            it.updatePolicySubjectsForKnownResources {
+                listOf(
+                    PolicySubject(
+                        urn = "urn:altinn:rolecode:lede",
+                        type = "urn:altinn:rolecode",
+                        value = "lede",
+                    )
                 )
-            )
-        }), RedisConfig.local(), null).also {
-            it.updatePolicySubjectsForKnownResources()
+            }
         }
 
         val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, resourceRegistry)
@@ -113,16 +113,16 @@ class AltinnRequiresReadyTest {
                 )
             )
         })
-        val resourceRegistry = ResourceRegistry(FakeAltinn3Client(resourceRegistry_PolicySubjectsHandler = {
-            listOf(
-                PolicySubject(
-                    urn = "urn:altinn:rolecode:lede",
-                    type = "urn:altinn:rolecode",
-                    value = "lede",
+        val resourceRegistry = ResourceRegistry(FakeAltinn3Client(), RedisConfig.local(), null).also {
+            it.updatePolicySubjectsForKnownResources {
+                listOf(
+                    PolicySubject(
+                        urn = "urn:altinn:rolecode:lede",
+                        type = "urn:altinn:rolecode",
+                        value = "lede",
+                    )
                 )
-            )
-        }), RedisConfig.local(), null).also {
-            it.updatePolicySubjectsForKnownResources()
+            }
         }
 
         val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, resourceRegistry)
@@ -167,16 +167,16 @@ class AltinnRequiresReadyTest {
                 )
             )
         })
-        val resourceRegistry = ResourceRegistry(FakeAltinn3Client(resourceRegistry_PolicySubjectsHandler = {
-            listOf(
-                PolicySubject(
-                    urn = "urn:altinn:rolecode:lede",
-                    type = "urn:altinn:rolecode",
-                    value = "lede",
+        val resourceRegistry = ResourceRegistry(FakeAltinn3Client(), RedisConfig.local(), null).also {
+            it.updatePolicySubjectsForKnownResources {
+                listOf(
+                    PolicySubject(
+                        urn = "urn:altinn:rolecode:lede",
+                        type = "urn:altinn:rolecode",
+                        value = "lede",
+                    )
                 )
-            )
-        }), RedisConfig.local(), null).also {
-            it.updatePolicySubjectsForKnownResources()
+            }
         }
 
         val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, resourceRegistry)
@@ -221,16 +221,16 @@ class AltinnRequiresReadyTest {
                 )
             )
         })
-        val resourceRegistry = ResourceRegistry(FakeAltinn3Client(resourceRegistry_PolicySubjectsHandler = {
-            listOf(
-                PolicySubject(
-                    urn = "urn:altinn:rolecode:lede",
-                    type = "urn:altinn:rolecode",
-                    value = "lede",
+        val resourceRegistry = ResourceRegistry(FakeAltinn3Client(), RedisConfig.local(), null).also {
+            it.updatePolicySubjectsForKnownResources {
+                listOf(
+                    PolicySubject(
+                        urn = "urn:altinn:rolecode:lede",
+                        type = "urn:altinn:rolecode",
+                        value = "lede",
+                    )
                 )
-            )
-        }), RedisConfig.local(), null).also {
-            it.updatePolicySubjectsForKnownResources()
+            }
         }
 
         val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, resourceRegistry)
@@ -272,16 +272,16 @@ class AltinnRequiresReadyTest {
                 ),
             )
         })
-        val resourceRegistry = ResourceRegistry(FakeAltinn3Client(resourceRegistry_PolicySubjectsHandler = {
-            listOf(
-                PolicySubject(
-                    urn = "urn:altinn:rolecode:lede",
-                    type = "urn:altinn:rolecode",
-                    value = "lede",
+        val resourceRegistry = ResourceRegistry(FakeAltinn3Client(), RedisConfig.local(), null).also {
+            it.updatePolicySubjectsForKnownResources {
+                listOf(
+                    PolicySubject(
+                        urn = "urn:altinn:rolecode:lede",
+                        type = "urn:altinn:rolecode",
+                        value = "lede",
+                    )
                 )
-            )
-        }), RedisConfig.local(), null).also {
-            it.updatePolicySubjectsForKnownResources()
+            }
         }
 
         val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, resourceRegistry)
@@ -335,16 +335,16 @@ class AltinnRequiresReadyTest {
                 ),
             )
         })
-        val resourceRegistry = ResourceRegistry(FakeAltinn3Client(resourceRegistry_PolicySubjectsHandler = {
-            listOf(
-                PolicySubject(
-                    urn = "urn:altinn:rolecode:lede",
-                    type = "urn:altinn:rolecode",
-                    value = "lede",
+        val resourceRegistry = ResourceRegistry(FakeAltinn3Client(), RedisConfig.local(), null).also {
+            it.updatePolicySubjectsForKnownResources {
+                listOf(
+                    PolicySubject(
+                        urn = "urn:altinn:rolecode:lede",
+                        type = "urn:altinn:rolecode",
+                        value = "lede",
+                    )
                 )
-            )
-        }), RedisConfig.local(), null).also {
-            it.updatePolicySubjectsForKnownResources()
+            }
         }
 
 

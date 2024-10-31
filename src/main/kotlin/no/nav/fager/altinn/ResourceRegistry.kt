@@ -52,7 +52,26 @@ class ResourceRegistry(
 
     init {
         backgroundCoroutineScope?.launch {
-            updateLoop()
+            while (!isReady) {
+                isReady = updatePolicySubjectsForKnownResources { resourceId ->
+                    this@ResourceRegistry.cache.get(resourceId)
+                }
+                delay(5.seconds)
+            }
+            log.info("ResourceRegistry isReady")
+        }
+
+        backgroundCoroutineScope?.launch {
+            while (true) {
+                val success = updatePolicySubjectsForKnownResources { resourceId -> cache.update(resourceId) }
+                if (success) {
+                    log.info("Policy subjects for kjente ressurser oppdatert")
+                    delay(30.minutes)
+                } else {
+                    log.error("Kunne ikke oppdatere policy subjects for kjente ressurser. Prøver igjen fortløpende")
+                    delay(5.seconds)
+                }
+            }
         }
     }
 
@@ -61,13 +80,12 @@ class ResourceRegistry(
             policySubjects.any { it.urn == urn }
         }.map { it.key }
 
-    // TODO: det hadde vært lurt å tvinge skriv til cache i et hyppigere intevall enn TTL på cachen
-    // Vi ønsker at cache verdien "alltid" er tilgjengelig, men samtidig at den oppdateres
-    // mao update interval != cache TTL
-
-    suspend fun updatePolicySubjectsForKnownResources() {
+    suspend fun updatePolicySubjectsForKnownResources(
+        fetcher: suspend ResourceRegistry.(resourceId: ResourceId) -> List<PolicySubject>
+    ): Boolean {
         val results = KnownResources.map { resource ->
-            resource to runCatching { cache.get(resource.resourceId) }
+            val resourceId = resource.resourceId
+            resource to runCatching { fetcher(resourceId) }
         }
 
         results.forEach { (resource, result) ->
@@ -81,21 +99,7 @@ class ResourceRegistry(
             )
         }
 
-        if (!isReady && results.all { it.second.isSuccess }) {
-            isReady = true
-        }
-    }
-
-    private suspend fun updateLoop() {
-        while (true) {
-            updatePolicySubjectsForKnownResources()
-
-            if (isReady) {
-                delay(10.minutes)
-            } else {
-                delay(5.seconds)
-            }
-        }
+        return results.none { it.second.isFailure }
     }
 }
 
