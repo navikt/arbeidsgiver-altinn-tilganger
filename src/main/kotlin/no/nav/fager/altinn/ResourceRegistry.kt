@@ -5,6 +5,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import no.nav.fager.infrastruktur.RequiresReady
+import no.nav.fager.infrastruktur.basedOnEnv
 import no.nav.fager.infrastruktur.logger
 import no.nav.fager.redis.RedisConfig
 import no.nav.fager.redis.RedisLoadingCache
@@ -14,11 +15,15 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 
-val KnownResources = listOf(
-    Resource(
-        resourceId = "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-skjemaer",
-        altinn2Tjeneste = listOf(Altinn2Tjeneste("5810", "1"))
-    )
+val KnownResources = listOfNotNull(
+    basedOnEnv(
+        prod = { null }, // TODO: oppdater når nav_permittering ressursen er prodsatt
+        other = {
+            Resource(
+                resourceId = "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-skjemaer",
+                altinn2Tjeneste = listOf(Altinn2Tjeneste("5810", "1"))
+            )
+        })
 )
 
 class ResourceRegistry(
