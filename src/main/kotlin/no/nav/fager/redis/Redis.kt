@@ -49,13 +49,13 @@ interface AltinnTilgangerRedisClient {
 }
 
 class AltinnTilgangerRedisClientImpl(redisConfig: RedisConfig) : AltinnTilgangerRedisClient {
-    private val codec = createCodec<AltinnTilgangerResultat>()
+    private val codec = createCodec<AltinnTilgangerResultat>("altinn-tilganger")
     private val redisClient = redisConfig.createClient()
 
     @OptIn(ExperimentalLettuceCoroutinesApi::class)
     override suspend fun get(fnr: String): AltinnTilgangerResultat? {
         return redisClient.useConnection(codec) {
-            it.get("altinn-tilganger:${fnr.hashed()}")
+            it.get(fnr.hashed())
         }
     }
 
@@ -63,7 +63,7 @@ class AltinnTilgangerRedisClientImpl(redisConfig: RedisConfig) : AltinnTilganger
     override suspend fun set(fnr: String, altinnTilganger: AltinnTilgangerResultat) {
         redisClient.useConnection(codec) {
             it.set(
-                "altinn-tilganger:${fnr.hashed()}",
+                fnr.hashed(),
                 altinnTilganger,
                 SetArgs.Builder.ex(
                     Duration.ofMinutes(10)
@@ -74,18 +74,19 @@ class AltinnTilgangerRedisClientImpl(redisConfig: RedisConfig) : AltinnTilganger
     }
 }
 
-inline fun <reified T> createCodec(): RedisCodec<String, T> {
+inline fun <reified T> createCodec(prefix: String): RedisCodec<String, T> {
     return object : RedisCodec<String, T> {
         private val stringCodec = StringCodec.UTF8
+        private val namespace = "$prefix:"
 
-        override fun decodeKey(bytes: ByteBuffer): String = stringCodec.decodeKey(bytes)
+        override fun decodeKey(bytes: ByteBuffer): String = stringCodec.decodeKey(bytes).removePrefix(namespace)
 
         override fun decodeValue(bytes: ByteBuffer): T =
             stringCodec.decodeValue(bytes).let {
                 Json.decodeFromString(it)
             }
 
-        override fun encodeKey(key: String): ByteBuffer = stringCodec.encodeKey(key)
+        override fun encodeKey(key: String): ByteBuffer = stringCodec.encodeKey("$namespace$key")
 
         override fun encodeValue(value: T): ByteBuffer =
             Json.encodeToString(value).let {
@@ -109,7 +110,7 @@ suspend fun <T : Any> RedisClient.useConnection(
 }
 
 class RedisLoadingCache<T : Any>(
-    private val name: String,
+    name: String,
     private val redisClient: RedisClient,
     private val codec: RedisCodec<String, T>,
     private val loader: suspend (String) -> T,
@@ -120,14 +121,13 @@ class RedisLoadingCache<T : Any>(
 
     @OptIn(ExperimentalLettuceCoroutinesApi::class)
     suspend fun get(key: String): T {
-        val redisKey = "$name:${key.hashed()}" // TODO: should the namespacing be done in the codec?
         return redisClient.useConnection(codec) { connection ->
-            connection.get(redisKey)?.also {
+            connection.get(key)?.also {
                 cacheHit.increment()
             } ?: run {
                 cacheMiss.increment()
                 loader(key).also {
-                    connection.set(redisKey, it, SetArgs.Builder.ex(cacheTTL))
+                    connection.set(key, it, SetArgs.Builder.ex(cacheTTL))
                 }
             }
         } ?: throw IllegalStateException("Failed to get value from cache")

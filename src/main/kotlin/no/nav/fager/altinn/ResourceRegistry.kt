@@ -4,13 +4,15 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
-import no.nav.fager.infrastruktur.Service
+import no.nav.fager.infrastruktur.RequiresReady
 import no.nav.fager.infrastruktur.logger
 import no.nav.fager.redis.RedisConfig
 import no.nav.fager.redis.RedisLoadingCache
 import no.nav.fager.redis.createCodec
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.toJavaDuration
 
 val KnownResources = listOf(
     Resource(
@@ -23,7 +25,7 @@ class ResourceRegistry(
     private val altinn3Client: Altinn3Client,
     redisConfig: RedisConfig,
     backgroundCoroutineScope: CoroutineScope?,
-) : Service {
+) : RequiresReady {
 
     private val log = logger()
 
@@ -35,8 +37,9 @@ class ResourceRegistry(
     private val cache = RedisLoadingCache(
         name = "resource-registry",
         redisClient = redisConfig.createClient(),
-        codec = createCodec<List<PolicySubject>>(),
-        loader = { s -> altinn3Client.resourceRegistry_PolicySubjects(s).getOrThrow() }
+        codec = createCodec<List<PolicySubject>>("resource-registry"),
+        loader = { s -> altinn3Client.resourceRegistry_PolicySubjects(s).getOrThrow() },
+        cacheTTL = 7.days.toJavaDuration()
     )
 
     private val policySubjectsPerResourceId = KnownResources.associate { resource ->
@@ -57,6 +60,10 @@ class ResourceRegistry(
         policySubjectsPerResourceId.filter { (_, policySubjects) ->
             policySubjects.any { it.urn == urn }
         }.map { it.key }
+
+    // TODO: det hadde vært lurt å tvinge skriv til cache i et hyppigere intevall enn TTL på cachen
+    // Vi ønsker at cache verdien "alltid" er tilgjengelig, men samtidig at den oppdateres
+    // mao update interval != cache TTL
 
     suspend fun updatePolicySubjectsForKnownResources() {
         val results = KnownResources.map { resource ->

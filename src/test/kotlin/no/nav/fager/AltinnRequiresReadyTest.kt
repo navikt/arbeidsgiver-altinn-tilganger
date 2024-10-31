@@ -10,7 +10,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-class AltinnServiceTest {
+class AltinnRequiresReadyTest {
     @Test
     fun `cache entry settes`() = runTest {
         val altinnRedisClient = FakeRedisClient()
