@@ -183,22 +183,6 @@ fun Application.ktorConfig(
         backgroundCoroutineScope = this,
     ).also { Health.register(it) }
 
-    val altinn2Client = Altinn2ClientImpl(
-        altinn2Config = altinn2Config,
-        maskinporten = maskinportenA2,
-    )
-
-    val altinn3Client = Altinn3ClientImpl(
-        altinn3Config = altinn3Config,
-        maskinporten = maskinportenA3,
-    )
-
-    val resourceRegistry = ResourceRegistry(
-        altinn3Client,
-        redisConfig,
-        this
-    ).also { Health.register(it) }
-
     routing {
         route("internal") {
             get("prometheus") {
@@ -233,12 +217,19 @@ fun Application.ktorConfig(
         route("swagger-ui") {
             swaggerUI("/api.json")
         }
+
         routeAltinnTilganger(
             AltinnService(
-                altinn2Client = altinn2Client,
-                altinn3Client = altinn3Client,
-                resourceRegistry = resourceRegistry,
+                altinn2Client = Altinn2ClientImpl(
+                    altinn2Config = altinn2Config,
+                    maskinporten = maskinportenA2,
+                ),
+                altinn3Client = Altinn3ClientImpl(
+                    altinn3Config = altinn3Config,
+                    maskinporten = maskinportenA3,
+                ),
                 redisClient = AltinnTilgangerRedisClientImpl(redisConfig),
+                altinn3TilAltinn2Map = Altinn3TilAltinn2Tilganger.MAP
             )
         )
 

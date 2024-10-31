@@ -5,11 +5,9 @@ import io.lettuce.core.api.coroutines
 import io.lettuce.core.api.coroutines.RedisCoroutinesCommands
 import io.lettuce.core.codec.RedisCodec
 import io.lettuce.core.codec.StringCodec
-import io.micrometer.core.instrument.Counter
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import no.nav.fager.altinn.AltinnService.AltinnTilgangerResultat
-import no.nav.fager.infrastruktur.Metrics
 import java.nio.ByteBuffer
 import java.security.MessageDigest
 import java.time.Duration
@@ -49,23 +47,20 @@ interface AltinnTilgangerRedisClient {
 }
 
 class AltinnTilgangerRedisClientImpl(redisConfig: RedisConfig) : AltinnTilgangerRedisClient {
-    private val codec = createCodec<AltinnTilgangerResultat>("altinn-tilganger")
     private val redisClient = redisConfig.createClient()
 
     @OptIn(ExperimentalLettuceCoroutinesApi::class)
     override suspend fun get(fnr: String): AltinnTilgangerResultat? {
-        return redisClient.useConnection(codec) {
+        return redisClient.useConnection(AltinnTilgangerCacheCodec()) {
             it.get(fnr.hashed())
         }
     }
 
     @OptIn(ExperimentalLettuceCoroutinesApi::class)
     override suspend fun set(fnr: String, altinnTilganger: AltinnTilgangerResultat) {
-        redisClient.useConnection(codec) {
+        redisClient.useConnection(AltinnTilgangerCacheCodec()) {
             it.set(
-                fnr.hashed(),
-                altinnTilganger,
-                SetArgs.Builder.ex(
+                fnr.hashed(), altinnTilganger, SetArgs.Builder.ex(
                     Duration.ofMinutes(10)
                 )
             )
@@ -73,26 +68,26 @@ class AltinnTilgangerRedisClientImpl(redisConfig: RedisConfig) : AltinnTilganger
         }
     }
 }
+/*
+Denne Codecen er spesifikk for AltinnTilgangerResultat. Fødselsnummer hashes med sha256
+*/
+class AltinnTilgangerCacheCodec : RedisCodec<String, AltinnTilgangerResultat> {
+    private val stringCodec = StringCodec.UTF8
 
-inline fun <reified T> createCodec(prefix: String): RedisCodec<String, T> {
-    return object : RedisCodec<String, T> {
-        private val stringCodec = StringCodec.UTF8
-        private val namespace = "$prefix:"
+    override fun decodeKey(bytes: ByteBuffer): String = stringCodec.decodeKey(bytes)
 
-        override fun decodeKey(bytes: ByteBuffer): String = stringCodec.decodeKey(bytes).removePrefix(namespace)
+    override fun decodeValue(bytes: ByteBuffer): AltinnTilgangerResultat =
+        stringCodec.decodeValue(bytes).let {
+            Json.decodeFromString(it)
+        }
 
-        override fun decodeValue(bytes: ByteBuffer): T =
-            stringCodec.decodeValue(bytes).let {
-                Json.decodeFromString(it)
-            }
+    override fun encodeKey(key: String): ByteBuffer = stringCodec.encodeKey(key)
 
-        override fun encodeKey(key: String): ByteBuffer = stringCodec.encodeKey("$namespace$key")
+    override fun encodeValue(value: AltinnTilgangerResultat): ByteBuffer =
+        Json.encodeToString(value).let {
+            stringCodec.encodeValue(it)
+        }
 
-        override fun encodeValue(value: T): ByteBuffer =
-            Json.encodeToString(value).let {
-                stringCodec.encodeValue(it)
-            }
-    }
 }
 
 private fun String.hashed() =
@@ -100,44 +95,11 @@ private fun String.hashed() =
 
 @OptIn(ExperimentalLettuceCoroutinesApi::class)
 suspend fun <T : Any> RedisClient.useConnection(
-    codec: RedisCodec<String, T>,
-    body: suspend (RedisCoroutinesCommands<String, T>) -> T?
+    codec: RedisCodec<String, T>, body: suspend (RedisCoroutinesCommands<String, T>) -> T?
 ): T? {
     return this.connect(codec).use { connection ->
         val api = connection.coroutines()
         body(api)
     }
-}
-
-class RedisLoadingCache<T : Any>(
-    name: String,
-    private val redisClient: RedisClient,
-    private val codec: RedisCodec<String, T>,
-    private val loader: suspend (String) -> T,
-    private val cacheTTL: Duration? = Duration.ofMinutes(10),
-) {
-    private val cacheHit = Counter.builder(name).tag("result", "hit").register(Metrics.meterRegistry)
-    private val cacheMiss = Counter.builder(name).tag("result", "miss").register(Metrics.meterRegistry)
-
-    @OptIn(ExperimentalLettuceCoroutinesApi::class)
-    suspend fun get(key: String): T {
-        return redisClient.useConnection(codec) { connection ->
-            connection.get(key)?.also {
-                cacheHit.increment()
-            } ?: run {
-                cacheMiss.increment()
-                loader(key).also {
-                    connection.set(key, it, SetArgs.Builder.ex(cacheTTL))
-                }
-            }
-        } ?: throw IllegalStateException("Failed to get value from cache")
-    }
-
-    @OptIn(ExperimentalLettuceCoroutinesApi::class)
-    suspend fun update(key: String): T = redisClient.useConnection(codec) { connection ->
-        loader(key).also {
-            connection.set(key, it, SetArgs.Builder.ex(cacheTTL))
-        }
-    } ?: throw IllegalStateException("Failed to update value from loader")
 }
 
