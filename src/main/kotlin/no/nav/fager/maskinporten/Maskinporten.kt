@@ -28,7 +28,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import no.nav.fager.infrastruktur.Metrics
-import no.nav.fager.infrastruktur.Service
+import no.nav.fager.infrastruktur.RequiresReady
 import no.nav.fager.infrastruktur.logger
 import java.time.Instant
 import java.util.*
@@ -82,7 +82,7 @@ class Maskinporten(
 
     /** Kun nødvendig for test-kode. */
     private val timeSource: TimeSource.WithComparableMarks = TimeSource.Monotonic,
-) : Service {
+) : RequiresReady {
     private val log = logger()
 
     /* Implementasjon basert på nais-doc:
