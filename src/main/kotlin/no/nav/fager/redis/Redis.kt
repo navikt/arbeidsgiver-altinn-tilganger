@@ -6,10 +6,12 @@ import io.lettuce.core.api.coroutines.RedisCoroutinesCommands
 import io.lettuce.core.codec.RedisCodec
 import io.lettuce.core.codec.StringCodec
 import io.micrometer.core.instrument.Counter
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import no.nav.fager.altinn.AltinnService.AltinnTilgangerResultat
 import no.nav.fager.infrastruktur.Metrics
+import no.nav.fager.infrastruktur.logger
 import java.nio.ByteBuffer
 import java.security.MessageDigest
 import java.time.Duration
@@ -95,7 +97,7 @@ inline fun <reified T> createCodec(prefix: String): RedisCodec<String, T> {
     }
 }
 
-private fun String.hashed() =
+fun String.hashed() =
     String(MessageDigest.getInstance("SHA-256").digest(this.toByteArray()), charset("UTF-8"))
 
 @OptIn(ExperimentalLettuceCoroutinesApi::class)
@@ -116,13 +118,21 @@ class RedisLoadingCache<T : Any>(
     private val loader: suspend (String) -> T,
     private val cacheTTL: Duration? = Duration.ofMinutes(10),
 ) {
+    private val log = logger()
     private val cacheHit = Counter.builder(name).tag("result", "hit").register(Metrics.meterRegistry)
+    private val cacheError = Counter.builder(name).tag("result", "error").register(Metrics.meterRegistry)
     private val cacheMiss = Counter.builder(name).tag("result", "miss").register(Metrics.meterRegistry)
 
     @OptIn(ExperimentalLettuceCoroutinesApi::class)
     suspend fun get(key: String): T {
         return redisClient.useConnection(codec) { connection ->
-            connection.get(key)?.also {
+            try {
+                connection.get(key)
+            } catch (e: SerializationException) {
+                cacheError.increment()
+                log.error("Deserialisering av cache entry feilet. Entry vil bli reloadet", e)
+                null
+            }?.also {
                 cacheHit.increment()
             } ?: run {
                 cacheMiss.increment()
