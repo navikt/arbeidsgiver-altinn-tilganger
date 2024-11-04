@@ -73,19 +73,7 @@ data class AltinnTilgang(
     @Description("Organisasjonsform. se https://www.brreg.no/bedrift/organisasjonsformer/")
     @Example("BEDR")
     val organisasjonsform: String,
-) {
-    @Deprecated
-    @Description("Feltet er utgått, og vil bli fjernet uten forvarsel. Bruk orgnr istedenfor")
-    val orgNr = orgnr
-
-    @Deprecated
-    @Description("Feltet er utgått, og vil bli fjernet uten forvarsel. Bruk navn istedenfor")
-    val name = navn
-
-    @Deprecated
-    @Description("Feltet er utgått, og vil bli fjernet uten forvarsel. Bruk organisasjonsform istedenfor")
-    val organizationForm = organisasjonsform
-}
+)
 
 @Serializable
 data class AltinnTilgangerResponse(
