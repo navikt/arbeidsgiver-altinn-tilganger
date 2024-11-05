@@ -20,7 +20,7 @@ val KnownResources = listOfNotNull(
         prod = { null }, // TODO: oppdater når nav_permittering ressursen er prodsatt
         other = {
             Resource(
-                resourceId = "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-skjemaer",
+                resourceId = "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger",
                 altinn2Tjeneste = listOf(Altinn2Tjeneste("5810", "1"))
             )
         })

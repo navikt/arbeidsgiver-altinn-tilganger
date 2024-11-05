@@ -27,7 +27,7 @@ class FakeApplication(
     private val fakeAltinn3Api = FakeApi().also {
         it.stubs[
             // når det kommer flere ressurser i KnownResources, må det legges til flere svar eller støtte for wildcards i fakeapi
-            Get to "/resourceregistry/api/v1/resource/nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-skjemaer/policy/subjects"
+            Get to "/resourceregistry/api/v1/resource/nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger/policy/subjects"
         ] = {
             call.respondText(
                 //language=json

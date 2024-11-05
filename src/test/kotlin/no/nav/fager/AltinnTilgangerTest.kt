@@ -161,14 +161,14 @@ class AltinnTilgangerTest {
         assertEquals(
             setOf(
                 "4936:1",
-                "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-skjemaer",
+                "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger",
                 "5810:1",
             ),
             tilganger.orgNrTilTilganger["910825554"]
         )
         assertEquals(
             setOf("910825554"),
-            tilganger.tilgangTilOrgNr["nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-skjemaer"]
+            tilganger.tilgangTilOrgNr["nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"]
         )
         assertEquals(
             setOf("910825554"),
