@@ -263,7 +263,7 @@ class AltinnServiceTest {
                 AuthorizedParty(
                     name = "ET ANNET REGNSKAP",
                     organizationNumber = "111111111",
-                    authorizedResources = setOf("nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-skjemaer"),
+                    authorizedResources = setOf("nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"),
                     authorizedRoles = setOf(),
                     subunits = listOf(),
                     unitType = "BEDR",
@@ -316,7 +316,7 @@ class AltinnServiceTest {
                 AuthorizedParty(
                     name = "SLEMMESTAD OG STAVERN REGNSKAP",
                     organizationNumber = "910825496",
-                    authorizedResources = setOf("nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-skjemaer"),
+                    authorizedResources = setOf("nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"),
                     authorizedRoles = setOf(),
                     subunits = listOf(),
                     unitType = "BEDR",
