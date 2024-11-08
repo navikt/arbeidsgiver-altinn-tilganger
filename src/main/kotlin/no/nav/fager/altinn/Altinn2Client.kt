@@ -12,7 +12,6 @@ import io.ktor.client.request.header
 import io.ktor.http.*
 import io.ktor.network.sockets.SocketTimeoutException
 import io.ktor.serialization.kotlinx.json.json
-import io.opentelemetry.instrumentation.annotations.WithSpan
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
@@ -107,7 +106,6 @@ class Altinn2ClientImpl(
      * henter tilganger i altinn 2 og returnerer som et map av orgnummer til tjeneste
      */
     @OptIn(ExperimentalCoroutinesApi::class)
-    @WithSpan
     override suspend fun hentAltinn2Tilganger(fnr: String): Altinn2Tilganger {
         val reportees: List<ReporteeResult> = tjenester.asFlow()
             .flowOn(Dispatchers.IO)

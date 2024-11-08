@@ -20,7 +20,6 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.micrometer.core.instrument.Gauge
-import io.opentelemetry.instrumentation.annotations.WithSpan
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -181,7 +180,6 @@ class Maskinporten(
         }
     }
 
-    @WithSpan
     private suspend fun fetchToken(): Either<Throwable, Cache> = either {
         val now = Instant.now()
         val expiration = now + 1.minutes.toJavaDuration()

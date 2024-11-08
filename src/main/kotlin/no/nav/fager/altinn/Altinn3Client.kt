@@ -10,7 +10,6 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.network.sockets.*
 import io.ktor.serialization.kotlinx.json.*
-import io.opentelemetry.instrumentation.annotations.WithSpan
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import no.nav.fager.infrastruktur.logger
@@ -73,7 +72,6 @@ class Altinn3ClientImpl(
         }
     }
 
-    @WithSpan
     override suspend fun resourceOwner_AuthorizedParties(fnr: String): Result<List<AuthorizedParty>> = runCatching {
         val httpResponse = httpClient.post {
             url {
