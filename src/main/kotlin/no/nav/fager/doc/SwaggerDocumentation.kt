@@ -73,6 +73,11 @@ fun Application.swaggerDocumentation() {
                 Når du skal gjøre et http-kall, må appen din 
                 skaffe seg et token som [beskrevet i nais-dokumentasjonen](https://doc.nais.io/auth/tokenx/how-to/consume/).
                 
+                ## Retry av driftsforstyrrelser
+                
+                Vi anbefaler at dere har retry i klienten deres ved driftsforstyrrelser. 
+                Feks HTTP 502, 503, 504 kan forsøkes på nytt et par ganger før dere gir opp og gir feilmelding til brukeren.
+                
             """.trimIndent()
         }
         pathFilter = { _, url -> url.getOrNull(0) != "internal" }
