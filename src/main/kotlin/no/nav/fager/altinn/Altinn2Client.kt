@@ -340,7 +340,7 @@ private val tjenester = listOf(
         serviceName = "Tiltakstjenester",
         serviceEditionName = "Avtale om inkluderingstilskudd",
     ),
-    Altinn2TjenesteDefinisjon(
+    Altinn2TjenesteDefinisjon( //TODO: denne kan også fjernes når vi migrerer til altinn3 ressurs
         serviceCode = "5810",
         serviceEdition = "1",
         serviceName = "Innsyn i permittering- og nedbemanningsmeldinger sendt til NAV",
