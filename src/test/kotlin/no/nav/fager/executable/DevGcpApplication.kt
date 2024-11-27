@@ -18,7 +18,7 @@ fun main() {
         "can't find $prefix secrets :'("
     }
 
-    val texas = getSecrets(findResourceName("texas-arbeidsgiver-altinn-tilganger"))
+    val texas = getEnvVars("NAIS_TOKEN_")
     val redis = getSecrets(findResourceName("aiven-arbeidsgiver-altinn-tilganger"))
     val altinnTilganger = getSecrets("altinn-tilganger")
 
@@ -77,6 +77,25 @@ private fun getSecrets(secretName: String) =
     exec(*kubectl, "get", "secret", secretName, "-o", "jsonpath={@.data}").let {
         Json.decodeFromString<Map<String, String>>(it)
             .mapValues { e -> e.value.decodeBase64String() }
+    }
+
+private fun getEnvVars(envVarPrefix: String) =
+    exec(
+        *kubectl,
+        "get",
+        "deployment",
+        "arbeidsgiver-altinn-tilganger",
+        "-o",
+        "jsonpath={@.spec.template.spec.containers[?(@.name=='arbeidsgiver-altinn-tilganger')].env}"
+    ).let {
+        Json.decodeFromString<List<Map<String, JsonElement>>>(it)
+            .filter { entries ->
+                entries.containsKey("value")
+                        && entries["name"]?.jsonPrimitive?.content?.startsWith(envVarPrefix) == true
+            }
+            .associate { entries ->
+                entries["name"]?.jsonPrimitive?.content to entries["value"]?.jsonPrimitive?.content
+            }
     }
 
 

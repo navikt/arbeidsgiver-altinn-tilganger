@@ -71,8 +71,15 @@ object TokenIntrospectionResponseSerializer : KSerializer<TokenIntrospectionResp
                 active = json["active"]?.jsonPrimitive?.boolean ?: false,
                 error = json["error"]?.jsonPrimitive?.contentOrNull,
                 other = json.filter { it.key != "active" && it.key != "error" }
-                    .mapValues { it.value.jsonPrimitive.contentOrNull }
-                    .filterValues { it != null },
+                    .mapValues {
+                        when (val value = it.value) {
+                            is JsonPrimitive -> value.contentOrNull
+                            is JsonArray -> value.map { el -> el.jsonPrimitive.contentOrNull }
+                            // skip nested objects for now
+                            //is JsonObject -> value.jsonObject.mapValues { el -> el.value.jsonPrimitive.contentOrNull }
+                            else -> null
+                        }
+                    }
             )
         }
     }
@@ -117,11 +124,12 @@ class AuthClient(
         TokenResponse.Error(e.response.body<TokenErrorResponse>(), e.response.status)
     }
 
-    suspend fun introspect(accessToken: String): TokenIntrospectionResponse =
-        httpClient.submitForm(config.tokenIntrospectionEndpoint, parameters {
+    suspend fun introspect(accessToken: String): TokenIntrospectionResponse {
+        return httpClient.submitForm(config.tokenIntrospectionEndpoint, parameters {
             set("token", accessToken)
             set("identity_provider", provider.alias)
         }).body()
+    }
 }
 
 class TexasAuthPluginConfiguration(

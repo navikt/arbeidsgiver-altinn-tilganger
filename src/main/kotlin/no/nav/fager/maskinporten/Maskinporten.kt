@@ -45,7 +45,7 @@ class Maskinporten(
 ) : RequiresReady {
     private val log = logger()
 
-    val maskinporten = AuthClient(texasAuthConfig, IdentityProvider.MASKINPORTEN)
+    private val maskinporten = AuthClient(texasAuthConfig, IdentityProvider.MASKINPORTEN)
 
     inner class Cache(
         val accessToken: String,
