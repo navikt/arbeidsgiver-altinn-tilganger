@@ -6,7 +6,7 @@ metadata:
   labels:
     team: fager
   annotations:
-    texas.nais.io: enabled
+    texas.nais.io/enabled: "true"
 spec:
   image: {{{ image }}}
 
