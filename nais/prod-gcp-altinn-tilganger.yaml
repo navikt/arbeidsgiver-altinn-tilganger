@@ -5,6 +5,8 @@ metadata:
   namespace: fager
   labels:
     team: fager
+  annotations:
+    texas.nais.io: enabled
 spec:
   image: {{{ image }}}
 
