@@ -4,8 +4,6 @@ import io.github.smiley4.ktorswaggerui.dsl.routing.get
 import io.github.smiley4.ktorswaggerui.dsl.routing.post
 import io.github.smiley4.ktorswaggerui.routing.openApiSpec
 import io.github.smiley4.ktorswaggerui.routing.swaggerUI
-import io.github.smiley4.schemakenerator.core.annotations.Description
-import io.github.smiley4.schemakenerator.core.annotations.Example
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
@@ -30,7 +28,6 @@ import io.micrometer.core.instrument.binder.logging.LogbackMetrics
 import io.micrometer.core.instrument.binder.system.FileDescriptorMetrics
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import no.nav.fager.AltinnTilgangerResponse.Companion.toResponse
@@ -223,13 +220,17 @@ fun Application.ktorConfig(
                 validate = { AutentisertM2MPrincipal.validate(it) }
             }
 
-            get("/whoami") {
+            get("/whoami", {
+                description = "Hvem er jeg autentisert som?"
+                protected = true // må si dette eksplisitt for at swagger skal få det med seg
+            }) {
                 val clientId = call.principal<AutentisertM2MPrincipal>()!!.clientId
                 call.respondText(Json.encodeToString(mapOf("clientId" to clientId)))
             }
 
             post("/altinn-tilganger", {
                 description = "Hent tilganger fra Altinn for en bruker på fnr autentisert som entra m2m."
+                protected = true // må si dette eksplisitt for at swagger skal få det med seg
                 request {
                     // todo document optional callid header
                     body<AltinnTilgangerM2MRequest>()
@@ -252,20 +253,32 @@ fun Application.ktorConfig(
             }
         }
 
-        route("/") {
+        route("/whoami") {
             // tokenx obo authentication
             install(TexasAuth) {
                 client = AuthClient(texasAuthConfig, IdentityProvider.TOKEN_X)
                 validate = { InnloggetBrukerPrincipal.validate(it) }
             }
 
-            get("/whoami") {
+            get({
+                description = "Hvem er jeg autentisert som?"
+                protected = true // må si dette eksplisitt for at swagger skal få det med seg
+            }) {
                 val clientId = call.principal<InnloggetBrukerPrincipal>()!!.clientId
                 call.respondText(Json.encodeToString(mapOf("clientId" to clientId)))
             }
+        }
 
-            post("/altinn-tilganger", {
+        route("altinn-tilganger") {
+            // tokenx obo authentication
+            install(TexasAuth) {
+                client = AuthClient(texasAuthConfig, IdentityProvider.TOKEN_X)
+                validate = { InnloggetBrukerPrincipal.validate(it) }
+            }
+
+            post({
                 description = "Hent tilganger fra Altinn for innlogget bruker."
+                protected = true // må si dette eksplisitt for at swagger skal få det med seg
                 request {
                     // todo document optional callid header
                 }
@@ -289,64 +302,6 @@ fun Application.ktorConfig(
     }
 }
 
-
-@Description("Brukerens tilganger til Altinn 2 og Altinn 3 for en organisasjon")
-@Serializable
-data class AltinnTilgang(
-    @Description("Organisasjonsnummer")
-    @Example("11223344")
-    val orgnr: String,
-    @Description("Tilganger til Altinn 3")
-    val altinn3Tilganger: Set<String>,
-    @Description("Tilganger til Altinn 2")
-    val altinn2Tilganger: Set<String>,
-    @Description("list av underenheter til denne organisasjonen hvor brukeren har tilganger")
-    val underenheter: List<AltinnTilgang>,
-    @Description("Navn på organisasjonen")
-    val navn: String,
-    @Description("Organisasjonsform. se https://www.brreg.no/bedrift/organisasjonsformer/")
-    @Example("BEDR")
-    val organisasjonsform: String,
-)
-
-@Serializable
-data class AltinnTilgangerResponse(
-    @Description("Om det var en feil ved henting av tilganger. Dersom denne er true kan det bety at ikke alle tilganger er hentet.")
-    val isError: Boolean,
-    @Description("Organisasjonshierarkiet med brukerens tilganger")
-    val hierarki: List<AltinnTilgang>,
-    @Description("Map fra organisasjonsnummer til tilganger. Convenience for å slå opp tilganger på orgnummer.")
-    val orgNrTilTilganger: Map<String, Set<String>>,
-    @Description("Map fra tilgang til organisasjonsnummer. Convenience for å slå opp orgnummer på tilgang.")
-    val tilgangTilOrgNr: Map<String, Set<String>>,
-) {
-    companion object {
-        fun AltinnService.AltinnTilgangerResultat.toResponse(): AltinnTilgangerResponse {
-            val orgNrTilTilganger: Map<String, Set<String>> =
-                this.altinnTilganger.flatMap { it.underenheter }
-                    .associate {
-                        it.orgnr to it.altinn2Tilganger + it.altinn3Tilganger
-                    }
-
-            val tilgangToOrgNr = orgNrTilTilganger.flatMap { (orgNr, tjenester) ->
-                tjenester.map { it to orgNr }
-            }.groupBy({ it.first }, { it.second }).mapValues { it.value.toSet() }
-
-
-            return AltinnTilgangerResponse(
-                isError = this.isError,
-                hierarki = this.altinnTilganger,
-                orgNrTilTilganger = orgNrTilTilganger,
-                tilgangTilOrgNr = tilgangToOrgNr,
-            )
-        }
-    }
-}
-
-@Serializable
-data class AltinnTilgangerM2MRequest(
-    val fnr: String,
-)
 
 private val clientTaggedTimerTimer = ConcurrentHashMap<String, Timer>()
 private fun withTimer(clientId: String): Timer =

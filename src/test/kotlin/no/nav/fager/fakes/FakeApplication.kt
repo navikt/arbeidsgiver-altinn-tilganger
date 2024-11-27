@@ -20,6 +20,29 @@ import no.nav.fager.redis.RedisConfig
 import no.nav.fager.texas.IdentityProvider
 import no.nav.fager.texas.TexasAuthConfig
 
+val mockOboTokens = mapOf(
+    "acr-high-11111111111" to mapOf(
+        "pid" to "11111111111",
+        "acr" to "idporten-loa-high",
+        "client_id" to "local:test",
+    ),
+    "acr-high-22222222222" to mapOf(
+        "pid" to "22222222222",
+        "acr" to "idporten-loa-high",
+        "client_id" to "local:test",
+    ),
+    "acr-low-33333333333" to mapOf(
+        "pid" to "33333333333",
+        "acr" to "idporten-loa-low",
+        "client_id" to "local:test",
+    ),
+//    trenger ikke teste audience validering da dette håndteres i texas
+//    "wrong-audience-44444444444" to mapOf(
+//        "active" to false,
+//        "pid" to "44444444444",
+//        "acr" to "idporten-loa-high",
+//    ),
+)
 
 class FakeApplication(
     private val port: Int = 0,
@@ -201,27 +224,3 @@ class FakeApplication(
         fakeTexas.errors.clear()
     }
 }
-
-val mockOboTokens = mapOf(
-    "acr-high-11111111111" to mapOf(
-        "pid" to "11111111111",
-        "acr" to "idporten-loa-high",
-        "client_id" to "local:test",
-    ),
-    "acr-high-22222222222" to mapOf(
-        "pid" to "22222222222",
-        "acr" to "idporten-loa-high",
-        "client_id" to "local:test",
-    ),
-    "acr-low-33333333333" to mapOf(
-        "pid" to "33333333333",
-        "acr" to "idporten-loa-low",
-        "client_id" to "local:test",
-    ),
-//    trenger ikke teste audience validering da dette håndteres i texas
-//    "wrong-audience-44444444444" to mapOf(
-//        "active" to false,
-//        "pid" to "44444444444",
-//        "acr" to "idporten-loa-high",
-//    ),
-)
