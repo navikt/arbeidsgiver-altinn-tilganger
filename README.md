@@ -27,7 +27,7 @@ lokalt med dev-gcp-oppsett):
     ```
 2. Kjør main fra filen [LocalApplication.kt](./src/test/kotlin/no/nav/fager/LocalApplication.kt)
 3. Gå til swagger-ui: http://localhost:8080/swagger-ui/index.html
-4. Tokens mot endepunktene kan hentes på samme måte som vi gjør det i unit-testene. Se [MockOauth2Server.kt](./src/test/kotlin/no/nav/fager/MockOauth2Server.kt).
+4. Tokens mot endepunktene kan hentes på samme måte som vi gjør det i unit-testene. Se [FakeApplication.kt](./src/test/kotlin/no/nav/fager/fakes/FakeApplication.kt).
 
 # Kjøre tester lokalt
 1. Start docker compose:

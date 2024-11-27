@@ -1,16 +1,6 @@
 ---
 version: '2'
 services:
-  oauth:
-    image: ghcr.io/navikt/mock-oauth2-server:2.1.8
-    ports:
-      - "9001:9001"
-    environment:
-      SERVER_PORT: "9001"
-      JSON_CONFIG_PATH: ./mock-oauth2-config.json
-    volumes:
-      - ./mock-oauth2-config.json:/mock-oauth2-config.json
-
   redis:
     image: redis:latest
     container_name: redis

@@ -12,6 +12,7 @@ import io.ktor.network.sockets.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import no.nav.fager.infrastruktur.defaultHttpClient
 import no.nav.fager.infrastruktur.logger
 import no.nav.fager.maskinporten.Maskinporten
 import javax.net.ssl.SSLHandshakeException
@@ -46,31 +47,8 @@ interface Altinn3Client {
 class Altinn3ClientImpl(
     val altinn3Config: Altinn3Config,
     val maskinporten: Maskinporten,
+    private val httpClient: HttpClient = defaultHttpClient()
 ) : Altinn3Client {
-    private val log = logger()
-
-    private val httpClient = HttpClient(CIO) {
-        expectSuccess = true
-        install(HttpRequestRetry) {
-            maxRetries = 3
-            retryOnExceptionIf { _, cause ->
-                cause is SocketTimeoutException ||
-                        cause is SSLHandshakeException
-            }
-
-            delayMillis { 250L }
-        }
-
-        install(ContentNegotiation) {
-            json(Json { ignoreUnknownKeys = true })
-        }
-
-        install(Logging) {
-            sanitizeHeader {
-                true
-            }
-        }
-    }
 
     override suspend fun resourceOwner_AuthorizedParties(fnr: String): Result<List<AuthorizedParty>> = runCatching {
         val httpResponse = httpClient.post {

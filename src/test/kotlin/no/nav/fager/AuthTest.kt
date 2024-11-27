@@ -1,13 +1,8 @@
 package no.nav.fager
 
-import io.ktor.client.request.get
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
-import io.ktor.http.ContentType
+import io.ktor.client.request.*
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.contentType
 import no.nav.fager.fakes.FakeApplication
-import no.nav.fager.fakes.authorization
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -49,7 +44,7 @@ class AuthTest {
     @Test
     fun `accepts authenticated call`() = app.runTest {
         client.get("/whoami") {
-            authorization(subject = "acr-high-11111111111")
+            header("Authorization", "Bearer acr-high-11111111111")
         }.apply {
             assertEquals(HttpStatusCode.OK, status)
         }
@@ -61,7 +56,7 @@ class AuthTest {
     @Test
     fun `rejects low authenticated call`() = app.runTest {
         client.get("/whoami") {
-            authorization(subject = "acr-low-33333333333")
+            header("Authorization", "Bearer acr-low-33333333333")
         }.apply {
             assertEquals(HttpStatusCode.Unauthorized, status)
         }
@@ -70,7 +65,7 @@ class AuthTest {
     @Test
     fun `rejects other autience call`() = app.runTest {
         client.get("/whoami") {
-            authorization("wrong-audience-44444444444")
+            header("Authorization", "Bearer wrong-audience-44444444444")
         }.apply {
             assertEquals(HttpStatusCode.Unauthorized, status)
         }

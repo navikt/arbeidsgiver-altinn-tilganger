@@ -2,60 +2,21 @@ package no.nav.fager.maskinporten
 
 import arrow.core.Either
 import arrow.core.raise.either
-import com.nimbusds.jose.JOSEObjectType
-import com.nimbusds.jose.JWSAlgorithm
-import com.nimbusds.jose.JWSHeader
-import com.nimbusds.jose.crypto.RSASSASigner
-import com.nimbusds.jose.jwk.RSAKey
-import com.nimbusds.jwt.JWTClaimsSet
-import com.nimbusds.jwt.SignedJWT
-import io.ktor.client.*
-import io.ktor.client.call.*
-import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.api.*
-import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
-import io.ktor.client.request.forms.*
-import io.ktor.client.statement.*
-import io.ktor.http.*
-import io.ktor.serialization.kotlinx.json.*
 import io.micrometer.core.instrument.Gauge
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
-import no.nav.fager.infrastruktur.Metrics
-import no.nav.fager.infrastruktur.RequiresReady
-import no.nav.fager.infrastruktur.logger
-import java.time.Instant
-import java.util.*
+import no.nav.fager.infrastruktur.*
+import no.nav.fager.texas.AuthClient
+import no.nav.fager.texas.IdentityProvider
+import no.nav.fager.texas.TexasAuthConfig
+import no.nav.fager.texas.TokenResponse
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.*
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
-
-
-class MaskinportenConfig(
-    val clientId: String,
-    val clientJwk: String,
-    val issuer: String,
-    val tokenEndpoint: String,
-) {
-    /** OBS: Verdien [clientJwk] er en *secret*. Pass på at den ikke blir logget! */
-    override fun toString() =
-        "Maskinporten(clientId: $clientId, clientJwk: SECRET, issuer: $issuer, tokenEndpoint: $tokenEndpoint)"
-
-    companion object {
-        fun nais() = MaskinportenConfig(
-            clientId = System.getenv("MASKINPORTEN_CLIENT_ID"),
-            clientJwk = System.getenv("MASKINPORTEN_CLIENT_JWK"),
-            issuer = System.getenv("MASKINPORTEN_ISSUER"),
-            tokenEndpoint = System.getenv("MASKINPORTEN_TOKEN_ENDPOINT"),
-        )
-    }
-}
 
 class MaskinportenPluginConfig(
     var maskinporten: Maskinporten? = null,
@@ -73,7 +34,7 @@ val MaskinportenPlugin = createClientPlugin("MaskinportenPlugin", ::Maskinporten
 
 @OptIn(ExperimentalTime::class)
 class Maskinporten(
-    private val maskinportenConfig: MaskinportenConfig,
+    texasAuthConfig: TexasAuthConfig,
 
     private val scope: String,
 
@@ -84,21 +45,7 @@ class Maskinporten(
 ) : RequiresReady {
     private val log = logger()
 
-    /* Implementasjon basert på nais-doc:
-     * https://doc.nais.io/auth/maskinporten/how-to/consume/#acquire-token
-     */
-    private val rsaKey = RSAKey.parse(maskinportenConfig.clientJwk)
-    private val signer = RSASSASigner(rsaKey.toPrivateKey())
-    private val header: JWSHeader = JWSHeader.Builder(JWSAlgorithm.RS256)
-        .keyID(rsaKey.keyID)
-        .type(JOSEObjectType.JWT)
-        .build()
-
-    private val httpClient = HttpClient(CIO) {
-        install(ContentNegotiation) {
-            json(Json { ignoreUnknownKeys = true })
-        }
-    }
+    val maskinporten = AuthClient(texasAuthConfig, IdentityProvider.MASKINPORTEN)
 
     inner class Cache(
         val accessToken: String,
@@ -181,46 +128,18 @@ class Maskinporten(
     }
 
     private suspend fun fetchToken(): Either<Throwable, Cache> = either {
-        val now = Instant.now()
-        val expiration = now + 1.minutes.toJavaDuration()
+        when (val response = maskinporten.token(scope)) {
+            is TokenResponse.Success -> Cache(
+                accessToken = response.accessToken,
+                expiresAt = timeSource.markNow() + response.expiresInSeconds.seconds,
+            )
 
-        val claims: JWTClaimsSet = JWTClaimsSet.Builder()
-            .issuer(maskinportenConfig.clientId)
-            .audience(maskinportenConfig.issuer)
-            .issueTime(Date.from(now))
-            .claim("scope", scope)
-            .expirationTime(Date.from(expiration))
-            .jwtID(UUID.randomUUID().toString())
-            .build()
-
-        val clientAssertion = SignedJWT(header, claims)
-            .apply { sign(signer) }
-            .serialize()
-
-        val httpResponse = httpClient.submitForm(
-            url = maskinportenConfig.tokenEndpoint,
-            formParameters = parameters {
-                append("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer")
-                append("assertion", clientAssertion)
-            }
-        ) {
-            accept(ContentType.Application.Json)
-        }
-
-        if (!httpResponse.status.isSuccess()) {
-            /* Ikke error siden det er retrylogikk. For alerts, så lager vi heller metric på expiration time. */
-            raise(
+            is TokenResponse.Error -> raise(
                 RuntimeException(
-                    "request for token from maskinporten failed with http status ${httpResponse.status}: ${httpResponse.bodyAsText()}"
+                    "request for token from maskinporten failed with http status ${response.status}: ${response.error}"
                 )
             )
         }
-        val body = httpResponse.body<TokenEndpointResponse>()
-
-        Cache(
-            accessToken = body.accessToken,
-            expiresAt = timeSource.markNow() + body.expiresIn.seconds,
-        )
     }
 
 
@@ -234,16 +153,4 @@ class Maskinporten(
     }
 
     override fun isReady() = cache.get() != null
-}
-
-@Serializable
-class TokenEndpointResponse(
-    @SerialName("access_token")
-    val accessToken: String,
-
-    @SerialName("expires_in")
-    val expiresIn: Long,
-) {
-    /* NB: accessToken en en secret, gjør det vanskelig å printe med en feil. */
-    override fun toString() = "TokenEndpointResponse(accessToken: SECRET, expiresIn: $expiresIn)"
 }
