@@ -4,9 +4,10 @@ import io.micrometer.core.instrument.Counter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.serialization.Serializable
-import no.nav.fager.redis.AltinnTilgangerRedisClient
+import no.nav.fager.AltinnTilgang
 import no.nav.fager.infrastruktur.Metrics
 import no.nav.fager.infrastruktur.coRecord
+import no.nav.fager.redis.AltinnTilgangerRedisClient
 
 
 class AltinnService(

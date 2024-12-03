@@ -1,3 +1,5 @@
+package no.nav.fager.executable
+
 import no.nav.fager.fakes.FakeApplication
 
 fun main() {

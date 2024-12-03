@@ -1,19 +1,14 @@
 package no.nav.fager.executable
 
-import io.ktor.server.cio.CIO
-import io.ktor.server.engine.embeddedServer
-import io.ktor.util.decodeBase64String
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
+import io.ktor.server.cio.*
+import io.ktor.server.engine.*
+import io.ktor.util.*
+import kotlinx.serialization.json.*
 import no.nav.fager.altinn.Altinn2Config
 import no.nav.fager.altinn.Altinn3Config
-import no.nav.fager.infrastruktur.AuthConfig
-import no.nav.fager.maskinporten.MaskinportenConfig
-import no.nav.fager.redis.RedisConfig
+import no.nav.fager.texas.TexasAuthConfig
 import no.nav.fager.ktorConfig
+import no.nav.fager.redis.RedisConfig
 import java.util.concurrent.TimeUnit
 
 
@@ -23,8 +18,7 @@ fun main() {
         "can't find $prefix secrets :'("
     }
 
-    val tokenx = getSecrets(findResourceName("tokenx-arbeidsgiver-altinn-tilganger"))
-    val maskinporten = getSecrets(findResourceName("maskinporten-arbeidsgiver-altinn-tilganger"))
+    val texas = getEnvVars("NAIS_TOKEN_")
     val redis = getSecrets(findResourceName("aiven-arbeidsgiver-altinn-tilganger"))
     val altinnTilganger = getSecrets("altinn-tilganger")
 
@@ -38,19 +32,13 @@ fun main() {
                 baseUrl = "https://tt02.altinn.no",
                 apiKey = altinnTilganger["ALTINN_2_API_KEY"]!!,
             ),
-            authConfig = AuthConfig(
-                clientId = tokenx["TOKEN_X_CLIENT_ID"]!!,
-                issuer = tokenx["TOKEN_X_ISSUER"]!!,
-                jwksUri = tokenx["TOKEN_X_JWKS_URI"]!!,
+            texasAuthConfig = TexasAuthConfig(
+                tokenEndpoint = texas["NAIS_TOKEN_ENDPOINT"]!!,
+                tokenExchangeEndpoint = texas["NAIS_TOKEN_EXCHANGE_ENDPOINT"]!!,
+                tokenIntrospectionEndpoint = texas["NAIS_TOKEN_INTROSPECTION_ENDPOINT"]!!,
             ).also {
                 println(it)
             },
-            maskinportenConfig = MaskinportenConfig(
-                clientId = maskinporten["MASKINPORTEN_CLIENT_ID"]!!,
-                clientJwk = maskinporten["MASKINPORTEN_CLIENT_JWK"]!!,
-                issuer = maskinporten["MASKINPORTEN_ISSUER"]!!,
-                tokenEndpoint = maskinporten["MASKINPORTEN_TOKEN_ENDPOINT"]!!,
-            ).also { println(it) },
             redisConfig = RedisConfig(
                 uri = redis["REDIS_URI_TILGANGER"]!!,
                 username = redis["REDIS_USERNAME_TILGANGER"]!!,
@@ -89,6 +77,25 @@ private fun getSecrets(secretName: String) =
     exec(*kubectl, "get", "secret", secretName, "-o", "jsonpath={@.data}").let {
         Json.decodeFromString<Map<String, String>>(it)
             .mapValues { e -> e.value.decodeBase64String() }
+    }
+
+private fun getEnvVars(envVarPrefix: String) =
+    exec(
+        *kubectl,
+        "get",
+        "deployment",
+        "arbeidsgiver-altinn-tilganger",
+        "-o",
+        "jsonpath={@.spec.template.spec.containers[?(@.name=='arbeidsgiver-altinn-tilganger')].env}"
+    ).let {
+        Json.decodeFromString<List<Map<String, JsonElement>>>(it)
+            .filter { entries ->
+                entries.containsKey("value")
+                        && entries["name"]?.jsonPrimitive?.content?.startsWith(envVarPrefix) == true
+            }
+            .associate { entries ->
+                entries["name"]?.jsonPrimitive?.content to entries["value"]?.jsonPrimitive?.content
+            }
     }
 
 

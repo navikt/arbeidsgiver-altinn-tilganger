@@ -1,20 +1,14 @@
 package no.nav.fager.altinn
 
-import io.ktor.client.*
 import io.ktor.client.call.*
-import io.ktor.client.engine.cio.*
-import io.ktor.client.plugins.*
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.client.plugins.logging.*
 import io.ktor.client.request.*
 import io.ktor.http.*
-import io.ktor.network.sockets.*
-import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
-import no.nav.fager.infrastruktur.logger
-import no.nav.fager.maskinporten.Maskinporten
-import javax.net.ssl.SSLHandshakeException
+import no.nav.fager.infrastruktur.defaultHttpClient
+import no.nav.fager.texas.AuthClient
+import no.nav.fager.texas.IdentityProvider
+import no.nav.fager.texas.TexasAuthClientPlugin
+import no.nav.fager.texas.TexasAuthConfig
 
 class Altinn3Config(
     val baseUrl: String,
@@ -31,49 +25,34 @@ class Altinn3Config(
     }
 }
 
+@Suppress("FunctionName")
 interface Altinn3Client {
     suspend fun resourceOwner_AuthorizedParties(fnr: String): Result<List<AuthorizedParty>>
-
     suspend fun resourceRegistry_PolicySubjects(resourceId: String): Result<List<PolicySubject>>
 }
 
-/** Swagger for api:
- * https://docs.altinn.studio/api/accessmanagement/resourceowneropenapi/#/Authorized%20Parties/post_resourceowner_authorizedparties
- *
- * Se også:
- * https://docs.altinn.studio/nb/authorization/guides/integrating-link-service/
- **/
+
 class Altinn3ClientImpl(
     val altinn3Config: Altinn3Config,
-    val maskinporten: Maskinporten,
+    val texasAuthConfig: TexasAuthConfig,
 ) : Altinn3Client {
-    private val log = logger()
 
-    private val httpClient = HttpClient(CIO) {
-        expectSuccess = true
-        install(HttpRequestRetry) {
-            maxRetries = 3
-            retryOnExceptionIf { _, cause ->
-                cause is SocketTimeoutException ||
-                        cause is SSLHandshakeException
-            }
-
-            delayMillis { 250L }
-        }
-
-        install(ContentNegotiation) {
-            json(Json { ignoreUnknownKeys = true })
-        }
-
-        install(Logging) {
-            sanitizeHeader {
-                true
-            }
+    private val resourceOwnerClient = defaultHttpClient {
+        install(TexasAuthClientPlugin) {
+            authClient = AuthClient(texasAuthConfig, IdentityProvider.MASKINPORTEN)
+            fetchToken = { it.token("altinn:accessmanagement/authorizedparties.resourceowner") }
         }
     }
 
+    /**
+     * Swagger for api:
+     * https://docs.altinn.studio/api/accessmanagement/resourceowneropenapi/#/Authorized%20Parties/post_resourceowner_authorizedparties
+     *
+     * Se også:
+     * https://docs.altinn.studio/nb/authorization/guides/integrating-link-service/
+     **/
     override suspend fun resourceOwner_AuthorizedParties(fnr: String): Result<List<AuthorizedParty>> = runCatching {
-        val httpResponse = httpClient.post {
+        val httpResponse = resourceOwnerClient.post {
             url {
                 takeFrom(altinn3Config.baseUrl)
                 appendPathSegments("/accessmanagement/api/v1/resourceowner/authorizedparties")
@@ -81,7 +60,6 @@ class Altinn3ClientImpl(
             }
             accept(ContentType.Application.Json)
             contentType(ContentType.Application.Json)
-            bearerAuth(maskinporten.accessToken())
             header("ocp-apim-subscription-key", altinn3Config.ocpApimSubscriptionKey)
             setBody(
                 mapOf(
@@ -94,8 +72,10 @@ class Altinn3ClientImpl(
         httpResponse.body()
     }
 
+    private val resourceRegistryClient = defaultHttpClient()
+
     override suspend fun resourceRegistry_PolicySubjects(resourceId: String) = runCatching {
-        val httpResponse = httpClient.get {
+        val httpResponse = resourceRegistryClient.get {
             url {
                 takeFrom(altinn3Config.baseUrl)
                 appendPathSegments("/resourceregistry/api/v1/resource/$resourceId/policy/subjects")

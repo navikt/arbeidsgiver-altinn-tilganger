@@ -1,60 +1,9 @@
-package no.nav.fager.altinn
+package no.nav.fager
 
-import io.github.smiley4.ktorswaggerui.dsl.routing.post
 import io.github.smiley4.schemakenerator.core.annotations.Description
 import io.github.smiley4.schemakenerator.core.annotations.Example
-import io.github.smiley4.schemakenerator.core.annotations.Deprecated
-import io.ktor.http.*
-import io.ktor.server.application.*
-import io.ktor.server.auth.*
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
-import io.micrometer.core.instrument.Timer
 import kotlinx.serialization.Serializable
-import no.nav.fager.infrastruktur.InloggetBrukerPrincipal
-import no.nav.fager.altinn.AltinnTilgangerResponse.Companion.toResponse
-import no.nav.fager.infrastruktur.Metrics
-import no.nav.fager.infrastruktur.coRecord
-import java.util.concurrent.ConcurrentHashMap
-
-private val clientTaggedTimerTimer = ConcurrentHashMap<String, Timer>()
-private fun withTimer(clientId: String): Timer =
-    clientTaggedTimerTimer.computeIfAbsent(clientId) {
-        Timer.builder("altinn_tilganger_responsetid")
-            .tag("klientapp", it)
-            .publishPercentileHistogram()
-            .register(Metrics.meterRegistry)
-    }
-
-fun Route.routeAltinnTilganger(altinnService: AltinnService) {
-    authenticate {
-        // TODO: it may be useful to be able to set a filter with service/resource (and optionally orgnr) as input
-        // a lot of other teams often only care about a single service/resource
-
-        post("/altinn-tilganger", {
-            description = "Hent tilganger fra Altinn for innlogget bruker."
-            request {
-                // todo document optional callid header
-            }
-            response {
-                HttpStatusCode.OK to {
-                    description = "Successful Request"
-                    body<AltinnTilgangerResponse> {
-                        exampleRef("Successful Respons", "tilganger_success")
-                    }
-                }
-            }
-        }) {
-            val fnr = call.principal<InloggetBrukerPrincipal>()!!.fnr
-            val clientId = call.principal<InloggetBrukerPrincipal>()!!.clientId
-            withTimer(clientId).coRecord {
-                val tilganger = altinnService.hentTilganger(fnr, this)
-                call.respond(tilganger.toResponse())
-            }
-        }
-    }
-}
-
+import no.nav.fager.altinn.AltinnService
 
 @Description("Brukerens tilganger til Altinn 2 og Altinn 3 for en organisasjon")
 @Serializable
@@ -108,3 +57,8 @@ data class AltinnTilgangerResponse(
         }
     }
 }
+
+@Serializable
+data class AltinnTilgangerM2MRequest(
+    val fnr: String,
+)

@@ -6,6 +6,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.server.cio.CIOApplicationEngine
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import no.nav.fager.infrastruktur.logger
 
 fun CIOApplicationEngine.startAndWaitUntilReady() {
     start()
@@ -13,6 +14,7 @@ fun CIOApplicationEngine.startAndWaitUntilReady() {
 }
 
 fun CIOApplicationEngine.waitUntilReady() {
+    val log = logger()
     val port = runBlocking {
         resolvedConnectors().first().port
     }
@@ -21,7 +23,7 @@ fun CIOApplicationEngine.waitUntilReady() {
     suspend fun isAlive() = runCatching {
         client.get("http://localhost:$port/internal/isready").status == HttpStatusCode.OK
     }.getOrElse {
-        println("not alive yet: $it")
+        log.warn("not alive yet: $it")
         false
     }
 

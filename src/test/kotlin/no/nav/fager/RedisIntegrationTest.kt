@@ -4,9 +4,7 @@ import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.codec.StringCodec
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
-import no.nav.fager.altinn.AltinnService
 import no.nav.fager.altinn.AltinnService.AltinnTilgangerResultat
-import no.nav.fager.altinn.AltinnTilgang
 import no.nav.fager.redis.*
 import java.util.UUID
 import kotlin.test.Test

@@ -1,26 +1,16 @@
 package no.nav.fager
 
-import io.ktor.client.call.body
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.call.*
+import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
-import io.ktor.client.statement.bodyAsText
-import io.ktor.http.ContentType
+import io.ktor.http.*
 import io.ktor.http.HttpMethod.Companion.Get
 import io.ktor.http.HttpMethod.Companion.Post
-import io.ktor.http.HttpStatusCode
-import io.ktor.http.contentType
-import io.ktor.serialization.kotlinx.json.json
-import io.ktor.server.application.call
-import io.ktor.server.response.respondText
+import io.ktor.serialization.kotlinx.json.*
+import io.ktor.server.application.*
+import io.ktor.server.response.*
 import kotlinx.serialization.json.Json
-import no.nav.fager.altinn.AltinnTilgangerResponse
 import no.nav.fager.fakes.FakeApplication
-import no.nav.fager.fakes.authorization
-import org.junit.Before
-import org.junit.BeforeClass
-import org.skyscreamer.jsonassert.JSONAssert
-import org.skyscreamer.jsonassert.JSONCompareMode
-import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -41,6 +31,7 @@ class AltinnTilgangerTest {
     fun `henter altinn tilganger`() = app.runTest {
         app.altinn3Response(Post, "/accessmanagement/api/v1/resourceowner/authorizedparties") {
             call.respondText(
+                //language=json
                 """
                 [
                   {
@@ -111,6 +102,7 @@ class AltinnTilgangerTest {
             )
         }
         val altinn2Responses = mutableListOf(
+            //language=json
             """
             [
                 {
@@ -123,6 +115,7 @@ class AltinnTilgangerTest {
                 }
             ]
             """,
+            //language=json
             """
             [
                 {
@@ -146,7 +139,7 @@ class AltinnTilgangerTest {
         }
 
         val tilganger: AltinnTilgangerResponse = client.post("/altinn-tilganger") {
-            authorization(subject = "acr-high-11111111111")
+            header("Authorization", "Bearer acr-high-11111111111")
             contentType(ContentType.Application.Json)
         }.apply {
             assertEquals(HttpStatusCode.OK, status)

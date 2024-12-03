@@ -6,8 +6,8 @@ import io.github.smiley4.ktorswaggerui.data.AuthType
 import io.github.smiley4.ktorswaggerui.data.SchemaConfigData
 import io.ktor.http.*
 import io.ktor.server.application.*
-import no.nav.fager.altinn.AltinnTilgang
-import no.nav.fager.altinn.AltinnTilgangerResponse
+import no.nav.fager.AltinnTilgang
+import no.nav.fager.AltinnTilgangerResponse
 
 fun Application.swaggerDocumentation() {
     install(SwaggerUI) {
@@ -20,10 +20,12 @@ fun Application.swaggerDocumentation() {
                 for brukeren.
                 
                 ## Hvordan du kaller dev-gcp-api-et fra denne siden
-                For at du skal kunne kalle dev-gcp-api-et vårt direkte her fra swagger, må du: 
+                For at du skal kunne kalle dev-gcp-api-et vårt direkte her fra swagger, må du lage en [developer token](https://doc.nais.io/auth/entra-id/how-to/generate/): 
                 1. Åpn i nettleseren: 
-                [https://tokenx-token-generator.intern.dev.nav.no/api/obo?aud=dev-gcp:fager:arbeidsgiver-altinn-tilganger&acr=idporten-loa-high](
-                https://tokenx-token-generator.intern.dev.nav.no/api/obo?aud=dev-gcp:fager:arbeidsgiver-altinn-tilganger&acr=idporten-loa-high).
+                  a) for obo-token:
+                    [https://tokenx-token-generator.intern.dev.nav.no/api/obo?aud=dev-gcp:fager:arbeidsgiver-altinn-tilganger&acr=idporten-loa-high](https://tokenx-token-generator.intern.dev.nav.no/api/obo?aud=dev-gcp:fager:arbeidsgiver-altinn-tilganger&acr=idporten-loa-high).
+                  b) for m2m-token:
+                    [https://azure-token-generator.intern.dev.nav.no/api/m2m?aud=dev-gcp:fager:arbeidsgiver-altinn-tilganger](https://azure-token-generator.intern.dev.nav.no/api/m2m?aud=dev-gcp:fager:arbeidsgiver-altinn-tilganger).
                 2. Logg inn med *test*-brukeren du ønsker token for. 
                 3. Kopier ut tokenet fra `"access_token"`-feltet. Ikke ta med fnuttene (`"`).
                 4. Klikk på *Authorize*-knappen nede til høyre, lim inn tokenet, og trykk på *Authorize* og *Close*.
