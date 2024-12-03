@@ -34,7 +34,6 @@ import no.nav.fager.AltinnTilgangerResponse.Companion.toResponse
 import no.nav.fager.altinn.*
 import no.nav.fager.doc.swaggerDocumentation
 import no.nav.fager.infrastruktur.*
-import no.nav.fager.maskinporten.Maskinporten
 import no.nav.fager.redis.AltinnTilgangerRedisClientImpl
 import no.nav.fager.redis.RedisConfig
 import no.nav.fager.texas.AuthClient
@@ -44,7 +43,6 @@ import no.nav.fager.texas.TexasAuthConfig
 import org.slf4j.event.Level
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.time.ExperimentalTime
 
 fun main() {
     embeddedServer(CIO, port = 8080, host = "0.0.0.0", module = {
@@ -142,28 +140,14 @@ fun Application.ktorConfig(
 
     swaggerDocumentation()
 
-    @OptIn(ExperimentalTime::class)
-    val maskinportenA3 = Maskinporten(
-        texasAuthConfig = texasAuthConfig,
-        scope = "altinn:accessmanagement/authorizedparties.resourceowner",
-        backgroundCoroutineScope = this,
-    ).also { Health.register(it) }
-
-    @OptIn(ExperimentalTime::class)
-    val maskinportenA2 = Maskinporten(
-        texasAuthConfig = texasAuthConfig,
-        scope = "altinn:serviceowner/reportees",
-        backgroundCoroutineScope = this,
-    ).also { Health.register(it) }
-
     val altinn2Client = Altinn2ClientImpl(
         altinn2Config = altinn2Config,
-        maskinporten = maskinportenA2,
+        texasAuthConfig = texasAuthConfig,
     )
 
     val altinn3Client = Altinn3ClientImpl(
         altinn3Config = altinn3Config,
-        maskinporten = maskinportenA3,
+        texasAuthConfig = texasAuthConfig,
     )
 
     val resourceRegistry = ResourceRegistry(

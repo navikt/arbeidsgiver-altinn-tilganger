@@ -2,33 +2,24 @@ package no.nav.fager
 
 import io.ktor.client.*
 import io.ktor.client.engine.mock.*
-import io.ktor.client.request.get
+import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.testTimeSource
 import no.nav.fager.fakes.FakeApi
 import no.nav.fager.fakes.fake
-import no.nav.fager.maskinporten.Maskinporten
-import no.nav.fager.maskinporten.MaskinportenPlugin
-import no.nav.fager.texas.TexasAuthConfig
-import no.nav.fager.texas.TokenResponse
-import java.util.concurrent.atomic.AtomicInteger
+import no.nav.fager.texas.*
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.collections.lastOrNull
+import kotlin.collections.set
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
-import kotlin.time.Duration.Companion.hours
-import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalCoroutinesApi::class, ExperimentalTime::class)
-class MaskinportenTest {
+class TexasTest {
     companion object {
-        private val callCount = AtomicInteger(0)
         private val token = AtomicReference("")
 
         @org.junit.ClassRule
@@ -39,7 +30,6 @@ class MaskinportenTest {
     @Test
     fun `plugin legger på token`() = runTest {
         fakeTexas.stubs[HttpMethod.Post to "/token"] = {
-            callCount.incrementAndGet()
             call.respondText(
                 //language=json
                 """
@@ -52,13 +42,7 @@ class MaskinportenTest {
             )
         }
 
-        val maskinporten = Maskinporten(
-            texasAuthConfig = TexasAuthConfig.fake(fakeTexas),
-            scope = "1234",
-            backgroundCoroutineScope = null,
-            timeSource = testTimeSource,
-        )
-
+        val texasAuthConfig = TexasAuthConfig.fake(fakeTexas)
 
         val fakeProtectedAPiEndpoint = MockEngine(MockEngineConfig().apply {
             addHandler {
@@ -71,50 +55,23 @@ class MaskinportenTest {
         })
 
         val httpClient = HttpClient(fakeProtectedAPiEndpoint) {
-            install(MaskinportenPlugin) {
-                this.maskinporten = maskinporten
+            install(TexasAuthClientPlugin) {
+                authClient = AuthClient(texasAuthConfig, IdentityProvider.MASKINPORTEN)
+                fetchToken = { it.token("1234") }
             }
         }
 
         token.set("first_token")
-        maskinporten.refreshTokenIfNeeded()
-
-        assertEquals(1, callCount.get(), "One call to maskinporten on initial refresh")
-
         httpClient.get("/some/protected/endpoint")
-
-        assertEquals(1, callCount.get(), "Still only one call to maskinporten because of caching")
         assertNotNull(fakeProtectedAPiEndpoint.requestHistory.lastOrNull()).apply {
             assertEquals("Bearer first_token", headers["authorization"])
         }
 
         token.set("second_token")
-
-        httpClient.get("/some/protected/endpoint")
-        assertEquals(1, callCount.get(), "Still only one call to maskinporten because of caching")
-        assertNotNull(fakeProtectedAPiEndpoint.requestHistory.lastOrNull()).apply {
-            assertEquals("Bearer first_token", headers["authorization"])
-        }
-
-        advanceTimeBy(1.hours)
-        maskinporten.refreshTokenIfNeeded()
-
-        assertEquals(
-            2,
-            callCount.get(),
-            "Expect two calls to maskinporten, as first token has expired."
-        )
-
         httpClient.get("/some/protected/endpoint")
         assertNotNull(fakeProtectedAPiEndpoint.requestHistory.lastOrNull()).apply {
             assertEquals("Bearer second_token", headers["authorization"])
         }
-
-        assertEquals(
-            2,
-            callCount.get(),
-            "Still two calls to maskinporten, because of caching."
-        )
     }
 
     @Test

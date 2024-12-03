@@ -1,33 +1,29 @@
 package no.nav.fager.altinn
 
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.engine.cio.CIO
+import io.ktor.client.*
+import io.ktor.client.call.*
+import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.*
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.logging.Logging
-import io.ktor.client.request.accept
-import io.ktor.client.request.get
-import io.ktor.client.request.header
+import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.client.plugins.logging.*
+import io.ktor.client.request.*
 import io.ktor.http.*
-import io.ktor.network.sockets.SocketTimeoutException
-import io.ktor.serialization.kotlinx.json.json
+import io.ktor.network.sockets.*
+import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.flatMapMerge
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.flow.*
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import no.nav.fager.infrastruktur.basedOnEnv
-import no.nav.fager.maskinporten.Maskinporten
-import no.nav.fager.maskinporten.MaskinportenPlugin
 import no.nav.fager.infrastruktur.logger
+import no.nav.fager.texas.AuthClient
+import no.nav.fager.texas.IdentityProvider
+import no.nav.fager.texas.TexasAuthClientPlugin
+import no.nav.fager.texas.TexasAuthConfig
 import javax.net.ssl.SSLHandshakeException
 
 class Altinn2Config(
@@ -66,7 +62,7 @@ interface Altinn2Client {
 
 class Altinn2ClientImpl(
     val altinn2Config: Altinn2Config,
-    val maskinporten: Maskinporten,
+    val texasAuthConfig: TexasAuthConfig,
 ) : Altinn2Client {
     private val log = logger()
 
@@ -84,8 +80,9 @@ class Altinn2ClientImpl(
             delayMillis { 250L }
         }
 
-        install(MaskinportenPlugin) {
-            maskinporten = this@Altinn2ClientImpl.maskinporten
+        install(TexasAuthClientPlugin) {
+            authClient = AuthClient(texasAuthConfig, IdentityProvider.MASKINPORTEN)
+            fetchToken = { it.token("altinn:serviceowner/reportees") }
         }
 
         install(ContentNegotiation) {

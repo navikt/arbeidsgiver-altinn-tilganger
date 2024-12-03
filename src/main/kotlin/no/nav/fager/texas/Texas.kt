@@ -3,6 +3,8 @@ package no.nav.fager.texas
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.*
+import io.ktor.client.plugins.api.*
+import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -187,6 +189,27 @@ val TexasAuth = createRouteScopedPlugin(
     }
 
     log.info("TexasAuth plugin loaded.")
+}
+
+class TexasAuthClientPluginConfig(
+    var authClient: AuthClient? = null,
+    var fetchToken: (suspend (AuthClient) -> TokenResponse)? = null,
+)
+
+val TexasAuthClientPlugin = createClientPlugin("TexasAuthClientPlugin", ::TexasAuthClientPluginConfig) {
+    val authClient = requireNotNull(pluginConfig.authClient) {
+        "TexasAuthClientPlugin: property 'authClient' must be set in configuration when installing plugin"
+    }
+    val fetchToken = requireNotNull(pluginConfig.fetchToken) {
+        "TexasAuthClientPlugin: property 'fetchToken' must be set in configuration when installing plugin"
+    }
+
+    onRequest { request, _ ->
+        when (val token = fetchToken(authClient)) {
+            is TokenResponse.Success -> request.bearerAuth(token.accessToken)
+            is TokenResponse.Error -> throw Exception("Failed to fetch token: ${token.error}")
+        }
+    }
 }
 
 fun ApplicationCall.bearerToken(): String? =
