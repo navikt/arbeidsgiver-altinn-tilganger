@@ -105,34 +105,20 @@ class AuthClient(
     private val httpClient: HttpClient = defaultHttpClient(),
 ) {
 
-    /**
-     * NB: texas caches tokens by default.
-     * If using an in-app cache, the skipCache must be set to true to avoid token exipry being misenterpreted.
-     */
-    suspend fun token(target: String, skipCache: Boolean = true): TokenResponse = try {
+    suspend fun token(target: String): TokenResponse = try {
         httpClient.submitForm(config.tokenEndpoint, parameters {
             set("target", target)
             set("identity_provider", provider.alias)
-            if (skipCache) {
-                set("skip_cache", "true")
-            }
         }).body<TokenResponse.Success>()
     } catch (e: ResponseException) {
         TokenResponse.Error(e.response.body<TokenErrorResponse>(), e.response.status)
     }
 
-    /**
-     * NB: texas caches tokens by default.
-     * If using an in-app cache, the skipCache must be set to true to avoid token exipry being misenterpreted.
-     */
-    suspend fun exchange(target: String, userToken: String, skipCache: Boolean = true): TokenResponse = try {
+    suspend fun exchange(target: String, userToken: String): TokenResponse = try {
         httpClient.submitForm(config.tokenExchangeEndpoint, parameters {
             set("target", target)
             set("user_token", userToken)
             set("identity_provider", provider.alias)
-            if (skipCache) {
-                set("skip_cache", "true")
-            }
         }).body<TokenResponse.Success>()
     } catch (e: ResponseException) {
         TokenResponse.Error(e.response.body<TokenErrorResponse>(), e.response.status)
