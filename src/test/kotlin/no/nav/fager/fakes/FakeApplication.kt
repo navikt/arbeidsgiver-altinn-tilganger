@@ -11,6 +11,7 @@ import io.ktor.server.cio.CIO
 import io.ktor.server.engine.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
+import io.ktor.server.routing.*
 import io.ktor.util.pipeline.*
 import kotlinx.coroutines.runBlocking
 import no.nav.fager.altinn.Altinn2Config
@@ -166,7 +167,7 @@ class FakeApplication(
         server.waitUntilReady()
 
         val port = runBlocking {
-            server.resolvedConnectors().first().port
+            server.engine.resolvedConnectors().first().port
         }
 
         val client = HttpClient(io.ktor.client.engine.cio.CIO) {
@@ -200,7 +201,7 @@ class FakeApplication(
     fun altinn3Response(
         httpMethod: HttpMethod,
         path: String,
-        handlePost: (suspend PipelineContext<Unit, ApplicationCall>.(Any) -> Unit)
+        handlePost: (suspend RoutingContext.(Any) -> Unit)
     ) {
         fakeAltinn3Api.stubs[httpMethod to path] = handlePost
         fakeAltinn3Api.errors.clear()
@@ -209,7 +210,7 @@ class FakeApplication(
     fun altinn2Response(
         httpMethod: HttpMethod,
         path: String,
-        handlePost: (suspend PipelineContext<Unit, ApplicationCall>.(Any) -> Unit)
+        handlePost: (suspend RoutingContext.(Any) -> Unit)
     ) {
         fakeAltinn2Api.stubs[httpMethod to path] = handlePost
         fakeAltinn2Api.errors.clear()
@@ -218,7 +219,7 @@ class FakeApplication(
     fun texasResponse(
         httpMethod: HttpMethod,
         path: String,
-        handlePost: (suspend PipelineContext<Unit, ApplicationCall>.(Any) -> Unit)
+        handlePost: (suspend RoutingContext.(Any) -> Unit)
     ) {
         fakeTexas.stubs[httpMethod to path] = handlePost
         fakeTexas.errors.clear()

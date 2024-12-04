@@ -4,19 +4,21 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.cio.CIOApplicationEngine
+import io.ktor.server.engine.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import no.nav.fager.infrastruktur.logger
 
-fun CIOApplicationEngine.startAndWaitUntilReady() {
+
+fun EmbeddedServer<CIOApplicationEngine, CIOApplicationEngine.Configuration>.startAndWaitUntilReady() {
     start()
     waitUntilReady()
 }
 
-fun CIOApplicationEngine.waitUntilReady() {
+fun EmbeddedServer<CIOApplicationEngine, CIOApplicationEngine.Configuration>.waitUntilReady() {
     val log = logger()
     val port = runBlocking {
-        resolvedConnectors().first().port
+        engine.resolvedConnectors().first().port
     }
 
     val client = HttpClient(io.ktor.client.engine.cio.CIO)

@@ -15,8 +15,8 @@
         <kotlin.compiler.incremental>false</kotlin.compiler.incremental>
         <kotlin.code.style>official</kotlin.code.style>
 
-        <ktor_version>2.3.12</ktor_version>
-        <kotlin_version>2.0.10</kotlin_version>
+        <ktor_version>3.0.0</ktor_version>
+        <kotlin_version>2.0.21</kotlin_version>
         <kotlinx_coroutines_version>1.8.1</kotlinx_coroutines_version>
         <schema_kenerator_version>1.2.2</schema_kenerator_version>
     </properties>

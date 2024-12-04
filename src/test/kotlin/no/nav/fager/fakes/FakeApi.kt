@@ -1,23 +1,17 @@
 package no.nav.fager.fakes
 
-import io.ktor.http.HttpMethod
-import io.ktor.http.HttpStatusCode
+import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
-import io.ktor.server.application.ApplicationCall
-import io.ktor.server.application.call
-import io.ktor.server.application.install
-import io.ktor.server.cio.CIO
-import io.ktor.server.engine.embeddedServer
-import io.ktor.server.plugins.callloging.CallLogging
+import io.ktor.server.application.*
+import io.ktor.server.cio.*
+import io.ktor.server.engine.*
+import io.ktor.server.plugins.calllogging.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.request.path
-import io.ktor.server.response.respond
-import io.ktor.server.routing.get
-import io.ktor.server.routing.post
-import io.ktor.server.routing.routing
-import io.ktor.util.pipeline.PipelineContext
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
+import io.ktor.util.pipeline.*
 import kotlinx.coroutines.runBlocking
-import no.nav.fager.altinn.Altinn2Config
 import no.nav.fager.texas.TexasAuthConfig
 import org.slf4j.event.Level
 import kotlin.test.fail
@@ -30,7 +24,7 @@ fun TexasAuthConfig.Companion.fake(fake: FakeApi) = TexasAuthConfig(
 
 class FakeApi : org.junit.rules.ExternalResource() {
 
-    val stubs = mutableMapOf<Pair<HttpMethod, String>, (suspend PipelineContext<Unit, ApplicationCall>.(Any) -> Unit)>()
+    val stubs = mutableMapOf<Pair<HttpMethod, String>, (suspend RoutingContext.(Any) -> Unit)>()
 
     val errors = mutableListOf<Throwable>()
 
@@ -64,7 +58,7 @@ class FakeApi : org.junit.rules.ExternalResource() {
             post("{...}") {
                 stubs[HttpMethod.Post to call.request.path()]?.let { handler ->
                     try {
-                        handler(it)
+                        handler(this)
                     } catch (e: Exception) {
                         errors.add(e)
                         throw e
@@ -75,7 +69,7 @@ class FakeApi : org.junit.rules.ExternalResource() {
             get("{...}") {
                 stubs[HttpMethod.Get to call.request.path()]?.let { handler ->
                     try {
-                        handler(it)
+                        handler(this)
                     } catch (e: Exception) {
                         errors.add(e)
                         throw e
@@ -94,7 +88,7 @@ class FakeApi : org.junit.rules.ExternalResource() {
 
     val port
         get() = runBlocking {
-            server.resolvedConnectors().first().port
+            server.engine.resolvedConnectors().first().port
         }
 
 }
