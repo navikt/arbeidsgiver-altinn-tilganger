@@ -19,6 +19,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import no.nav.fager.infrastruktur.basedOnEnv
+import no.nav.fager.infrastruktur.defaultHttpClient
 import no.nav.fager.infrastruktur.logger
 import no.nav.fager.texas.AuthClient
 import no.nav.fager.texas.IdentityProvider
@@ -66,36 +67,14 @@ class Altinn2ClientImpl(
 ) : Altinn2Client {
     private val log = logger()
 
-    @OptIn(ExperimentalSerializationApi::class)
-    private val httpClient = HttpClient(CIO) {
-        expectSuccess = true
-        install(HttpRequestRetry) {
-            maxRetries = 3
-            retryOnExceptionIf { _, cause ->
-                cause is SocketTimeoutException ||
-                        cause is SSLHandshakeException ||
-                        cause is ClosedReceiveChannelException
-            }
-
-            delayMillis { 250L }
-        }
-
+    private val httpClient = defaultHttpClient {
         install(TexasAuthClientPlugin) {
             authClient = AuthClient(texasAuthConfig, IdentityProvider.MASKINPORTEN)
             fetchToken = { it.token("altinn:serviceowner/reportees") }
         }
 
-        install(ContentNegotiation) {
-            json(Json {
-                ignoreUnknownKeys = true
-                explicitNulls = false
-            })
-        }
-
-        install(Logging) {
-            sanitizeHeader {
-                true
-            }
+        install(HttpTimeout) {
+            requestTimeoutMillis = 30_000
         }
     }
 
@@ -337,7 +316,8 @@ private val tjenester = listOf(
         serviceName = "Tiltakstjenester",
         serviceEditionName = "Avtale om inkluderingstilskudd",
     ),
-    Altinn2TjenesteDefinisjon( //TODO: denne kan også fjernes når vi migrerer til altinn3 ressurs
+    Altinn2TjenesteDefinisjon(
+        //TODO: denne kan også fjernes når vi migrerer til altinn3 ressurs
         serviceCode = "5810",
         serviceEdition = "1",
         serviceName = "Innsyn i permittering- og nedbemanningsmeldinger sendt til NAV",
