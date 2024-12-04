@@ -1,9 +1,9 @@
 package no.nav.fager
 
-import io.github.smiley4.ktorswaggerui.dsl.routing.get
-import io.github.smiley4.ktorswaggerui.dsl.routing.post
-import io.github.smiley4.ktorswaggerui.routing.openApiSpec
-import io.github.smiley4.ktorswaggerui.routing.swaggerUI
+//import io.github.smiley4.ktorswaggerui.dsl.routing.get
+//import io.github.smiley4.ktorswaggerui.dsl.routing.post
+//import io.github.smiley4.ktorswaggerui.routing.openApiSpec
+//import io.github.smiley4.ktorswaggerui.routing.swaggerUI
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
@@ -32,7 +32,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import no.nav.fager.AltinnTilgangerResponse.Companion.toResponse
 import no.nav.fager.altinn.*
-import no.nav.fager.doc.swaggerDocumentation
+//import no.nav.fager.doc.swaggerDocumentation
 import no.nav.fager.infrastruktur.*
 import no.nav.fager.redis.AltinnTilgangerRedisClientImpl
 import no.nav.fager.redis.RedisConfig
@@ -138,7 +138,7 @@ fun Application.ktorConfig(
         json()
     }
 
-    swaggerDocumentation()
+    //swaggerDocumentation()
 
     val altinn2Client = Altinn2ClientImpl(
         altinn2Config = altinn2Config,
@@ -186,17 +186,17 @@ fun Application.ktorConfig(
             }
         }
 
-        get("/", {
-            hidden = true
-        }) {
-            call.respondRedirect("/swagger-ui/index.html")
-        }
-        route("api.json") {
-            openApiSpec()
-        }
-        route("swagger-ui") {
-            swaggerUI("/api.json")
-        }
+//        get("/", {
+//            hidden = true
+//        }) {
+//            call.respondRedirect("/swagger-ui/index.html")
+//        }
+//        route("api.json") {
+//            openApiSpec()
+//        }
+//        route("swagger-ui") {
+//            swaggerUI("/api.json")
+//        }
 
         route("/m2m") {
             install(TexasAuth) {
@@ -204,34 +204,34 @@ fun Application.ktorConfig(
                 validate = { AutentisertM2MPrincipal.validate(it) }
             }
 
-            get("/whoami", {
-                description = "Hvem er jeg autentisert som?"
-                protected = true // må si dette eksplisitt for at swagger skal få det med seg
-            }) {
+            get("/whoami") {
+            //    description = "Hvem er jeg autentisert som?"
+            //    protected = true // må si dette eksplisitt for at swagger skal få det med seg
+            //}) {
                 val clientId = call.principal<AutentisertM2MPrincipal>()!!.clientId
                 call.respondText(Json.encodeToString(mapOf("clientId" to clientId)))
             }
 
-            post("/altinn-tilganger", {
-                description = "Hent tilganger fra Altinn for en bruker på fnr autentisert som entra m2m."
-                protected = true // må si dette eksplisitt for at swagger skal få det med seg
-                request {
-                    // todo document optional callid header
-                    body<AltinnTilgangerM2MRequest>()
-                }
-                response {
-                    HttpStatusCode.OK to {
-                        description = "Successful Request"
-                        body<AltinnTilgangerResponse> {
-                            exampleRef("Successful Respons", "tilganger_success")
-                        }
-                    }
-                }
-            }) {
+            post("/altinn-tilganger") {
+//                description = "Hent tilganger fra Altinn for en bruker på fnr autentisert som entra m2m."
+//                protected = true // må si dette eksplisitt for at swagger skal få det med seg
+//                request {
+//                    // todo document optional callid header
+//                    body<AltinnTilgangerM2MRequest>()
+//                }
+//                response {
+//                    HttpStatusCode.OK to {
+//                        description = "Successful Request"
+//                        body<AltinnTilgangerResponse> {
+//                            exampleRef("Successful Respons", "tilganger_success")
+//                        }
+//                    }
+//                }
+//            }) {
                 val clientId = call.principal<AutentisertM2MPrincipal>()!!.clientId
                 val fnr = call.receive<AltinnTilgangerM2MRequest>().fnr
                 withTimer(clientId).coRecord {
-                    val tilganger = altinnService.hentTilganger(fnr, this)
+                    val tilganger = altinnService.hentTilganger(fnr, call)
                     call.respond(tilganger.toResponse())
                 }
             }
@@ -244,10 +244,7 @@ fun Application.ktorConfig(
                 validate = { InnloggetBrukerPrincipal.validate(it) }
             }
 
-            get({
-                description = "Hvem er jeg autentisert som?"
-                protected = true // må si dette eksplisitt for at swagger skal få det med seg
-            }) {
+            get {
                 val clientId = call.principal<InnloggetBrukerPrincipal>()!!.clientId
                 call.respondText(Json.encodeToString(mapOf("clientId" to clientId)))
             }
@@ -260,25 +257,11 @@ fun Application.ktorConfig(
                 validate = { InnloggetBrukerPrincipal.validate(it) }
             }
 
-            post({
-                description = "Hent tilganger fra Altinn for innlogget bruker."
-                protected = true // må si dette eksplisitt for at swagger skal få det med seg
-                request {
-                    // todo document optional callid header
-                }
-                response {
-                    HttpStatusCode.OK to {
-                        description = "Successful Request"
-                        body<AltinnTilgangerResponse> {
-                            exampleRef("Successful Respons", "tilganger_success")
-                        }
-                    }
-                }
-            }) {
+            post {
                 val fnr = call.principal<InnloggetBrukerPrincipal>()!!.fnr
                 val clientId = call.principal<InnloggetBrukerPrincipal>()!!.clientId
                 withTimer(clientId).coRecord {
-                    val tilganger = altinnService.hentTilganger(fnr, this)
+                    val tilganger = altinnService.hentTilganger(fnr, call)
                     call.respond(tilganger.toResponse())
                 }
             }

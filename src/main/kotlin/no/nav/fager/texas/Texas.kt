@@ -10,10 +10,10 @@ import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.request.*
-import io.ktor.server.response.*
 import kotlinx.serialization.*
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.json.*
+import no.nav.fager.infrastruktur.Principal
 import no.nav.fager.infrastruktur.defaultHttpClient
 import no.nav.fager.infrastruktur.logger
 
@@ -154,7 +154,7 @@ val TexasAuth = createRouteScopedPlugin(
             is AuthenticationFailedCause.InvalidCredentials -> log.info("unauthenticated: InvalidCredentials")
         }
 
-        call.respond(HttpStatusCode.Unauthorized)
+        call.response.status(HttpStatusCode.Unauthorized)
     }
 
     pluginConfig.apply {

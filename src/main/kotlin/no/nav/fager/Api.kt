@@ -1,7 +1,7 @@
 package no.nav.fager
 
-import io.github.smiley4.schemakenerator.core.annotations.Description
-import io.github.smiley4.schemakenerator.core.annotations.Example
+//import io.github.smiley4.schemakenerator.core.annotations.Description
+//import io.github.smiley4.schemakenerator.core.annotations.Example
 import kotlinx.serialization.Serializable
 import no.nav.fager.altinn.AltinnService
 
@@ -23,6 +23,10 @@ data class AltinnTilgang(
     @Example("BEDR")
     val organisasjonsform: String,
 )
+
+annotation class Example(val value: String)
+
+annotation class Description(val value: String)
 
 @Serializable
 data class AltinnTilgangerResponse(

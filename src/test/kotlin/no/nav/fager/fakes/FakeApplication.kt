@@ -20,6 +20,9 @@ import no.nav.fager.ktorConfig
 import no.nav.fager.redis.RedisConfig
 import no.nav.fager.texas.IdentityProvider
 import no.nav.fager.texas.TexasAuthConfig
+import org.junit.jupiter.api.extension.AfterAllCallback
+import org.junit.jupiter.api.extension.BeforeAllCallback
+import org.junit.jupiter.api.extension.ExtensionContext
 
 val mockOboTokens = mapOf(
     "acr-high-11111111111" to mapOf(
@@ -48,7 +51,8 @@ val mockOboTokens = mapOf(
 class FakeApplication(
     private val port: Int = 0,
     private val clientConfig: HttpClientConfig<CIOEngineConfig>.() -> Unit = {}
-) : org.junit.rules.ExternalResource() {
+) : BeforeAllCallback, AfterAllCallback {
+
     private val fakeAltinn3Api = FakeApi().also {
         it.stubs[
             // når det kommer flere ressurser i KnownResources, må det legges til flere svar eller støtte for wildcards i fakeapi
@@ -155,19 +159,15 @@ class FakeApplication(
 
     private var testContext: TestContext? = null
 
-    public override fun before() {
-        start(wait = false)
-    }
-
-    fun start(wait: Boolean = false) {
+    fun start(wait: Boolean = false) = runBlocking {
         fakeTexas.start()
         fakeAltinn3Api.start()
         fakeAltinn2Api.start()
-        server.start(wait = wait)
-        server.waitUntilReady()
+        server.application.engine.startSuspend(wait = wait)
+        server.application.engine.waitUntilReady()
 
         val port = runBlocking {
-            server.engine.resolvedConnectors().first().port
+            server.application.engine.resolvedConnectors().first().port
         }
 
         val client = HttpClient(io.ktor.client.engine.cio.CIO) {
@@ -180,7 +180,11 @@ class FakeApplication(
         testContext = TestContext(client)
     }
 
-    public override fun after() {
+    override fun beforeAll(ctx: ExtensionContext) {
+        start(wait = false)
+    }
+
+    override fun afterAll(ctx: ExtensionContext) {
         server.stop()
         fakeTexas.stop()
         fakeAltinn3Api.stop()

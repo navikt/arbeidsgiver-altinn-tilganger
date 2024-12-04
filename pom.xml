@@ -15,10 +15,10 @@
         <kotlin.compiler.incremental>false</kotlin.compiler.incremental>
         <kotlin.code.style>official</kotlin.code.style>
 
-        <ktor_version>3.0.0</ktor_version>
-        <kotlin_version>2.0.21</kotlin_version>
-        <kotlinx_coroutines_version>1.8.1</kotlinx_coroutines_version>
-        <schema_kenerator_version>1.2.2</schema_kenerator_version>
+        <ktor_version>3.0.1</ktor_version>
+        <kotlin_version>2.1.0</kotlin_version>
+        <kotlinx_coroutines_version>1.9.0</kotlinx_coroutines_version>
+        <schema_kenerator_version>1.6.0</schema_kenerator_version>
     </properties>
 
     <dependencies>
@@ -97,21 +97,21 @@
         </dependency>
 
         <!-- openapi -->
-        <dependency>
-            <groupId>io.github.smiley4</groupId>
-            <artifactId>ktor-swagger-ui</artifactId>
-            <version>3.3.1</version>
-        </dependency>
-        <dependency>
-            <groupId>io.github.smiley4</groupId>
-            <artifactId>schema-kenerator-core</artifactId>
-            <version>${schema_kenerator_version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.github.smiley4</groupId>
-            <artifactId>schema-kenerator-reflection</artifactId>
-            <version>${schema_kenerator_version}</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>io.github.smiley4</groupId>-->
+<!--            <artifactId>ktor-swagger-ui</artifactId>-->
+<!--            <version>4.1.0</version>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>io.github.smiley4</groupId>-->
+<!--            <artifactId>schema-kenerator-core</artifactId>-->
+<!--            <version>${schema_kenerator_version}</version>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>io.github.smiley4</groupId>-->
+<!--            <artifactId>schema-kenerator-reflection</artifactId>-->
+<!--            <version>${schema_kenerator_version}</version>-->
+<!--        </dependency>-->
 
         <!-- ktor client -->
         <dependency>
@@ -141,6 +141,12 @@
             <artifactId>ktor-serialization-kotlinx-json-jvm</artifactId>
             <version>${ktor_version}</version>
         </dependency>
+        <dependency>
+            <!-- file not found kotlinx/io/unsafe/UnsafeBufferOperations -->
+            <groupId>org.jetbrains.kotlinx</groupId>
+            <artifactId>kotlinx-io-core-jvm</artifactId>
+            <version>0.6.0</version>
+        </dependency>
 
         <!-- observability -->
         <dependency>
@@ -159,13 +165,6 @@
             <version>1.5.6</version>
         </dependency>
 
-        <!-- JWT -->
-        <dependency>
-            <groupId>com.nimbusds</groupId>
-            <artifactId>nimbus-jose-jwt</artifactId>
-            <version>9.40</version>
-        </dependency>
-
         <!-- observability -->
         <dependency>
             <groupId>io.micrometer</groupId>
@@ -177,14 +176,14 @@
         <dependency>
             <groupId>io.lettuce</groupId>
             <artifactId>lettuce-core</artifactId>
-            <version>6.3.2.RELEASE</version>
+            <version>6.5.1.RELEASE</version>
         </dependency>
 
         <!-- test -->
         <dependency>
             <groupId>org.jetbrains.kotlinx</groupId>
             <artifactId>kotlinx-coroutines-test</artifactId>
-            <version>1.9.0-RC</version>
+            <version>1.9.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -195,7 +194,7 @@
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-test-junit</artifactId>
+            <artifactId>kotlin-test-junit5</artifactId>
             <version>${kotlin_version}</version>
             <scope>test</scope>
         </dependency>
@@ -208,7 +207,7 @@
         <dependency>
             <groupId>org.jetbrains.kotlinx</groupId>
             <artifactId>kotlinx-coroutines-debug</artifactId>
-            <version>1.6.4</version>
+            <version>${kotlinx_coroutines_version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -320,6 +319,14 @@
                 <configuration>
                     <source>21</source>
                     <target>21</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.5.2</version>
+                <configuration>
+                    <failIfNoTests>true</failIfNoTests>
                 </configuration>
             </plugin>
         </plugins>

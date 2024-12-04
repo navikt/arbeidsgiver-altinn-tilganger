@@ -7,17 +7,17 @@ import io.ktor.http.*
 import io.ktor.http.HttpMethod.Companion.Get
 import io.ktor.http.HttpMethod.Companion.Post
 import io.ktor.serialization.kotlinx.json.*
-import io.ktor.server.application.*
 import io.ktor.server.response.*
 import kotlinx.serialization.json.Json
 import no.nav.fager.fakes.FakeApplication
+import org.junit.jupiter.api.extension.RegisterExtension
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class AltinnTilgangerTest {
     companion object {
         @JvmField
-        @org.junit.ClassRule
+        @RegisterExtension
         val app = FakeApplication(
             clientConfig = {
                 install(ContentNegotiation) {
