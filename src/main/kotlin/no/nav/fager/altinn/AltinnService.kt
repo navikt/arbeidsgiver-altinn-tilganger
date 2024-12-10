@@ -20,6 +20,11 @@ class AltinnService(
     private val cacheHit = Counter.builder("altinnservice.cache").tag("result", "hit").register(Metrics.meterRegistry)
     private val cacheMiss = Counter.builder("altinnservice.cache").tag("result", "miss").register(Metrics.meterRegistry)
 
+    // Midlertidige metrikker som måler om migrering fra Altinn2 til Altinn3 er blitt korrekt. https://trello.com/c/2MNaHFmd/125-legg-til-metrikk-i-tilgagner-proxy-som-sier-hvor-mange-som-har-f%C3%A5tt-nye-ressursen-eksplisitt-delegert
+    private val harKunAltinn2Tilgang = Counter.builder("altinnservice.brukertilganger").tag("result", "harKunAltinn2Tilgang").register(Metrics.meterRegistry)
+    private val harKunAltinn3Tilgang = Counter.builder("altinnservice.brukertilganger").tag("result", "harKunAltinn3Tilgang").register(Metrics.meterRegistry)
+    private val harAltinn2ogAltinn3Tilgang = Counter.builder("altinnservice.brukertilganger").tag("result", "harAltinn2ogAltinn3Tilgang").register(Metrics.meterRegistry)
+
     suspend fun hentTilganger(fnr: String, scope: CoroutineScope) =
         redisClient.get(fnr)?.also {
             cacheHit.increment()
@@ -91,6 +96,7 @@ class AltinnService(
                 if (party.organizationNumber == null || party.unitType == null || party.isDeleted) {
                     null
                 } else {
+                    registrerAltinn3MigreringsMetrikker(party, altinn2Tilganger)
                     AltinnTilgang(
                         orgnr = party.organizationNumber, // alle orgnr finnes i altinn3 pga includeAltinn2=true
                         navn = party.name,
@@ -103,6 +109,29 @@ class AltinnService(
                     )
                 }
             }
+    }
+
+    // Metrikker som måler om en bruker har tilgang til kun Altinn2 tjeneste
+    // eller både Altinn3 ressurs og Altinn2 tjeneste for permittering og nedbemmaning.
+    // Vi måler dette for alle organisasjoner som en bruker har tilgang til.
+    private fun registrerAltinn3MigreringsMetrikker(party: AuthorizedParty, altinn2Tilganger: Altinn2Tilganger) {
+        val harAltinn2 = altinn2Tilganger.orgNrTilTjenester[party.organizationNumber]?.any {
+            it == Altinn2Tjeneste(
+                "5810",
+                "1"
+            )
+        } == true
+        val harAltinn3 = party.authorizedResources.contains("nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger")
+
+        if (harAltinn2 && harAltinn3){
+            harAltinn2ogAltinn3Tilgang.increment()
+        }
+        else if (harAltinn3){
+            harKunAltinn3Tilgang.increment()
+        }
+        else if (harAltinn2){
+            harKunAltinn2Tilgang.increment()
+        }
     }
 
     @Serializable
