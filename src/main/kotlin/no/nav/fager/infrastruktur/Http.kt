@@ -20,7 +20,8 @@ fun defaultHttpClient(
         retryOnExceptionIf { _, cause ->
             cause is SocketTimeoutException ||
                     cause is SSLHandshakeException ||
-                    cause is ClosedReceiveChannelException
+                    cause is ClosedReceiveChannelException ||
+                    cause is HttpRequestTimeoutException
         }
 
         delayMillis { 250L }

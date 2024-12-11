@@ -12,12 +12,9 @@ import io.ktor.network.sockets.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.flow.*
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import no.nav.fager.infrastruktur.basedOnEnv
 import no.nav.fager.infrastruktur.defaultHttpClient
 import no.nav.fager.infrastruktur.logger
@@ -25,7 +22,6 @@ import no.nav.fager.texas.AuthClient
 import no.nav.fager.texas.IdentityProvider
 import no.nav.fager.texas.TexasAuthClientPlugin
 import no.nav.fager.texas.TexasAuthConfig
-import javax.net.ssl.SSLHandshakeException
 
 class Altinn2Config(
     val baseUrl: String,
@@ -74,7 +70,7 @@ class Altinn2ClientImpl(
         }
 
         install(HttpTimeout) {
-            requestTimeoutMillis = 30_000
+            requestTimeoutMillis = 10_000
         }
     }
 
@@ -109,7 +105,8 @@ class Altinn2ClientImpl(
         )
     }
 
-    /** Viktig om personvern: Dette endepunktet hos Altinn forventer fødselsnummer som et query-parameter. Det fører
+    /**
+     * Viktig om personvern: Dette endepunktet hos Altinn forventer fødselsnummer som et query-parameter. Det fører
      * til ekstra risiko for at NAVs infrastruktur eller våre biblioteker logger fødselsnummeret.
      *
      * 1. Vi maskerer fødselsnummer i denne appen sine logger (se klassen [MaskingAppender]).
