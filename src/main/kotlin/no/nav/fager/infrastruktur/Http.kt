@@ -9,6 +9,7 @@ import io.ktor.network.sockets.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.serialization.json.Json
+import java.io.EOFException
 import javax.net.ssl.SSLHandshakeException
 
 fun defaultHttpClient(
@@ -18,10 +19,15 @@ fun defaultHttpClient(
     install(HttpRequestRetry) {
         maxRetries = 3
         retryOnExceptionIf { _, cause ->
-            cause is SocketTimeoutException ||
-                    cause is SSLHandshakeException ||
-                    cause is ClosedReceiveChannelException ||
-                    cause is HttpRequestTimeoutException
+            when (cause) {
+                is SocketTimeoutException,
+                is EOFException,
+                is SSLHandshakeException,
+                is ClosedReceiveChannelException,
+                is HttpRequestTimeoutException -> true
+
+                else -> false
+            }
         }
 
         delayMillis { 250L }
