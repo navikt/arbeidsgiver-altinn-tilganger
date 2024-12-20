@@ -35,7 +35,11 @@ spec:
 
   envFrom:
     - secret: altinn-tilganger
-  
+
+  azure:
+    application:
+      enabled: true
+
   tokenx:
     enabled: true
 
