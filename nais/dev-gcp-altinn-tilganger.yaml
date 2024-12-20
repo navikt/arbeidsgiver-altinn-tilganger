@@ -39,7 +39,8 @@ spec:
     - secret: altinn-tilganger
 
   azure:
-    enabled: true
+    application:
+      enabled: true
 
   tokenx:
     enabled: true
