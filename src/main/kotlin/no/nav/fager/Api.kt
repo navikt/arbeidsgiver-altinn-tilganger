@@ -4,6 +4,8 @@ import io.github.smiley4.schemakenerator.core.annotations.Description
 import io.github.smiley4.schemakenerator.core.annotations.Example
 import kotlinx.serialization.Serializable
 import no.nav.fager.altinn.AltinnService
+import no.nav.fager.altinn.KnownAltinn2Tjenester
+import no.nav.fager.altinn.KnownResourceIds
 
 @Description("Brukerens tilganger til Altinn 2 og Altinn 3 for en organisasjon")
 @Serializable
@@ -58,7 +60,51 @@ data class AltinnTilgangerResponse(
     }
 }
 
+@Description(
+    """
+Filter for hvilke tilganger som skal hentes. Dersom flere filter er angitt tolkes dette som logisk OR.
+Trenger dere en annen logikk kan dere kontakte teamet så kan vi prioritere å støtte det.
+    """
+)
+@Serializable
+data class Filter(
+    @Description("Filter for hvilke tilganger som skal hentes")
+    val altinn2Tilganger: Set<String> = emptySet(),
+    val altinn3Tilganger: Set<String> = emptySet(),
+) {
+    init {
+        altinn2Tilganger.forEach {
+            require(KnownAltinn2Tjenester.contains(it)) {
+                "Invalid value in Altinn 2 filter '$it'. Valid Altinn 2 filters: $KnownAltinn2Tjenester"
+            }
+        }
+        altinn3Tilganger.forEach {
+            require(KnownResourceIds.contains(it)) {
+                "Invalid value in Altinn 3 filter '$it'. Valid Altinn 3 filters: $KnownResourceIds"
+            }
+        }
+    }
+
+    val isEmpty: Boolean
+        get() = altinn2Tilganger.isEmpty() && altinn3Tilganger.isEmpty()
+
+    companion object {
+        val empty = Filter(emptySet(), emptySet())
+    }
+}
+
+@Serializable
+sealed class AltinnTilgangerRequestBase {
+    abstract val filter: Filter
+}
+
+@Serializable
+data class AltinnTilgangerRequest(
+    override val filter: Filter = Filter.empty,
+) : AltinnTilgangerRequestBase()
+
 @Serializable
 data class AltinnTilgangerM2MRequest(
     val fnr: String,
-)
+    override val filter: Filter = Filter.empty,
+) : AltinnTilgangerRequestBase()

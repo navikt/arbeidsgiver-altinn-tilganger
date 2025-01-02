@@ -11,6 +11,7 @@ import io.ktor.server.auth.*
 import io.ktor.server.cio.*
 import io.ktor.server.engine.*
 import io.ktor.server.metrics.micrometer.*
+import io.ktor.server.plugins.*
 import io.ktor.server.plugins.callid.*
 import io.ktor.server.plugins.callloging.*
 import io.ktor.server.plugins.compression.*
@@ -78,8 +79,19 @@ fun Application.ktorConfig(
 
     install(StatusPages) {
         exception<Throwable> { call, cause ->
-            log.error("Unexpected exception at ktor-toplevel: {}", cause.javaClass.canonicalName, cause)
-            call.respond(HttpStatusCode.InternalServerError)
+            when (cause) {
+                is IllegalArgumentException,
+                is BadRequestException,
+                    -> call.respondText(
+                    text = "${HttpStatusCode.BadRequest}: $cause",
+                    status = HttpStatusCode.BadRequest
+                )
+
+                else -> {
+                    log.error("Unexpected exception at ktor-toplevel: {}", cause.javaClass.canonicalName, cause)
+                    call.respond(HttpStatusCode.InternalServerError)
+                }
+            }
         }
     }
 
@@ -229,10 +241,15 @@ fun Application.ktorConfig(
                 }
             }) {
                 val clientId = call.principal<AutentisertM2MPrincipal>()!!.clientId
-                val fnr = call.receive<AltinnTilgangerM2MRequest>().fnr
+                val (fnr, filter) = call.receive<AltinnTilgangerM2MRequest>()
                 withTimer(clientId).coRecord {
-                    val tilganger = altinnService.hentTilganger(fnr, this)
-                    call.respond(tilganger.toResponse())
+                    call.respond(
+                        altinnService.hentTilganger(
+                            fnr = fnr,
+                            filter = filter,
+                            scope = this
+                        ).toResponse()
+                    )
                 }
             }
         }
@@ -265,6 +282,7 @@ fun Application.ktorConfig(
                 protected = true // må si dette eksplisitt for at swagger skal få det med seg
                 request {
                     // todo document optional callid header
+                    body<AltinnTilgangerRequest>()
                 }
                 response {
                     HttpStatusCode.OK to {
@@ -277,9 +295,26 @@ fun Application.ktorConfig(
             }) {
                 val fnr = call.principal<InnloggetBrukerPrincipal>()!!.fnr
                 val clientId = call.principal<InnloggetBrukerPrincipal>()!!.clientId
+                val filter = call.receiveText().let {
+                    /**
+                     * since filter is optional, and only parameter we need to support posts with empty body
+                     * receive<AltinnTilgangerRequest>() will throw if body is empty,
+                     * so we go via text and parse manually
+                     */
+                    if (it.isBlank()) {
+                        Filter.empty
+                    } else {
+                        Json.decodeFromString(AltinnTilgangerRequest.serializer(), it).filter
+                    }
+                }
                 withTimer(clientId).coRecord {
-                    val tilganger = altinnService.hentTilganger(fnr, this)
-                    call.respond(tilganger.toResponse())
+                    call.respond(
+                        altinnService.hentTilganger(
+                            fnr = fnr,
+                            filter = filter,
+                            scope = this
+                        ).toResponse()
+                    )
                 }
             }
         }

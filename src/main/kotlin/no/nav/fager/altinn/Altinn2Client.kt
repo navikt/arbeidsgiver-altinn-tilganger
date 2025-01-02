@@ -1,15 +1,9 @@
 package no.nav.fager.altinn
 
-import io.ktor.client.*
 import io.ktor.client.call.*
-import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.*
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.client.plugins.logging.*
 import io.ktor.client.request.*
 import io.ktor.http.*
-import io.ktor.network.sockets.*
-import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -79,7 +73,9 @@ class Altinn2ClientImpl(
      */
     @OptIn(ExperimentalCoroutinesApi::class)
     override suspend fun hentAltinn2Tilganger(fnr: String): Altinn2Tilganger {
-        val reportees: List<ReporteeResult> = tjenester.asFlow()
+        val reportees: List<ReporteeResult> = tjenester
+            //TODO .filter { filter.isEmpty() || "${it.serviceCode}:${it.serviceEdition}" in filter }
+            .asFlow()
             .flowOn(Dispatchers.IO)
             .flatMapMerge { tjeneste ->
                 flow {
@@ -325,3 +321,5 @@ private val tjenester = listOf(
         serviceName = "Forebygge fravær",
     ),
 )
+
+val KnownAltinn2Tjenester = tjenester.map { "${it.serviceCode}:${it.serviceEdition}" }

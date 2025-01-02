@@ -5,7 +5,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import no.nav.fager.infrastruktur.RequiresReady
-import no.nav.fager.infrastruktur.basedOnEnv
 import no.nav.fager.infrastruktur.logger
 import no.nav.fager.redis.RedisConfig
 import no.nav.fager.redis.RedisLoadingCache
@@ -21,6 +20,8 @@ val KnownResources = listOfNotNull(
         altinn2Tjeneste = listOf(Altinn2Tjeneste("5810", "1"))
     )
 )
+
+val KnownResourceIds = KnownResources.map { it.resourceId }
 
 class ResourceRegistry(
     private val altinn3Client: Altinn3Client,
