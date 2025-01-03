@@ -63,12 +63,23 @@ data class AltinnTilgangerResponse(
 @Description(
     """
 Filter for hvilke tilganger som skal hentes. Dersom flere filter er angitt tolkes dette som logisk OR.
-Trenger dere en annen logikk kan dere kontakte teamet så kan vi prioritere å støtte det.
+Trenger dere en annen logikk kan dere kontakte teamet så kan vi prioritere å støtte det. 
+
+Filterne har et hardkodet sett med gyldige verdier. 
+Dersom dere angir en verdi utenfor det gyldige settet vil det returneres en HTTP 400 feil som angir den ugyldige verdien, samt hva som er tillatt.
+Gyldige verdier varierer i dev og prod for noen servicecode/version kombinasjoner. Derfor er de ikke dokumentert her.
+De gyldige verdiene finner dere i kildekoden: https://github.com/navikt/arbeidsgiver-altinn-tilganger/blob/main/src/main/kotlin/no/nav/fager/altinn/ResourceRegistry.kt#L18. 
+KnownAltinn2Tjenester (altinn2) og KnownResourceIds (altinn3)  
+
+Dersom dere trenger andre verdier kan dere kontakte teamet så legger vi dem til.
+
+Til slutt en liten caveat: Filtrering gjøres på løvnoder/virksomheter. Her antas det at overordnede enhet ikke har tilganger som ikke er delegert til en av sine underenheter.
+Dette er en antakelse vi har gjort basert på observasjoner i dev. Dersom det viser seg at tjenester delegeres ekspisitt på overordnet nivå kan det føre til at filtreringen vil returnere overordnet enhet som laveste nivå.
+Dette er noe vi overvåker og vil endre dersom det viser seg at det forekommer. 
     """
 )
 @Serializable
 data class Filter(
-    @Description("Filter for hvilke tilganger som skal hentes")
     val altinn2Tilganger: Set<String> = emptySet(),
     val altinn3Tilganger: Set<String> = emptySet(),
 ) {

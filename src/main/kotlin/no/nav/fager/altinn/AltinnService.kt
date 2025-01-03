@@ -35,10 +35,7 @@ class AltinnService(
                     redisClient.set(fnr, it)
                 }
             }
-        }.let {
-            // TODO: filter recursive if filter is not empty
-            it.filter(filter)
-        }
+        }.filter(filter)
 
     private suspend fun hentTilgangerFraAltinn(
         fnr: String,
@@ -54,7 +51,7 @@ class AltinnService(
                 altinn3tilganger.addAuthorizedResourcesRecursive { party ->
                     // adds all resources from the resource registry for the roles the party has
                     // this must be done prior to mapping to Altinn2 services
-                    party.authorizedRolesAsUrn.flatMap { // TODO: replace with party.authorizedRoles.flatMap when api returns urns
+                    party.authorizedRolesAsUrn.flatMap { // TODO: replace with party.authorizedRoles.flatMap when new altinn api returns urns
                         resourceRegistry.getResourceIdForPolicySubject(it)
                     }.toSet()
                 }
@@ -121,6 +118,7 @@ class AltinnService(
         fun filter(filter: Filter) = if (filter.isEmpty) {
             this
         } else {
+            // TODO: metrikk / log.error dersom filter ender med å eksponere en overordnet enhet som laveste nivå.
             AltinnTilgangerResultat(
                 isError,
                 altinnTilganger.filterRecursive(filter)
@@ -129,15 +127,24 @@ class AltinnService(
     }
 }
 
-private fun List<AltinnTilgang>.filterRecursive(filter: Filter): List<AltinnTilgang> {
-    return map { it.copy(underenheter = it.underenheter.filterRecursive(filter)) }
+/**
+ * Filtrerer rekursivt basert på angitt filter.
+ * Her antas det at vi kun skal filtrere på løvnoder (virksomheter) og ikke på overenheter.
+ * Dvs. at vi ikke forventer at en tjeneste kun er delegert på et overordnet nivå.
+ * Dersom det er tilfelle kan det være at en overordnet enhet returneres som laveste nivå.
+ * Oss bekjent gjør Nav tiolgangsstyring på virksomheter.
+ * Vi ser ingen tilfeller av dette i dev, men det betyr ikke at det ikke forekommer.
+ *
+ * Dersom det viser seg at det blir et problem bør man endre logikken her slik at overordnet nivå fjernes dersom
+ * alle løvnoder fjernes basert på filter, uavhenig av om overordnet nivå har tilgangen definert eller ikke.
+ */
+private fun List<AltinnTilgang>.filterRecursive(filter: Filter): List<AltinnTilgang> =
+    map { it.copy(underenheter = it.underenheter.filterRecursive(filter)) }
         .filter {
-            (it.altinn2Tilganger intersect filter.altinn2Tilganger).isNotEmpty() ||
-                    (it.altinn3Tilganger intersect filter.altinn3Tilganger).isNotEmpty() ||
-                    it.underenheter.isNotEmpty()
+            it.underenheter.isNotEmpty() || // hopp over hvis dette ikke er en løvnøde (virksomhet)
+                    (it.altinn2Tilganger intersect filter.altinn2Tilganger).isNotEmpty() ||
+                    (it.altinn3Tilganger intersect filter.altinn3Tilganger).isNotEmpty()
         }
-
-}
 
 private fun AuthorizedParty.addAuthorizedResourcesRecursive(
     addResources: (AuthorizedParty) -> Set<String>

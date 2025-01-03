@@ -322,4 +322,4 @@ private val tjenester = listOf(
     ),
 )
 
-val KnownAltinn2Tjenester = tjenester.map { "${it.serviceCode}:${it.serviceEdition}" }
+internal val Altinn2Tjenester = tjenester.map { "${it.serviceCode}:${it.serviceEdition}" }
