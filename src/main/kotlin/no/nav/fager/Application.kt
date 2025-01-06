@@ -4,6 +4,8 @@ import io.github.smiley4.ktorswaggerui.dsl.routing.get
 import io.github.smiley4.ktorswaggerui.dsl.routing.post
 import io.github.smiley4.ktorswaggerui.routing.openApiSpec
 import io.github.smiley4.ktorswaggerui.routing.swaggerUI
+import io.ktor.client.network.sockets.ConnectTimeoutException
+import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
@@ -78,8 +80,18 @@ fun Application.ktorConfig(
 
     install(StatusPages) {
         exception<Throwable> { call, cause ->
-            log.error("Unexpected exception at ktor-toplevel: {}", cause.javaClass.canonicalName, cause)
-            call.respond(HttpStatusCode.InternalServerError)
+            when (cause) {
+                is HttpRequestTimeoutException,
+                is ConnectTimeoutException -> {
+                    log.warn("Unexpected exception at ktor-toplevel: {}", cause.javaClass.canonicalName, cause)
+                    call.respond(HttpStatusCode.InternalServerError)
+                }
+
+                else -> {
+                    log.error("Unexpected exception at ktor-toplevel: {}", cause.javaClass.canonicalName, cause)
+                    call.respond(HttpStatusCode.InternalServerError)
+                }
+            }
         }
     }
 
