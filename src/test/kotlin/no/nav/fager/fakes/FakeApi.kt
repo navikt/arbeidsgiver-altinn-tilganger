@@ -1,21 +1,16 @@
 package no.nav.fager.fakes
 
-import io.ktor.http.HttpMethod
-import io.ktor.http.HttpStatusCode
+import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
-import io.ktor.server.application.ApplicationCall
-import io.ktor.server.application.call
-import io.ktor.server.application.install
-import io.ktor.server.cio.CIO
-import io.ktor.server.engine.embeddedServer
-import io.ktor.server.plugins.callloging.CallLogging
+import io.ktor.server.application.*
+import io.ktor.server.cio.*
+import io.ktor.server.engine.*
+import io.ktor.server.plugins.callloging.*
 import io.ktor.server.plugins.contentnegotiation.*
-import io.ktor.server.request.path
-import io.ktor.server.response.respond
-import io.ktor.server.routing.get
-import io.ktor.server.routing.post
-import io.ktor.server.routing.routing
-import io.ktor.util.pipeline.PipelineContext
+import io.ktor.server.request.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
+import io.ktor.util.pipeline.*
 import kotlinx.coroutines.runBlocking
 import no.nav.fager.altinn.Altinn2Config
 import no.nav.fager.texas.TexasAuthConfig
@@ -26,6 +21,11 @@ fun TexasAuthConfig.Companion.fake(fake: FakeApi) = TexasAuthConfig(
     tokenEndpoint = "http://localhost:${fake.port}/token",
     tokenExchangeEndpoint = "http://localhost:${fake.port}/exchange",
     tokenIntrospectionEndpoint = "http://localhost:${fake.port}/introspect",
+)
+
+fun Altinn2Config.Companion.fake(fake: FakeApi) = Altinn2Config(
+    baseUrl = "http://localhost:${fake.port}",
+    apiKey = "someApiKey",
 )
 
 class FakeApi : org.junit.rules.ExternalResource() {
