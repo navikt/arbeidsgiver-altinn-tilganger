@@ -73,9 +73,7 @@ class Altinn2ClientImpl(
      */
     @OptIn(ExperimentalCoroutinesApi::class)
     override suspend fun hentAltinn2Tilganger(fnr: String): Altinn2Tilganger {
-        val reportees: List<ReporteeResult> = tjenester
-            //TODO .filter { filter.isEmpty() || "${it.serviceCode}:${it.serviceEdition}" in filter }
-            .asFlow()
+        val reportees: List<ReporteeResult> = tjenester.asFlow()
             .flowOn(Dispatchers.IO)
             .flatMapMerge { tjeneste ->
                 flow {
