@@ -1,15 +1,9 @@
 package no.nav.fager.altinn
 
-import io.ktor.client.*
 import io.ktor.client.call.*
-import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.*
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.client.plugins.logging.*
 import io.ktor.client.request.*
 import io.ktor.http.*
-import io.ktor.network.sockets.*
-import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -136,7 +130,13 @@ class Altinn2ClientImpl(
                     header("ApiKey", altinn2Config.apiKey)
                 }.body<List<Altinn2Reportee>>().let {
                     hasMore = it.isNotEmpty()
-                    reportees.addAll(it)
+                    reportees.addAll(
+                        it.filter {
+                            // dette skal egentlig filtreres ut i altinn pga filter query param, men vi ser tidvis at noe slipper gjennom.
+                            // derfor en dobbeltsjekk her
+                            it.organizationNumber != null && it.type != "Person" && it.status == "Active"
+                        }
+                    )
                 }
             }
 
@@ -191,11 +191,11 @@ class Altinn2Reportee(
     @SerialName("ParentOrganizationNumber")
     val parentOrganizationNumber: String? = null,
     @SerialName("OrganizationNumber")
-    val organizationNumber: String?,
+    val organizationNumber: String? = null,
     @SerialName("OrganizationForm")
-    val organizationForm: String?,
+    val organizationForm: String? = null,
     @SerialName("Status")
-    val status: String?
+    val status: String? = null
 )
 
 @Suppress("unused")

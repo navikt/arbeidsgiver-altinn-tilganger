@@ -21,9 +21,15 @@ class AltinnService(
     private val cacheMiss = Counter.builder("altinnservice.cache").tag("result", "miss").register(Metrics.meterRegistry)
 
     // Midlertidige metrikker som måler om migrering fra Altinn2 til Altinn3 er blitt korrekt. https://trello.com/c/2MNaHFmd/125-legg-til-metrikk-i-tilgagner-proxy-som-sier-hvor-mange-som-har-f%C3%A5tt-nye-ressursen-eksplisitt-delegert
-    private val harKunAltinn2Tilgang = Counter.builder("altinnservice.brukertilganger").tag("result", "harKunAltinn2Tilgang").register(Metrics.meterRegistry)
-    private val harKunAltinn3Tilgang = Counter.builder("altinnservice.brukertilganger").tag("result", "harKunAltinn3Tilgang").register(Metrics.meterRegistry)
-    private val harAltinn2ogAltinn3Tilgang = Counter.builder("altinnservice.brukertilganger").tag("result", "harAltinn2ogAltinn3Tilgang").register(Metrics.meterRegistry)
+    private val harKunAltinn2Tilgang =
+        Counter.builder("altinnservice.brukertilganger").tag("result", "harKunAltinn2Tilgang")
+            .register(Metrics.meterRegistry)
+    private val harKunAltinn3Tilgang =
+        Counter.builder("altinnservice.brukertilganger").tag("result", "harKunAltinn3Tilgang")
+            .register(Metrics.meterRegistry)
+    private val harAltinn2ogAltinn3Tilgang =
+        Counter.builder("altinnservice.brukertilganger").tag("result", "harAltinn2ogAltinn3Tilgang")
+            .register(Metrics.meterRegistry)
 
     suspend fun hentTilganger(fnr: String, scope: CoroutineScope) =
         redisClient.get(fnr)?.also {
@@ -121,22 +127,22 @@ class AltinnService(
                 "1"
             )
         } == true
-        val harAltinn3 = party.authorizedResources.contains("nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger")
+        val harAltinn3 =
+            party.authorizedResources.contains("nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger")
 
-        if (harAltinn2 && harAltinn3){
+        if (harAltinn2 && harAltinn3) {
             harAltinn2ogAltinn3Tilgang.increment()
-        }
-        else if (harAltinn3){
+        } else if (harAltinn3) {
             harKunAltinn3Tilgang.increment()
-        }
-        else if (harAltinn2){
+        } else if (harAltinn2) {
             harKunAltinn2Tilgang.increment()
         }
     }
 
     @Serializable
     data class AltinnTilgangerResultat(
-        val isError: Boolean, val altinnTilganger: List<AltinnTilgang>
+        val isError: Boolean,
+        val altinnTilganger: List<AltinnTilgang>
     )
 }
 
