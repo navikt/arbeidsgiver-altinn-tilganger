@@ -240,7 +240,7 @@ class AltinnTilgangerResultatTest {
     }
 
     @Test
-    fun `filter logger error dersom tom parent blir igjen etter filtrering`() {
+    fun `filter fjerner tom parent dersom alle underenheter filtreres bort, tross for filter match på parent`() {
         AltinnTilgangerResultat(
             isError = false,
             altinnTilganger = listOf(

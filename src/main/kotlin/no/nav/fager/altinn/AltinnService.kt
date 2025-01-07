@@ -8,6 +8,7 @@ import no.nav.fager.AltinnTilgang
 import no.nav.fager.Filter
 import no.nav.fager.infrastruktur.Metrics
 import no.nav.fager.infrastruktur.coRecord
+import no.nav.fager.infrastruktur.logger
 import no.nav.fager.redis.AltinnTilgangerRedisClient
 
 
@@ -140,8 +141,14 @@ class AltinnService(
 private fun List<AltinnTilgang>.filterRecursive(filter: Filter, parent: AltinnTilgang? = null): List<AltinnTilgang> =
     mapNotNull {
         val underenheter = it.underenheter.filterRecursive(filter, it)
-        val noneMatched = underenheter.isEmpty() && it.underenheter.isNotEmpty()
-        if (noneMatched) {
+        val alleUnderenheterFjernet = underenheter.isEmpty() && it.underenheter.isNotEmpty()
+        if (alleUnderenheterFjernet) {
+            val filterMatchAltinn2 = (it.altinn2Tilganger intersect filter.altinn2Tilganger).isNotEmpty()
+            val filterMatchAltinn3 = (it.altinn3Tilganger intersect filter.altinn3Tilganger).isNotEmpty()
+
+            if (filterMatchAltinn2 || filterMatchAltinn3) {
+                logger().error("Tom overordnet enhet som matcher filter fjernet pga alle underenheter fjernet")
+            }
             null
         } else {
             it.copy(underenheter = underenheter)
