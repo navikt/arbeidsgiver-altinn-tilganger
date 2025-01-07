@@ -238,6 +238,47 @@ class AltinnTilgangerResultatTest {
             )
         }
     }
+
+    @Test
+    fun `filter logger error dersom tom parent blir igjen etter filtrering`() {
+        AltinnTilgangerResultat(
+            isError = false,
+            altinnTilganger = listOf(
+                AltinnTilgang(
+                    orgnr = "1",
+                    altinn3Tilganger = setOf("nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"),
+                    altinn2Tilganger = setOf("4936:1"),
+                    underenheter = listOf(
+                        AltinnTilgang(
+                            orgnr = "2",
+                            altinn3Tilganger = setOf("foo"),
+                            altinn2Tilganger = setOf("bar:none"),
+                            underenheter = listOf(),
+                            navn = "2",
+                            organisasjonsform = "BEDR"
+                        ),
+                        AltinnTilgang(
+                            orgnr = "3",
+                            altinn3Tilganger = setOf("foo"),
+                            altinn2Tilganger = setOf("bar:none"),
+                            underenheter = listOf(),
+                            navn = "3",
+                            organisasjonsform = "BEDR"
+                        )
+                    ),
+                    navn = "1",
+                    organisasjonsform = "AS"
+                )
+            )
+        ).filter(
+            Filter(
+                altinn2Tilganger = setOf("4936:1"),
+                altinn3Tilganger = setOf()
+            )
+        ).let {
+            assertEquals(0, it.altinnTilganger.size)
+        }
+    }
 }
 
 private fun List<AltinnTilgang>.alleOrgn(): List<String> = flatten { it.orgnr }

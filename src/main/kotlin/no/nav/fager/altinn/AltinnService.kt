@@ -118,7 +118,6 @@ class AltinnService(
         fun filter(filter: Filter) = if (filter.isEmpty) {
             this
         } else {
-            // TODO: metrikk / log.error dersom filter ender med å eksponere en overordnet enhet som laveste nivå.
             AltinnTilgangerResultat(
                 isError,
                 altinnTilganger.filterRecursive(filter)
@@ -131,20 +130,30 @@ class AltinnService(
  * Filtrerer rekursivt basert på angitt filter.
  * Her antas det at vi kun skal filtrere på løvnoder (virksomheter) og ikke på overenheter.
  * Dvs. at vi ikke forventer at en tjeneste kun er delegert på et overordnet nivå.
- * Dersom det er tilfelle kan det være at en overordnet enhet returneres som laveste nivå.
- * Oss bekjent gjør Nav tiolgangsstyring på virksomheter.
- * Vi ser ingen tilfeller av dette i dev, men det betyr ikke at det ikke forekommer.
+ * Oss bekjent gjør Nav tilgangsstyring på virksomheter og ikke på overordnet nivå.
+ * Vi har ikke observert tilfeller i dev hvor en parent har tilgang som ikke finnes blant underenhetene,
+ * men det betyr ikke at det ikke forekommer.
  *
- * Dersom det viser seg at det blir et problem bør man endre logikken her slik at overordnet nivå fjernes dersom
- * alle løvnoder fjernes basert på filter, uavhenig av om overordnet nivå har tilgangen definert eller ikke.
+ * Mao. vi filtrerer fra bunnen. Dersom en overordnet enhet har barn og alle disse fjernes pga filteret
+ * så fjernes også overordnet enhet. Dette uavhengig om overordnet enhet har tilgangen definert eller ikke.
  */
-private fun List<AltinnTilgang>.filterRecursive(filter: Filter): List<AltinnTilgang> =
-    map { it.copy(underenheter = it.underenheter.filterRecursive(filter)) }
-        .filter {
-            it.underenheter.isNotEmpty() || // hopp over hvis dette ikke er en løvnøde (virksomhet)
-                    (it.altinn2Tilganger intersect filter.altinn2Tilganger).isNotEmpty() ||
-                    (it.altinn3Tilganger intersect filter.altinn3Tilganger).isNotEmpty()
+private fun List<AltinnTilgang>.filterRecursive(filter: Filter, parent: AltinnTilgang? = null): List<AltinnTilgang> =
+    mapNotNull {
+        val underenheter = it.underenheter.filterRecursive(filter, it)
+        val noneMatched = underenheter.isEmpty() && it.underenheter.isNotEmpty()
+        if (noneMatched) {
+            null
+        } else {
+            it.copy(underenheter = underenheter)
         }
+    }.filterIndexed { idx, it ->
+        val filterMatchAltinn2 = (it.altinn2Tilganger intersect filter.altinn2Tilganger).isNotEmpty()
+        val filterMatchAltinn3 = (it.altinn3Tilganger intersect filter.altinn3Tilganger).isNotEmpty()
+        val isLeaf = it.underenheter.isEmpty()
+
+        // hopp over hvis dette ikke er en løvnøde (virksomhet)
+        !isLeaf || filterMatchAltinn2 || filterMatchAltinn3
+    }
 
 private fun AuthorizedParty.addAuthorizedResourcesRecursive(
     addResources: (AuthorizedParty) -> Set<String>

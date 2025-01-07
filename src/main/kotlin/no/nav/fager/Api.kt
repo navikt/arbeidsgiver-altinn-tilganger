@@ -74,8 +74,10 @@ KnownAltinn2Tjenester (altinn2) og KnownResourceIds (altinn3)
 Dersom dere trenger andre verdier kan dere kontakte teamet så legger vi dem til.
 
 Til slutt en liten caveat: Filtrering gjøres på løvnoder/virksomheter. Her antas det at overordnede enhet ikke har tilganger som ikke er delegert til en av sine underenheter.
-Dette er en antakelse vi har gjort basert på observasjoner i dev. Dersom det viser seg at tjenester delegeres ekspisitt på overordnet nivå kan det føre til at filtreringen vil returnere overordnet enhet som laveste nivå.
-Dette er noe vi overvåker og vil endre dersom det viser seg at det forekommer. 
+Logikken er nå slik at dersom en parent har tjenesten, men ingen av underenhetene har den så vil parenten også fjernes.
+Dette er for å hindre at en overordnet enhet blir til laveste nivå.
+Dette er en antakelse vi har gjort basert på observasjoner i dev. 
+Dersom det viser seg at tjenester delegeres ekspisitt på overordnet nivå og det er noe dere trenger at vi støtter ta kontakt med oss. 
     """
 )
 @Serializable
