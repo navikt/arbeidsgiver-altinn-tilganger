@@ -325,3 +325,5 @@ private val tjenester = listOf(
         serviceName = "Forebygge fravær",
     ),
 )
+
+internal val Altinn2Tjenester = tjenester.map { "${it.serviceCode}:${it.serviceEdition}" }

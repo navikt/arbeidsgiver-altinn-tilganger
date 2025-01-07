@@ -5,8 +5,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.serialization.Serializable
 import no.nav.fager.AltinnTilgang
+import no.nav.fager.Filter
 import no.nav.fager.infrastruktur.Metrics
 import no.nav.fager.infrastruktur.coRecord
+import no.nav.fager.infrastruktur.logger
 import no.nav.fager.redis.AltinnTilgangerRedisClient
 
 
@@ -20,18 +22,11 @@ class AltinnService(
     private val cacheHit = Counter.builder("altinnservice.cache").tag("result", "hit").register(Metrics.meterRegistry)
     private val cacheMiss = Counter.builder("altinnservice.cache").tag("result", "miss").register(Metrics.meterRegistry)
 
-    // Midlertidige metrikker som måler om migrering fra Altinn2 til Altinn3 er blitt korrekt. https://trello.com/c/2MNaHFmd/125-legg-til-metrikk-i-tilgagner-proxy-som-sier-hvor-mange-som-har-f%C3%A5tt-nye-ressursen-eksplisitt-delegert
-    private val harKunAltinn2Tilgang =
-        Counter.builder("altinnservice.brukertilganger").tag("result", "harKunAltinn2Tilgang")
-            .register(Metrics.meterRegistry)
-    private val harKunAltinn3Tilgang =
-        Counter.builder("altinnservice.brukertilganger").tag("result", "harKunAltinn3Tilgang")
-            .register(Metrics.meterRegistry)
-    private val harAltinn2ogAltinn3Tilgang =
-        Counter.builder("altinnservice.brukertilganger").tag("result", "harAltinn2ogAltinn3Tilgang")
-            .register(Metrics.meterRegistry)
-
-    suspend fun hentTilganger(fnr: String, scope: CoroutineScope) =
+    suspend fun hentTilganger(
+        fnr: String,
+        filter: Filter = Filter.empty,
+        scope: CoroutineScope
+    ) =
         redisClient.get(fnr)?.also {
             cacheHit.increment()
         } ?: run {
@@ -41,7 +36,7 @@ class AltinnService(
                     redisClient.set(fnr, it)
                 }
             }
-        }
+        }.filter(filter)
 
     private suspend fun hentTilgangerFraAltinn(
         fnr: String,
@@ -57,7 +52,7 @@ class AltinnService(
                 altinn3tilganger.addAuthorizedResourcesRecursive { party ->
                     // adds all resources from the resource registry for the roles the party has
                     // this must be done prior to mapping to Altinn2 services
-                    party.authorizedRolesAsUrn.flatMap { // TODO: replace with party.authorizedRoles.flatMap when api returns urns
+                    party.authorizedRolesAsUrn.flatMap { // TODO: replace with party.authorizedRoles.flatMap when new altinn api returns urns
                         resourceRegistry.getResourceIdForPolicySubject(it)
                     }.toSet()
                 }
@@ -102,7 +97,6 @@ class AltinnService(
                 if (party.organizationNumber == null || party.unitType == null || party.isDeleted) {
                     null
                 } else {
-                    registrerAltinn3MigreringsMetrikker(party, altinn2Tilganger)
                     AltinnTilgang(
                         orgnr = party.organizationNumber, // alle orgnr finnes i altinn3 pga includeAltinn2=true
                         navn = party.name,
@@ -117,34 +111,56 @@ class AltinnService(
             }
     }
 
-    // Metrikker som måler om en bruker har tilgang til kun Altinn2 tjeneste
-    // eller både Altinn3 ressurs og Altinn2 tjeneste for permittering og nedbemmaning.
-    // Vi måler dette for alle organisasjoner som en bruker har tilgang til.
-    private fun registrerAltinn3MigreringsMetrikker(party: AuthorizedParty, altinn2Tilganger: Altinn2Tilganger) {
-        val harAltinn2 = altinn2Tilganger.orgNrTilTjenester[party.organizationNumber]?.any {
-            it == Altinn2Tjeneste(
-                "5810",
-                "1"
-            )
-        } == true
-        val harAltinn3 =
-            party.authorizedResources.contains("nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger")
-
-        if (harAltinn2 && harAltinn3) {
-            harAltinn2ogAltinn3Tilgang.increment()
-        } else if (harAltinn3) {
-            harKunAltinn3Tilgang.increment()
-        } else if (harAltinn2) {
-            harKunAltinn2Tilgang.increment()
-        }
-    }
-
     @Serializable
     data class AltinnTilgangerResultat(
         val isError: Boolean,
         val altinnTilganger: List<AltinnTilgang>
-    )
+    ) {
+        fun filter(filter: Filter) = if (filter.isEmpty) {
+            this
+        } else {
+            AltinnTilgangerResultat(
+                isError,
+                altinnTilganger.filterRecursive(filter)
+            )
+        }
+    }
 }
+
+/**
+ * Filtrerer rekursivt basert på angitt filter.
+ * Her antas det at vi kun skal filtrere på løvnoder (virksomheter) og ikke på overenheter.
+ * Dvs. at vi ikke forventer at en tjeneste kun er delegert på et overordnet nivå.
+ * Oss bekjent gjør Nav tilgangsstyring på virksomheter og ikke på overordnet nivå.
+ * Vi har ikke observert tilfeller i dev hvor en parent har tilgang som ikke finnes blant underenhetene,
+ * men det betyr ikke at det ikke forekommer.
+ *
+ * Mao. vi filtrerer fra bunnen. Dersom en overordnet enhet har barn og alle disse fjernes pga filteret
+ * så fjernes også overordnet enhet. Dette uavhengig om overordnet enhet har tilgangen definert eller ikke.
+ */
+private fun List<AltinnTilgang>.filterRecursive(filter: Filter, parent: AltinnTilgang? = null): List<AltinnTilgang> =
+    mapNotNull {
+        val underenheter = it.underenheter.filterRecursive(filter, it)
+        val alleUnderenheterFjernet = underenheter.isEmpty() && it.underenheter.isNotEmpty()
+        if (alleUnderenheterFjernet) {
+            val filterMatchAltinn2 = (it.altinn2Tilganger intersect filter.altinn2Tilganger).isNotEmpty()
+            val filterMatchAltinn3 = (it.altinn3Tilganger intersect filter.altinn3Tilganger).isNotEmpty()
+
+            if (filterMatchAltinn2 || filterMatchAltinn3) {
+                logger().error("Tom overordnet enhet som matcher filter fjernet pga alle underenheter fjernet")
+            }
+            null
+        } else {
+            it.copy(underenheter = underenheter)
+        }
+    }.filterIndexed { idx, it ->
+        val filterMatchAltinn2 = (it.altinn2Tilganger intersect filter.altinn2Tilganger).isNotEmpty()
+        val filterMatchAltinn3 = (it.altinn3Tilganger intersect filter.altinn3Tilganger).isNotEmpty()
+        val isLeaf = it.underenheter.isEmpty()
+
+        // hopp over hvis dette ikke er en løvnøde (virksomhet)
+        !isLeaf || filterMatchAltinn2 || filterMatchAltinn3
+    }
 
 private fun AuthorizedParty.addAuthorizedResourcesRecursive(
     addResources: (AuthorizedParty) -> Set<String>

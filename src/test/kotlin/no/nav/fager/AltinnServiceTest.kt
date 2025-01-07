@@ -2,6 +2,7 @@ package no.nav.fager
 
 import kotlinx.coroutines.test.runTest
 import no.nav.fager.altinn.*
+import no.nav.fager.altinn.AltinnService.AltinnTilgangerResultat
 import no.nav.fager.fakes.clients.FakeAltinn2Client
 import no.nav.fager.fakes.clients.FakeAltinn3Client
 import no.nav.fager.fakes.clients.FakeRedisClient
@@ -56,13 +57,13 @@ class AltinnServiceTest {
         val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, resourceRegistry)
 
         val fnr = "16120101181"
-        altinnService.hentTilganger(fnr, this)
+        altinnService.hentTilganger(fnr, Filter.empty, this)
 
         assertTrue(altinnRedisClient.getCallCountWithArgs(altinnRedisClient::get.name, fnr) == 1)
         assertTrue(
             altinnRedisClient.getCallCountWithArgs(
                 altinnRedisClient::set.name, fnr,
-                AltinnService.AltinnTilgangerResultat(
+                AltinnTilgangerResultat(
                     isError = false,
                     altinnTilganger = listOf(
                         AltinnTilgang(
@@ -85,7 +86,7 @@ class AltinnServiceTest {
 
     @Test
     fun `cache entry eksisterer, klienter kalles ikke`() = runTest {
-        val altinnRedisClient = FakeRedisClient { AltinnService.AltinnTilgangerResultat(false, listOf()) }
+        val altinnRedisClient = FakeRedisClient { AltinnTilgangerResultat(false, listOf()) }
         val altinn2Client = FakeAltinn2Client {
             Altinn2Tilganger(
                 isError = false,
@@ -128,7 +129,7 @@ class AltinnServiceTest {
         val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, resourceRegistry)
 
         val fnr = "16120101181"
-        altinnService.hentTilganger(fnr, this)
+        altinnService.hentTilganger(fnr, Filter.empty, this)
 
         assertTrue(altinnRedisClient.getCallCountWithArgs(altinnRedisClient::get.name, fnr) == 1)
         assertTrue(altinnRedisClient.getCallCount(altinnRedisClient::set.name) == 0)
@@ -182,7 +183,7 @@ class AltinnServiceTest {
         val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, resourceRegistry)
 
         val fnr = "16120101181"
-        altinnService.hentTilganger(fnr, this)
+        altinnService.hentTilganger(fnr, Filter.empty, this)
 
         assertTrue(altinnRedisClient.getCallCountWithArgs(altinnRedisClient::get.name, fnr) == 1)
         assertTrue(altinnRedisClient.getCallCount(altinnRedisClient::set.name) == 0)
@@ -238,8 +239,8 @@ class AltinnServiceTest {
         val fnr1 = "16120101181"
         val fnr2 = "26903848935"
 
-        altinnService.hentTilganger(fnr1, this)
-        altinnService.hentTilganger(fnr2, this)
+        altinnService.hentTilganger(fnr1, Filter.empty, this)
+        altinnService.hentTilganger(fnr2, Filter.empty, this)
 
         assertTrue(altinnRedisClient.getCallCount(altinnRedisClient::get.name) == 2)
         assertTrue(altinnRedisClient.getCallCountWithArgs(altinnRedisClient::get.name, fnr1) == 1)
@@ -287,7 +288,7 @@ class AltinnServiceTest {
         val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, resourceRegistry)
 
         val fnr = "16120101181"
-        val tilganger = altinnService.hentTilganger(fnr, this)
+        val tilganger = altinnService.hentTilganger(fnr, Filter.empty, this)
 
         assertTrue(tilganger.altinnTilganger.count() == 1)
         assertTrue(tilganger.altinnTilganger.first { it.orgnr == "111111111" }.altinn2Tilganger.count() == 1)
@@ -351,7 +352,7 @@ class AltinnServiceTest {
         val fnr = "16120101181"
         val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, resourceRegistry)
 
-        val tilganger = altinnService.hentTilganger(fnr, this)
+        val tilganger = altinnService.hentTilganger(fnr, Filter.empty, this)
         assertEquals(2, tilganger.altinnTilganger.size)
 
         tilganger.altinnTilganger.first { it.orgnr == "910825496" }.let { slemmestad ->
