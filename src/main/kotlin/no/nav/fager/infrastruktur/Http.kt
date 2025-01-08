@@ -49,6 +49,7 @@ fun defaultHttpClient(
 }
 
 val httpClientTaggedTimerTimer = ConcurrentHashMap<String, Timer>()
+
 fun withTimer(name: String): Timer =
     httpClientTaggedTimerTimer.computeIfAbsent(name) {
         Timer.builder("http_client")
