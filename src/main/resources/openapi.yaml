@@ -240,7 +240,6 @@ paths:
               $ref: '#/components/schemas/no.nav.fager.AltinnTilgangerRequest'
             examples:
               no_filter:
-                value: ""
               filter_altinn2:
                 value:
                   filter:
