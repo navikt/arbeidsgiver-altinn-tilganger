@@ -163,7 +163,26 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/no.nav.fager.AltinnTilgangerM2MRequest'
-        required: false
+            examples:
+              no_filter:
+                value:
+                  fnr: "11123456789"
+              filter_altinn2:
+                value:
+                  fnr: "11123456789"
+                  filter:
+                    altinn2Tilganger: [ "4936:1" ]
+              filter_altinn3:
+                value:
+                  fnr: "11123456789"
+                  filter:
+                    altinn3Tilganger: [ "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger" ]
+              filter_altinn2og3:
+                value:
+                  fnr: "11123456789"
+                  filter:
+                    altinn2Tilganger: [ "4936:1" ]
+                    altinn3Tilganger: [ "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger" ]
       responses:
         '200':
           description: Successful Request
@@ -219,6 +238,22 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/no.nav.fager.AltinnTilgangerRequest'
+            examples:
+              no_filter:
+                value: ""
+              filter_altinn2:
+                value:
+                  filter:
+                    altinn2Tilganger: [ "4936:1" ]
+              filter_altinn3:
+                value:
+                  filter:
+                    altinn3Tilganger: [ "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger" ]
+              filter_altinn2og3:
+                value:
+                  filter:
+                    altinn2Tilganger: [ "4936:1" ]
+                    altinn3Tilganger: [ "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger" ]
         required: false
       responses:
         '200':

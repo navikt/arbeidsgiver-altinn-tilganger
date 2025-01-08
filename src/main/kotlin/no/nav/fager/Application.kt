@@ -202,7 +202,7 @@ fun Application.ktorConfig(
         get("/") {
             call.respondRedirect("/swagger-ui")
         }
-        swaggerUI(path = "swagger-ui", swaggerFile = "api.yaml")
+        swaggerUI(path = "swagger-ui", swaggerFile = "openapi.yaml")
 
         route("/m2m") {
             install(TexasAuth) {
