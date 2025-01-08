@@ -385,6 +385,107 @@ class AltinnTilgangerTest {
         }.apply {
             assertEquals(HttpStatusCode.OK, status)
         }.body<AltinnTilgangerResponse>().also(assertResponse)
+
+        client.post("/altinn-tilganger") {
+            header("Authorization", "Bearer acr-high-11111111111")
+            contentType(ContentType.Application.Json)
+            setBody(
+                //language=json
+                """
+                {
+                    "filter": {
+                        "altinn3Tilganger": ["nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"]
+                    }
+                }
+                """.trimIndent()
+            )
+        }.apply {
+            assertEquals(HttpStatusCode.OK, status)
+        }.body<AltinnTilgangerResponse>().also(assertResponse)
+
+        client.post("/m2m/altinn-tilganger") {
+            header("Authorization", "Bearer fakem2mtoken")
+            contentType(ContentType.Application.Json)
+            setBody(
+                //language=json
+                """
+                {
+                    "fnr": "some-fnr",
+                    "filter": {
+                        "altinn3Tilganger": ["nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"]
+                    }
+                }
+                """.trimIndent()
+            )
+        }.apply {
+            assertEquals(HttpStatusCode.OK, status)
+        }.body<AltinnTilgangerResponse>().also(assertResponse)
+
+        client.post("/altinn-tilganger") {
+            header("Authorization", "Bearer acr-high-11111111111")
+            contentType(ContentType.Application.Json)
+            setBody(
+                //language=json
+                """
+                {
+                    "filter": {
+                        "altinn2Tilganger": ["5810:1"]
+                    }
+                }
+                """.trimIndent()
+            )
+        }.apply {
+            assertEquals(HttpStatusCode.OK, status)
+        }.body<AltinnTilgangerResponse>().also(assertResponse)
+
+        client.post("/m2m/altinn-tilganger") {
+            header("Authorization", "Bearer fakem2mtoken")
+            contentType(ContentType.Application.Json)
+            setBody(
+                //language=json
+                """
+                {
+                    "fnr": "some-fnr",
+                    "filter": {
+                        "altinn2Tilganger": ["5810:1"]
+                    }
+                }
+                """.trimIndent()
+            )
+        }.apply {
+            assertEquals(HttpStatusCode.OK, status)
+        }.body<AltinnTilgangerResponse>().also(assertResponse)
+
+        client.post("/altinn-tilganger") {
+            header("Authorization", "Bearer acr-high-11111111111")
+            contentType(ContentType.Application.Json)
+            setBody(
+                //language=json
+                """
+                {
+                    "filter": {}
+                }
+                """.trimIndent()
+            )
+        }.apply {
+            assertEquals(HttpStatusCode.OK, status)
+        }.body<AltinnTilgangerResponse>()
+
+        client.post("/m2m/altinn-tilganger") {
+            header("Authorization", "Bearer fakem2mtoken")
+            contentType(ContentType.Application.Json)
+            setBody(
+                //language=json
+                """
+                {
+                    "fnr": "some-fnr",
+                    "filter": {}
+                }
+                """.trimIndent()
+            )
+        }.apply {
+            assertEquals(HttpStatusCode.OK, status)
+        }.body<AltinnTilgangerResponse>()
     }
 
     @Test

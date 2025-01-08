@@ -1,0 +1,470 @@
+openapi: 3.1.1
+info:
+  title: Tilgangsstyring av arbeidsgivere med Altinn
+  description: >
+    Dette api-et lar appen din se hvilke tilganger en innlogget bruker har i
+    hvilke virksomheter/bedrifter.
+
+    Med innlogget bruker, mener vi at api-et vårt kun godtar kall med
+    on-behalf-of access token 
+
+    for brukeren.
+
+
+    ## Hvordan du kaller dev-gcp-api-et fra denne siden
+
+    For at du skal kunne kalle dev-gcp-api-et vårt direkte her fra swagger, må
+    du lage en [developer
+    token](https://doc.nais.io/auth/entra-id/how-to/generate/): 
+
+    1. Åpne i nettleseren: 
+      a) for obo-token:
+        [https://tokenx-token-generator.intern.dev.nav.no/api/obo?aud=dev-gcp:fager:arbeidsgiver-altinn-tilganger&acr=idporten-loa-high](https://tokenx-token-generator.intern.dev.nav.no/api/obo?aud=dev-gcp:fager:arbeidsgiver-altinn-tilganger&acr=idporten-loa-high).
+      b) for m2m-token:
+        [https://azure-token-generator.intern.dev.nav.no/api/m2m?aud=dev-gcp:fager:arbeidsgiver-altinn-tilganger](https://azure-token-generator.intern.dev.nav.no/api/m2m?aud=dev-gcp:fager:arbeidsgiver-altinn-tilganger).
+    2. Logg inn med *test*-brukeren du ønsker token for. 
+
+    3. Kopier ut tokenet fra `"access_token"`-feltet. Ikke ta med fnuttene
+    (`"`).
+
+    4. Klikk på *Authorize*-knappen nede til høyre, lim inn tokenet, og trykk på
+    *Authorize* og *Close*.
+
+
+    Om du foretrekker curl, postman eller noe annet, må du legge ved tokenet som
+    en header i HTTP-requesten:
+
+    ```
+
+    Authorization: Bearer tokenet-fra-steg-3-her
+
+    ```
+
+
+    ## Access policy i dev-gcp og prod-gcp
+
+    Du må legge på [outbound access
+    policy](https://doc.nais.io/workloads/how-to/access-policies/#send-requests-to-other-app-in-another-namespace)
+
+    i appen din, slik som dette (bytt ut `prod-gcp` med `dev-gcp` i test):
+
+    ```
+
+    accessPolicy:
+      outbound:
+        rules:
+          - application: arbeidsgiver-altinn-tilganger
+            namespace: fager
+            cluster: prod-gcp
+    ```
+
+
+    Du må også be oss om å
+
+    legge til appen deres i vår inbound access policy.
+
+    Du kontakter oss i [slack kanalen 
+
+    #team-fager](https://nav-it.slack.com/archives/C01V9FFEHEK).
+
+
+    ## Ingresser
+
+    Produksjon:
+
+    - prod-gcp (service discovery):
+    `http://arbeidsgiver-altinn-tilganger.fager/`
+
+    - prod-fss: ikke satt opp, ta kontakt ved behov
+
+
+    Testmiljø, som bruker Altinns tt02-miljø:
+
+    - dev-gcp (service discovery, anbefalt):
+    `http://arbeidsgiver-altinn-tilganger.fager/`
+
+    - dev-gcp (ingress):
+    `https://arbeidsgiver-altinn-tilganger.intern.dev.nav.no`
+
+    - dev-fss: ikke satt opp, ta kontakt ved behov
+
+
+    Bruk ingress-versjonen for å lese dokumentasjon og
+
+    når du eksperimenterer med curl, post-man eller
+
+    lignende.  Bruk service discovery fra appen din.
+
+
+    ## Autentisering av kall mot api-et
+
+    Du må legge ved en header på følgende form når du kaller api-et vårt:
+
+    ```
+
+    Authorization: Bearer et-token-fra-tokenx-her
+
+    ```
+
+    Først må du sette opp access policy [som beskrevet over](#).
+
+    Når du skal gjøre et http-kall, må appen din 
+
+    skaffe seg et token som [beskrevet i
+    nais-dokumentasjonen](https://doc.nais.io/auth/tokenx/how-to/consume/).
+
+
+    ## Retry av driftsforstyrrelser
+
+
+    Vi anbefaler at dere har retry i klienten deres ved driftsforstyrrelser. 
+
+    Feks HTTP 502, 503, 504 kan forsøkes på nytt et par ganger før dere gir opp
+    og gir feilmelding til brukeren.
+  version: local
+externalDocs:
+  url: /
+servers:
+  - url: https://arbeidsgiver-altinn-tilganger.intern.dev.nav.no
+    description: dev-gcp
+  - url: http://0.0.0.0:8080
+    description: Local mock server
+tags: [ ]
+paths:
+  /m2m/whoami:
+    get:
+      tags: [ ]
+      description: Hvem er jeg autentisert som?
+      parameters: [ ]
+      responses:
+        '401':
+          description: >-
+            Når vi ikke aksepterer tokenet du sendte i Authorization-headeren.
+            Vi sjekker blant annet at tokenet:
+
+            - ikke er utgått
+
+            - har `acr`-claim med `Level4` eller `idporten-loa-high`
+
+            - har riktig audience og issuer (`aud` og `iss`)
+          headers: { }
+      deprecated: false
+      security:
+        - BearerAuth: [ ]
+  /m2m/altinn-tilganger:
+    post:
+      tags: [ ]
+      description: >-
+        Hent tilganger fra Altinn for en bruker på fnr autentisert som entra
+        m2m.
+      parameters: [ ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/no.nav.fager.AltinnTilgangerM2MRequest'
+        required: false
+      responses:
+        '200':
+          description: Successful Request
+          headers: { }
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/no.nav.fager.AltinnTilgangerResponse'
+              examples:
+                Successful Respons:
+                  $ref: '#/components/examples/tilganger_success'
+        '401':
+          description: >-
+            Når vi ikke aksepterer tokenet du sendte i Authorization-headeren.
+            Vi sjekker blant annet at tokenet:
+
+            - ikke er utgått
+
+            - har `acr`-claim med `Level4` eller `idporten-loa-high`
+
+            - har riktig audience og issuer (`aud` og `iss`)
+          headers: { }
+      deprecated: false
+      security:
+        - BearerAuth: [ ]
+  /whoami:
+    get:
+      tags: [ ]
+      description: Hvem er jeg autentisert som?
+      parameters: [ ]
+      responses:
+        '401':
+          description: >-
+            Når vi ikke aksepterer tokenet du sendte i Authorization-headeren.
+            Vi sjekker blant annet at tokenet:
+
+            - ikke er utgått
+
+            - har `acr`-claim med `Level4` eller `idporten-loa-high`
+
+            - har riktig audience og issuer (`aud` og `iss`)
+          headers: { }
+      deprecated: false
+      security:
+        - BearerAuth: [ ]
+  /altinn-tilganger:
+    post:
+      tags: [ ]
+      description: Hent tilganger fra Altinn for innlogget bruker.
+      parameters: [ ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/no.nav.fager.AltinnTilgangerRequest'
+        required: false
+      responses:
+        '200':
+          description: Successful Request
+          headers: { }
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/no.nav.fager.AltinnTilgangerResponse'
+              examples:
+                Successful Respons:
+                  $ref: '#/components/examples/tilganger_success'
+        '401':
+          description: >-
+            Når vi ikke aksepterer tokenet du sendte i Authorization-headeren.
+            Vi sjekker blant annet at tokenet:
+
+            - ikke er utgått
+
+            - har `acr`-claim med `Level4` eller `idporten-loa-high`
+
+            - har riktig audience og issuer (`aud` og `iss`)
+          headers: { }
+      deprecated: false
+      security:
+        - BearerAuth: [ ]
+components:
+  schemas:
+    no.nav.fager.Filter:
+      title: Filter
+      type: object
+      properties:
+        altinn2Tilganger:
+          title: Set<String>
+          uniqueItems: true
+          type: array
+          items:
+            title: String
+            type: string
+        altinn3Tilganger:
+          title: Set<String>
+          uniqueItems: true
+          type: array
+          items:
+            title: String
+            type: string
+      description: >-
+
+        Filter for hvilke tilganger som skal hentes. Dersom flere filter er
+        angitt tolkes dette som logisk OR.
+
+        Trenger dere en annen logikk kan dere kontakte teamet så kan vi
+        prioritere å støtte det. 
+
+
+        Filterne har et hardkodet sett med gyldige verdier. 
+
+        Dersom dere angir en verdi utenfor det gyldige settet vil det returneres
+        en HTTP 400 feil som angir den ugyldige verdien, samt hva som er
+        tillatt.
+
+        Gyldige verdier varierer i dev og prod for noen servicecode/version
+        kombinasjoner. Derfor er de ikke dokumentert her.
+
+        De gyldige verdiene finner dere i kildekoden:
+        https://github.com/navikt/arbeidsgiver-altinn-tilganger/blob/main/src/main/kotlin/no/nav/fager/altinn/ResourceRegistry.kt#L18. 
+
+        KnownAltinn2Tjenester (altinn2) og KnownResourceIds (altinn3)  
+
+
+        Dersom dere trenger andre verdier kan dere kontakte teamet så legger vi
+        dem til.
+
+
+        Til slutt en liten caveat: Filtrering gjøres på løvnoder/virksomheter.
+        Her antas det at overordnede enhet ikke har tilganger som ikke er
+        delegert til en av sine underenheter.
+
+        Logikken er nå slik at dersom en parent har tjenesten, men ingen av
+        underenhetene har den så vil parenten også fjernes.
+
+        Dette er for å hindre at en overordnet enhet blir til laveste nivå.
+
+        Dette er en antakelse vi har gjort basert på observasjoner i dev. 
+
+        Dersom det viser seg at tjenester delegeres ekspisitt på overordnet nivå
+        og det er noe dere trenger at vi støtter ta kontakt med oss. 
+
+    no.nav.fager.AltinnTilgangerM2MRequest:
+      title: AltinnTilgangerM2MRequest
+      required:
+        - fnr
+      type: object
+      properties:
+        filter:
+          $ref: '#/components/schemas/no.nav.fager.Filter'
+        fnr:
+          title: String
+          type: string
+    no.nav.fager.AltinnTilgang:
+      title: AltinnTilgang
+      required:
+        - altinn2Tilganger
+        - altinn3Tilganger
+        - navn
+        - organisasjonsform
+        - orgnr
+        - underenheter
+      type: object
+      properties:
+        altinn2Tilganger:
+          title: Set<String>
+          uniqueItems: true
+          type: array
+          description: Tilganger til Altinn 2
+          items:
+            title: String
+            type: string
+        altinn3Tilganger:
+          title: Set<String>
+          uniqueItems: true
+          type: array
+          description: Tilganger til Altinn 3
+          items:
+            title: String
+            type: string
+        navn:
+          title: String
+          type: string
+          description: Navn på organisasjonen
+        organisasjonsform:
+          title: String
+          type: string
+          description: >-
+            Organisasjonsform. se
+            https://www.brreg.no/bedrift/organisasjonsformer/
+          example: BEDR
+        orgnr:
+          title: String
+          type: string
+          description: Organisasjonsnummer
+          example: '11223344'
+        underenheter:
+          title: List<AltinnTilgang>
+          type: array
+          description: >-
+            list av underenheter til denne organisasjonen hvor brukeren har
+            tilganger
+          items:
+            $ref: '#/components/schemas/no.nav.fager.AltinnTilgang'
+      description: Brukerens tilganger til Altinn 2 og Altinn 3 for en organisasjon
+    no.nav.fager.AltinnTilgangerResponse:
+      title: AltinnTilgangerResponse
+      required:
+        - hierarki
+        - isError
+        - orgNrTilTilganger
+        - tilgangTilOrgNr
+      type: object
+      properties:
+        hierarki:
+          title: List<AltinnTilgang>
+          type: array
+          description: Organisasjonshierarkiet med brukerens tilganger
+          items:
+            $ref: '#/components/schemas/no.nav.fager.AltinnTilgang'
+        isError:
+          title: Boolean
+          type: boolean
+          description: >-
+            Om det var en feil ved henting av tilganger. Dersom denne er true
+            kan det bety at ikke alle tilganger er hentet.
+        orgNrTilTilganger:
+          title: Map<String,Set<String>>
+          type: object
+          additionalProperties:
+            title: Set<String>
+            uniqueItems: true
+            type: array
+            items:
+              title: String
+              type: string
+          description: >-
+            Map fra organisasjonsnummer til tilganger. Convenience for å slå opp
+            tilganger på orgnummer.
+        tilgangTilOrgNr:
+          title: Map<String,Set<String>>
+          type: object
+          additionalProperties:
+            title: Set<String>
+            uniqueItems: true
+            type: array
+            items:
+              title: String
+              type: string
+          description: >-
+            Map fra tilgang til organisasjonsnummer. Convenience for å slå opp
+            orgnummer på tilgang.
+    no.nav.fager.AltinnTilgangerRequest:
+      title: AltinnTilgangerRequest
+      type: object
+      properties:
+        filter:
+          $ref: '#/components/schemas/no.nav.fager.Filter'
+  examples:
+    tilganger_success:
+      value:
+        hierarki:
+          - orgnr: '987654321'
+            altinn3Tilganger: [ ]
+            altinn2Tilganger: [ ]
+            underenheter:
+              - orgnr: '123456789'
+                altinn3Tilganger:
+                  - tilgang1
+                  - tilgang2
+                altinn2Tilganger:
+                  - serviceCode:serviceEdition
+                underenheter: [ ]
+                navn: Organisasjon 2
+                organisasjonsform: BEDR
+            navn: Organissjon 1
+            organisasjonsform: ORGL
+        orgNrTilTilganger:
+          '123456789':
+            - serviceCode:serviceEdition
+            - tilgang1
+            - tilgang2
+        tilgangTilOrgNr:
+          serviceCode:serviceEdition:
+            - '123456789'
+          tilgang1:
+            - '123456789'
+          tilgang2:
+            - '123456789'
+        error: false
+  securitySchemes:
+    BearerAuth:
+      type: http
+      description: >-
+        Du skaffer deg et token som du kan bruke her ved å logge inn med
+        test-bruker på [denne nettsiden](
+
+        https://tokenx-token-generator.intern.dev.nav.no/api/obo?aud=dev-gcp:fager:arbeidsgiver-altinn-tilganger&acr=idporten-loa-high
+
+        ) og bruker veriden fra `"access_token"`-feltet. Ikke ta med fnuttene
+        (`"`).
+      scheme: bearer
+      bearerFormat: JWT
