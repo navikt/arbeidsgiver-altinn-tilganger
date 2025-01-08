@@ -11,6 +11,7 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.coroutines.runBlocking
+import no.nav.fager.altinn.Altinn2Config
 import no.nav.fager.texas.TexasAuthConfig
 import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
@@ -22,6 +23,11 @@ fun TexasAuthConfig.Companion.fake(fake: FakeApi) = TexasAuthConfig(
     tokenEndpoint = "http://localhost:${fake.port}/token",
     tokenExchangeEndpoint = "http://localhost:${fake.port}/exchange",
     tokenIntrospectionEndpoint = "http://localhost:${fake.port}/introspect",
+)
+
+fun Altinn2Config.Companion.fake(fake: FakeApi) = Altinn2Config(
+    baseUrl = "http://localhost:${fake.port}",
+    apiKey = "someApiKey",
 )
 
 class FakeApi : BeforeAllCallback, AfterAllCallback {

@@ -1,23 +1,14 @@
 package no.nav.fager.altinn
 
-import io.ktor.client.*
 import io.ktor.client.call.*
-import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.*
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.client.plugins.logging.*
 import io.ktor.client.request.*
 import io.ktor.http.*
-import io.ktor.network.sockets.*
-import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.flow.*
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import no.nav.fager.infrastruktur.basedOnEnv
 import no.nav.fager.infrastruktur.defaultHttpClient
 import no.nav.fager.infrastruktur.logger
@@ -25,7 +16,6 @@ import no.nav.fager.texas.AuthClient
 import no.nav.fager.texas.IdentityProvider
 import no.nav.fager.texas.TexasAuthClientPlugin
 import no.nav.fager.texas.TexasAuthConfig
-import javax.net.ssl.SSLHandshakeException
 
 class Altinn2Config(
     val baseUrl: String,
@@ -74,7 +64,7 @@ class Altinn2ClientImpl(
         }
 
         install(HttpTimeout) {
-            requestTimeoutMillis = 30_000
+            requestTimeoutMillis = 10_000
         }
     }
 
@@ -109,7 +99,8 @@ class Altinn2ClientImpl(
         )
     }
 
-    /** Viktig om personvern: Dette endepunktet hos Altinn forventer fødselsnummer som et query-parameter. Det fører
+    /**
+     * Viktig om personvern: Dette endepunktet hos Altinn forventer fødselsnummer som et query-parameter. Det fører
      * til ekstra risiko for at NAVs infrastruktur eller våre biblioteker logger fødselsnummeret.
      *
      * 1. Vi maskerer fødselsnummer i denne appen sine logger (se klassen [MaskingAppender]).
@@ -139,7 +130,13 @@ class Altinn2ClientImpl(
                     header("ApiKey", altinn2Config.apiKey)
                 }.body<List<Altinn2Reportee>>().let {
                     hasMore = it.isNotEmpty()
-                    reportees.addAll(it)
+                    reportees.addAll(
+                        it.filter {
+                            // dette skal egentlig filtreres ut i altinn pga filter query param, men vi ser tidvis at noe slipper gjennom.
+                            // derfor en dobbeltsjekk her
+                            it.organizationNumber != null && it.type != "Person" && it.status == "Active"
+                        }
+                    )
                 }
             }
 
@@ -194,11 +191,11 @@ class Altinn2Reportee(
     @SerialName("ParentOrganizationNumber")
     val parentOrganizationNumber: String? = null,
     @SerialName("OrganizationNumber")
-    val organizationNumber: String?,
+    val organizationNumber: String? = null,
     @SerialName("OrganizationForm")
-    val organizationForm: String?,
+    val organizationForm: String? = null,
     @SerialName("Status")
-    val status: String?
+    val status: String? = null
 )
 
 @Suppress("unused")
@@ -317,12 +314,6 @@ private val tjenester = listOf(
         serviceEditionName = "Avtale om inkluderingstilskudd",
     ),
     Altinn2TjenesteDefinisjon(
-        //TODO: denne kan også fjernes når vi migrerer til altinn3 ressurs
-        serviceCode = "5810",
-        serviceEdition = "1",
-        serviceName = "Innsyn i permittering- og nedbemanningsmeldinger sendt til NAV",
-    ),
-    Altinn2TjenesteDefinisjon(
         serviceCode = "5902",
         serviceEdition = "1",
         serviceName = "Skademelding",
@@ -334,3 +325,5 @@ private val tjenester = listOf(
         serviceName = "Forebygge fravær",
     ),
 )
+
+internal val Altinn2Tjenester = tjenester.map { "${it.serviceCode}:${it.serviceEdition}" }

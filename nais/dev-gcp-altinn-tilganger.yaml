@@ -37,7 +37,11 @@ spec:
 
   envFrom:
     - secret: altinn-tilganger
-  
+
+  azure:
+    application:
+      enabled: true
+
   tokenx:
     enabled: true
 
@@ -60,6 +64,10 @@ spec:
           namespace: permittering-og-nedbemanning
         - application: mulighetsrommet-api
           namespace: team-mulighetsrommet
+        - application: fritakagp
+          namespace: helsearbeidsgiver
+        - application: im-altinn
+          namespace: helsearbeidsgiver
     outbound:
       external:
         - host: platform.tt02.altinn.no
