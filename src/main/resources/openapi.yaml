@@ -165,19 +165,23 @@ paths:
               $ref: '#/components/schemas/no.nav.fager.AltinnTilgangerM2MRequest'
             examples:
               no_filter:
+                summary: Ingen filter
                 value:
                   fnr: "11123456789"
               filter_altinn2:
+                summary: filtrer på en eller flere altinn 2 tjenester
                 value:
                   fnr: "11123456789"
                   filter:
                     altinn2Tilganger: [ "4936:1" ]
               filter_altinn3:
+                summary: filtrer på en eller flere altinn 3 ressurser
                 value:
                   fnr: "11123456789"
                   filter:
                     altinn3Tilganger: [ "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger" ]
-              filter_altinn2og3:
+              filter_altinn2eller3:
+                summary: filtrer på en eller flere altinn 2 tjenester og en eller flere altinn 3 ressurser
                 value:
                   fnr: "11123456789"
                   filter:
@@ -238,18 +242,23 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/no.nav.fager.AltinnTilgangerRequest'
+            required: false
             examples:
               no_filter:
-                value: ""
+                summary: Ingen filter (trenger ikke noe i body)
+                value: "{}"
               filter_altinn2:
+                summary: filtrer på en eller flere altinn 2 tjenester
                 value:
                   filter:
                     altinn2Tilganger: [ "4936:1" ]
               filter_altinn3:
+                summary: filtrer på en eller flere altinn 3 ressurser
                 value:
                   filter:
                     altinn3Tilganger: [ "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger" ]
-              filter_altinn2og3:
+              filter_altinn2eller3:
+                summary: filtrer på en eller flere altinn 2 tjenester og en eller flere altinn 3 ressurser
                 value:
                   filter:
                     altinn2Tilganger: [ "4936:1" ]

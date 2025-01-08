@@ -14,8 +14,10 @@ import io.ktor.server.response.*
 import kotlinx.serialization.*
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.json.*
+import no.nav.fager.infrastruktur.coRecord
 import no.nav.fager.infrastruktur.defaultHttpClient
 import no.nav.fager.infrastruktur.logger
+import no.nav.fager.infrastruktur.withTimer
 
 /**
  * Lånt med modifikasjoner fra https://github.com/nais/wonderwalled
@@ -108,29 +110,33 @@ class AuthClient(
 ) {
 
     suspend fun token(target: String): TokenResponse = try {
-        httpClient.submitForm(config.tokenEndpoint, parameters {
-            set("target", target)
-            set("identity_provider", provider.alias)
-        }).body<TokenResponse.Success>()
+        withTimer("texas_auth_token").coRecord {
+            httpClient.submitForm(config.tokenEndpoint, parameters {
+                set("target", target)
+                set("identity_provider", provider.alias)
+            }).body<TokenResponse.Success>()
+        }
     } catch (e: ResponseException) {
         TokenResponse.Error(e.response.body<TokenErrorResponse>(), e.response.status)
     }
 
     suspend fun exchange(target: String, userToken: String): TokenResponse = try {
-        httpClient.submitForm(config.tokenExchangeEndpoint, parameters {
-            set("target", target)
-            set("user_token", userToken)
-            set("identity_provider", provider.alias)
-        }).body<TokenResponse.Success>()
+        withTimer("texas_auth_exchange").coRecord {
+            httpClient.submitForm(config.tokenExchangeEndpoint, parameters {
+                set("target", target)
+                set("user_token", userToken)
+                set("identity_provider", provider.alias)
+            }).body<TokenResponse.Success>()
+        }
     } catch (e: ResponseException) {
         TokenResponse.Error(e.response.body<TokenErrorResponse>(), e.response.status)
     }
 
-    suspend fun introspect(accessToken: String): TokenIntrospectionResponse {
-        return httpClient.submitForm(config.tokenIntrospectionEndpoint, parameters {
+    suspend fun introspect(accessToken: String) = withTimer("texas_auth_introspect").coRecord {
+        httpClient.submitForm(config.tokenIntrospectionEndpoint, parameters {
             set("token", accessToken)
             set("identity_provider", provider.alias)
-        }).body()
+        }).body<TokenIntrospectionResponse>()
     }
 }
 

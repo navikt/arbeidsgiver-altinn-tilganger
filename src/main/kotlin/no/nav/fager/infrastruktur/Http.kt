@@ -7,9 +7,11 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.logging.*
 import io.ktor.network.sockets.*
 import io.ktor.serialization.kotlinx.json.*
+import io.micrometer.core.instrument.Timer
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.serialization.json.Json
 import java.io.EOFException
+import java.util.concurrent.ConcurrentHashMap
 import javax.net.ssl.SSLHandshakeException
 
 fun defaultHttpClient(
@@ -45,3 +47,13 @@ fun defaultHttpClient(
 
     configure()
 }
+
+val httpClientTaggedTimerTimer = ConcurrentHashMap<String, Timer>()
+
+fun withTimer(name: String): Timer =
+    httpClientTaggedTimerTimer.computeIfAbsent(name) {
+        Timer.builder("http_client")
+            .tag("name", it)
+            .publishPercentileHistogram()
+            .register(Metrics.meterRegistry)
+    }
