@@ -11,7 +11,7 @@ import io.ktor.server.engine.*
 import io.ktor.server.metrics.micrometer.*
 import io.ktor.server.plugins.*
 import io.ktor.server.plugins.callid.*
-import io.ktor.server.plugins.callloging.*
+import io.ktor.server.plugins.calllogging.*
 import io.ktor.server.plugins.compression.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.statuspages.*
@@ -223,7 +223,7 @@ fun Application.ktorConfig(
                         altinnService.hentTilganger(
                             fnr = fnr,
                             filter = filter,
-                            scope = this
+                            scope = call
                         ).toResponse()
                     )
                 }
@@ -270,7 +270,7 @@ fun Application.ktorConfig(
                         altinnService.hentTilganger(
                             fnr = fnr,
                             filter = filter,
-                            scope = this
+                            scope = call
                         ).toResponse()
                     )
                 }

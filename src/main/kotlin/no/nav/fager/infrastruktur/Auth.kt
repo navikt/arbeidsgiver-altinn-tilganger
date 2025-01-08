@@ -1,7 +1,8 @@
 package no.nav.fager.infrastruktur
 
-import io.ktor.server.auth.*
 import no.nav.fager.texas.TokenIntrospectionResponse
+
+interface Principal
 
 class InnloggetBrukerPrincipal(
     val fnr: String,

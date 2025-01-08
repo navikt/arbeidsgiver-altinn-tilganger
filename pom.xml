@@ -15,9 +15,9 @@
         <kotlin.compiler.incremental>false</kotlin.compiler.incremental>
         <kotlin.code.style>official</kotlin.code.style>
 
-        <ktor_version>2.3.13</ktor_version>
-        <kotlin_version>2.0.10</kotlin_version>
-        <kotlinx_coroutines_version>1.8.1</kotlinx_coroutines_version>
+        <ktor_version>3.0.1</ktor_version>
+        <kotlin_version>2.1.0</kotlin_version>
+        <kotlinx_coroutines_version>1.9.0</kotlinx_coroutines_version>
     </properties>
 
     <dependencies>
@@ -102,7 +102,6 @@
             <version>${ktor_version}</version>
         </dependency>
 
-
         <!-- ktor client -->
         <dependency>
             <groupId>io.ktor</groupId>
@@ -149,13 +148,6 @@
             <version>1.5.16</version>
         </dependency>
 
-        <!-- JWT -->
-        <dependency>
-            <groupId>com.nimbusds</groupId>
-            <artifactId>nimbus-jose-jwt</artifactId>
-            <version>9.40</version>
-        </dependency>
-
         <!-- observability -->
         <dependency>
             <groupId>io.micrometer</groupId>
@@ -174,7 +166,7 @@
         <dependency>
             <groupId>org.jetbrains.kotlinx</groupId>
             <artifactId>kotlinx-coroutines-test</artifactId>
-            <version>1.9.0-RC</version>
+            <version>1.9.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -185,7 +177,7 @@
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-test-junit</artifactId>
+            <artifactId>kotlin-test-junit5</artifactId>
             <version>${kotlin_version}</version>
             <scope>test</scope>
         </dependency>
@@ -198,7 +190,7 @@
         <dependency>
             <groupId>org.jetbrains.kotlinx</groupId>
             <artifactId>kotlinx-coroutines-debug</artifactId>
-            <version>1.6.4</version>
+            <version>${kotlinx_coroutines_version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -310,6 +302,14 @@
                 <configuration>
                     <source>21</source>
                     <target>21</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.5.2</version>
+                <configuration>
+                    <failIfNoTests>true</failIfNoTests>
                 </configuration>
             </plugin>
         </plugins>

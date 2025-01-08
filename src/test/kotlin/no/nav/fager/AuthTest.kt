@@ -3,13 +3,14 @@ package no.nav.fager
 import io.ktor.client.request.*
 import io.ktor.http.HttpStatusCode
 import no.nav.fager.fakes.FakeApplication
+import org.junit.jupiter.api.extension.RegisterExtension
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class AuthTest {
     companion object {
-        @org.junit.ClassRule
         @JvmField
+        @RegisterExtension
         val app = FakeApplication()
     }
 

@@ -15,6 +15,10 @@ data class AltinnTilgang(
     val organisasjonsform: String,
 )
 
+annotation class Example(val value: String)
+
+annotation class Description(val value: String)
+
 @Serializable
 data class AltinnTilgangerResponse(
     val isError: Boolean,
