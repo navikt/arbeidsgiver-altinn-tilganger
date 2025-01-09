@@ -16,6 +16,7 @@ import no.nav.fager.texas.AuthClient
 import no.nav.fager.texas.IdentityProvider
 import no.nav.fager.texas.TexasAuthClientPlugin
 import no.nav.fager.texas.TexasAuthConfig
+import org.slf4j.event.Level
 
 class Altinn2Config(
     val baseUrl: String,
@@ -154,8 +155,14 @@ class Altinn2ClientImpl(
                     reportees = emptyList(),
                     isError = false,
                 )
+
             } else {
-                log.error(
+                log.atLevel(
+                    when (e) {
+                        is HttpRequestTimeoutException -> Level.WARN
+                        else -> Level.ERROR
+                    }
+                ).log(
                     "reportee for service $serviceCode:$serviceEdition kastet exception ${e::class.qualifiedName}",
                     e
                 )
