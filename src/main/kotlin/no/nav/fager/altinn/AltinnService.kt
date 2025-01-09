@@ -26,8 +26,8 @@ class AltinnService(
         fnr: String,
         filter: Filter = Filter.empty,
         scope: CoroutineScope
-    ) =
-        redisClient.get(fnr)?.also {
+    ): AltinnTilgangerResultat {
+        val result = redisClient.get(fnr)?.also {
             cacheHit.increment()
         } ?: run {
             cacheMiss.increment()
@@ -36,7 +36,10 @@ class AltinnService(
                     redisClient.set(fnr, it)
                 }
             }
-        }.filter(filter)
+        }
+
+        return result.filter(filter)
+    }
 
     private suspend fun hentTilgangerFraAltinn(
         fnr: String,
