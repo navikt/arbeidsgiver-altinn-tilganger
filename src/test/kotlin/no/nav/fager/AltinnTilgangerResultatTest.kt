@@ -299,13 +299,7 @@ class AltinnTilgangerResultatTest {
 }
 
 private fun List<AltinnTilgang>.alleOrgn(): List<String> = flatten { it.orgnr }
-private fun <T> List<AltinnTilgang>.flatten(mapFn: (AltinnTilgang) -> T?): List<T> = flatMap { flatten(it, mapFn) }
-private fun <T> flatten(
-    tilgang: AltinnTilgang,
-    mapFn: (AltinnTilgang) -> T?
-): List<T> = listOfNotNull(
-    mapFn(tilgang)
-) + tilgang.underenheter.flatMap { flatten(it, mapFn) }
+
 
 
 /* count occurrences of altinn2Tilganger

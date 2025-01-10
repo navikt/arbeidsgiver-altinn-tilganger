@@ -46,7 +46,7 @@ class AltinnTilgangerTest {
                     "unitType": "AS",
                     "isDeleted": false,
                     "onlyHierarchyElementWithNoAccess": true,
-                    "authorizedResources": [],
+                    "authorizedResources": ["test-fager"],
                     "authorizedRoles": [],
                     "subunits": [
                       {
@@ -164,6 +164,10 @@ class AltinnTilgangerTest {
             assertEquals(
                 setOf("910825554"),
                 it.tilgangTilOrgNr["5810:1"]
+            )
+            assertEquals(
+                setOf("810825472", "910825496"),
+                it.tilgangTilOrgNr["test-fager"]
             )
         }
 
