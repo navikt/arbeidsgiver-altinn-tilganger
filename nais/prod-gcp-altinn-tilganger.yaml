@@ -60,6 +60,8 @@ spec:
         - application: min-side-arbeidsgiver-api
         - application: permitteringsskjema-api
           namespace: permittering-og-nedbemanning
+        - application: fritakagp
+          namespace: helsearbeidsgiver
     outbound:
       external:
         - host: platform.altinn.no
