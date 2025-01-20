@@ -86,7 +86,23 @@ class AltinnServiceTest {
 
     @Test
     fun `cache entry eksisterer, klienter kalles ikke`() = runTest {
-        val altinnRedisClient = FakeRedisClient { AltinnTilgangerResultat(false, listOf()) }
+        val altinnRedisClient = FakeRedisClient(
+            mutableMapOf(
+                "16120101181" to AltinnTilgangerResultat(
+                    isError = false,
+                    altinnTilganger = listOf(
+                        AltinnTilgang(
+                            orgnr = "910825496",
+                            altinn3Tilganger = setOf("test-fager"),
+                            altinn2Tilganger = setOf("4936:1"),
+                            underenheter = listOf(),
+                            navn = "SLEMMESTAD OG STAVERN REGNSKAP",
+                            organisasjonsform = "BEDR"
+                        )
+                    )
+                )
+            )
+        )
         val altinn2Client = FakeAltinn2Client {
             Altinn2Tilganger(
                 isError = false,
@@ -365,4 +381,114 @@ class AltinnServiceTest {
             assertEquals(setOf("5810:1"), annet.altinn2Tilganger)
         }
     }
+
+    @Test
+    fun `filter fungerer med og uten cache hit`() = runTest {
+        val altinnRedisClient = FakeRedisClient()
+        val altinn2Client = FakeAltinn2Client {
+            Altinn2Tilganger(
+                isError = false,
+                orgNrTilTjenester = mapOf(
+                    "2.1" to listOf(
+                        Altinn2Tjeneste(
+                            serviceCode = "4936",
+                            serviceEdition = "1"
+                        )
+                    ),
+                    "3.1" to listOf(
+                        Altinn2Tjeneste(
+                            serviceCode = "2896",
+                            serviceEdition = "87"
+                        )
+                    )
+                )
+            )
+        }
+        val altinn3Client = FakeAltinn3Client(resourceOwner_AuthorizedPartiesHandler = {
+            listOf(
+                AuthorizedParty(
+                    name = "1",
+                    organizationNumber = "1",
+                    authorizedResources = setOf(),
+                    authorizedRoles = setOf(),
+                    subunits = listOf(
+                        AuthorizedParty(
+                            name = "1.1",
+                            organizationNumber = "1.1",
+                            authorizedResources = setOf("nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"),
+                            authorizedRoles = setOf(),
+                            subunits = listOf(),
+                            unitType = "BEDR",
+                            type = "Business",
+                            isDeleted = false,
+                        )
+                    ),
+                    unitType = "AS",
+                    type = "Business",
+                    isDeleted = false,
+                ),
+                AuthorizedParty(
+                    name = "2",
+                    organizationNumber = "2",
+                    authorizedResources = setOf(),
+                    authorizedRoles = setOf(),
+                    subunits = listOf(
+                        AuthorizedParty(
+                            name = "2.1",
+                            organizationNumber = "2.1",
+                            authorizedResources = setOf(),
+                            authorizedRoles = setOf(),
+                            subunits = listOf(),
+                            unitType = "BEDR",
+                            type = "Business",
+                            isDeleted = false,
+                        )
+                    ),
+                    unitType = "AS",
+                    type = "Business",
+                    isDeleted = false,
+                ),
+                AuthorizedParty(
+                    name = "3",
+                    organizationNumber = "3",
+                    authorizedResources = setOf(),
+                    authorizedRoles = setOf(),
+                    subunits = listOf(
+                        AuthorizedParty(
+                            name = "3.1",
+                            organizationNumber = "3.1",
+                            authorizedResources = setOf(),
+                            authorizedRoles = setOf(),
+                            subunits = listOf(),
+                            unitType = "BEDR",
+                            type = "Business",
+                            isDeleted = false,
+                        )
+                    ),
+                    unitType = "AS",
+                    type = "Business",
+                    isDeleted = false,
+                ),
+            )
+        })
+        val resourceRegistry = ResourceRegistry(FakeAltinn3Client(), RedisConfig.local(), null).also {
+            it.updatePolicySubjectsForKnownResources {
+                listOf()
+            }
+        }
+
+        val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, resourceRegistry)
+
+        val fnr = "42"
+        val tilganger = altinnService.hentTilganger(fnr, Filter(setOf("4936:1")), this)
+        assertEquals(1, tilganger.altinnTilganger.size)
+        assertEquals("2", tilganger.altinnTilganger.first().orgnr)
+        assertEquals("2.1", tilganger.altinnTilganger.first().underenheter.first().orgnr)
+
+        val tilganger2 = altinnService.hentTilganger(fnr, Filter(setOf("4936:1")), this)
+        assertEquals(1, tilganger2.altinnTilganger.size)
+        assertEquals("2", tilganger.altinnTilganger.first().orgnr)
+        assertEquals("2.1", tilganger.altinnTilganger.first().underenheter.first().orgnr)
+    }
+
 }
