@@ -62,6 +62,8 @@ spec:
           namespace: permittering-og-nedbemanning
         - application: fritakagp
           namespace: helsearbeidsgiver
+        - application: im-altinn
+          namespace: helsearbeidsgiver
     outbound:
       external:
         - host: platform.altinn.no
