@@ -8,13 +8,11 @@ import io.ktor.server.engine.*
 import io.ktor.server.plugins.calllogging.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.request.*
-import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.coroutines.runBlocking
 import no.nav.fager.altinn.Altinn2Config
 import no.nav.fager.texas.TexasAuthConfig
-import org.junit.jupiter.api.extension.AfterAllCallback
-import org.junit.jupiter.api.extension.BeforeAllCallback
+import org.junit.jupiter.api.extension.BeforeTestExecutionCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.slf4j.event.Level
 import kotlin.test.fail
@@ -30,24 +28,28 @@ fun Altinn2Config.Companion.fake(fake: FakeApi) = Altinn2Config(
     apiKey = "someApiKey",
 )
 
-class FakeApi : BeforeAllCallback, AfterAllCallback {
+class FakeApi : BeforeTestExecutionCallback {
 
     val stubs = mutableMapOf<Pair<HttpMethod, String>, (suspend RoutingContext.(Any) -> Unit)>()
 
     val errors = mutableListOf<Throwable>()
 
+    override fun beforeTestExecution(ctx: ExtensionContext) = runBlocking {
+        start()
+    }
+
     suspend fun start() {
-        server.engine.startAndWaitUntilReady()
+        server.start(false)
+        server.engine.waitUntilReady()
     }
 
     fun stop() {
-        server.engine.stop()
+        server.stop()
     }
 
     private val server = embeddedServer(CIO, port = 0) {
         install(CallLogging) {
             level = Level.INFO
-            //filter { call -> !call.request.path().startsWith("/internal/") }
         }
 
         install(ContentNegotiation) {
@@ -67,7 +69,7 @@ class FakeApi : BeforeAllCallback, AfterAllCallback {
                         errors.add(e)
                         throw e
                     }
-                } ?: return@post call.respond(HttpStatusCode.NotFound)
+                } ?: return@post call.response.status(HttpStatusCode.NotFound)
             }
 
             get("{...}") {
@@ -78,7 +80,7 @@ class FakeApi : BeforeAllCallback, AfterAllCallback {
                         errors.add(e)
                         throw e
                     }
-                } ?: return@get call.respond(HttpStatusCode.NotFound)
+                } ?: return@get call.response.status(HttpStatusCode.NotFound)
             }
         }
     }
@@ -92,16 +94,8 @@ class FakeApi : BeforeAllCallback, AfterAllCallback {
 
     val port
         get() = runBlocking {
-            server.engine.resolvedConnectors().first().port
+            server.application.engine.resolvedConnectors().first().port
         }
-
-    override fun beforeAll(ctx: ExtensionContext) = runBlocking {
-        start()
-    }
-
-    override fun afterAll(ctx: ExtensionContext) {
-        stop()
-    }
 
 }
 

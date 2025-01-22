@@ -6,13 +6,11 @@ import io.ktor.client.plugins.*
 import io.ktor.http.*
 import io.ktor.http.HttpMethod.Companion.Get
 import io.ktor.http.HttpMethod.Companion.Post
-import io.ktor.server.application.*
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.util.pipeline.*
 import kotlinx.coroutines.runBlocking
 import no.nav.fager.altinn.Altinn2Config
 import no.nav.fager.altinn.Altinn3Config
@@ -163,33 +161,10 @@ class FakeApplication(
         fakeTexas.start()
         fakeAltinn3Api.start()
         fakeAltinn2Api.start()
-        server.application.engine.startSuspend(wait = wait)
-        server.application.engine.waitUntilReady()
 
-        val port = runBlocking {
-            server.application.engine.resolvedConnectors().first().port
-        }
-
-        val client = HttpClient(io.ktor.client.engine.cio.CIO) {
-            defaultRequest {
-                url("http://localhost:$port/")
-            }
-            clientConfig()
-        }
-
-        testContext = TestContext(client)
+        server.start(wait) // waits until killed
     }
 
-    override fun beforeAll(ctx: ExtensionContext) {
-        start(wait = false)
-    }
-
-    override fun afterAll(ctx: ExtensionContext) {
-        server.stop()
-        fakeTexas.stop()
-        fakeAltinn3Api.stop()
-        fakeAltinn2Api.stop()
-    }
 
     class TestContext(
         val client: HttpClient,
@@ -227,5 +202,25 @@ class FakeApplication(
     ) {
         fakeTexas.stubs[httpMethod to path] = handlePost
         fakeTexas.errors.clear()
+    }
+
+    override fun beforeAll(context: ExtensionContext) = runBlocking {
+        start(false)
+        server.engine.waitUntilReady()
+        val port = server.engine.resolvedConnectors().first().port
+        val client = HttpClient(io.ktor.client.engine.cio.CIO) {
+            defaultRequest {
+                url("http://127.0.0.1:$port/")
+            }
+            clientConfig()
+        }
+        testContext = TestContext(client)
+    }
+
+    override fun afterAll(context: ExtensionContext) {
+        server.stop()
+        fakeTexas.stop()
+        fakeAltinn3Api.stop()
+        fakeAltinn2Api.stop()
     }
 }

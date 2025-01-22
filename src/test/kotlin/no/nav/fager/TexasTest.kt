@@ -4,7 +4,6 @@ import io.ktor.client.*
 import io.ktor.client.engine.mock.*
 import io.ktor.client.request.*
 import io.ktor.http.*
-import io.ktor.server.application.*
 import io.ktor.server.response.*
 import kotlinx.coroutines.test.runTest
 import no.nav.fager.fakes.FakeApi
@@ -12,7 +11,6 @@ import no.nav.fager.fakes.fake
 import no.nav.fager.texas.*
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.collections.lastOrNull
 import kotlin.collections.set
 import kotlin.test.Test
 import kotlin.test.assertEquals

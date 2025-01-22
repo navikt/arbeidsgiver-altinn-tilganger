@@ -90,7 +90,7 @@ class LogConfig : ContextAwareBase(), Configurator {
         }
 
         lc.getLogger(Logger.ROOT_LOGGER_NAME).apply {
-            level = Level.TRACE
+            level = Level.INFO
             addAppender(rootAppender)
             addAppender(secureAppender)
         }

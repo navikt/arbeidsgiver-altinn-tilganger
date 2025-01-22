@@ -2,7 +2,6 @@ package no.nav.fager.altinn
 
 import io.ktor.http.*
 import io.ktor.http.HttpMethod.Companion.Get
-import io.ktor.server.application.*
 import io.ktor.server.response.*
 import kotlinx.coroutines.runBlocking
 import no.nav.fager.fakes.FakeApi

@@ -7,23 +7,16 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.server.engine.*
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
 import no.nav.fager.infrastruktur.logger
 
 
-suspend fun ApplicationEngine.startAndWaitUntilReady() {
-    startSuspend()
-    waitUntilReady()
-}
 
-fun ApplicationEngine.waitUntilReady() {
+suspend fun ApplicationEngine.waitUntilReady() {
     val log = logger()
-    val port = runBlocking {
-        resolvedConnectors().first().port
-    }
 
     val client = HttpClient(CIO)
     suspend fun isAlive() = runCatching {
+        val port = resolvedConnectors().first().port
         client.get("http://localhost:$port/internal/isready", {
             timeout {
                 requestTimeoutMillis = 100
@@ -36,9 +29,7 @@ fun ApplicationEngine.waitUntilReady() {
         false
     }
 
-    runBlocking {
-        while (!isAlive()) {
-            delay(1000)
-        }
+    while (!isAlive()) {
+        delay(100)
     }
 }

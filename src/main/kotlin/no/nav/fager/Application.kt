@@ -51,8 +51,7 @@ fun main() {
             texasAuthConfig = TexasAuthConfig.nais(),
             redisConfig = RedisConfig.nais(),
         )
-    })
-        .start(wait = true)
+    }).start(wait = true)
 }
 
 fun Application.ktorConfig(
@@ -87,12 +86,12 @@ fun Application.ktorConfig(
                 is HttpRequestTimeoutException,
                 is ConnectTimeoutException -> {
                     log.warn("Unexpected exception at ktor-toplevel: {}", cause.javaClass.canonicalName, cause)
-                    call.respond(HttpStatusCode.InternalServerError)
+                    call.response.status(HttpStatusCode.InternalServerError)
                 }
 
                 else -> {
                     log.error("Unexpected exception at ktor-toplevel: {}", cause.javaClass.canonicalName, cause)
-                    call.respond(HttpStatusCode.InternalServerError)
+                    call.response.status(HttpStatusCode.InternalServerError)
                 }
             }
         }
@@ -182,7 +181,7 @@ fun Application.ktorConfig(
                 call.respond<String>(Metrics.meterRegistry.scrape())
             }
             get("isalive") {
-                call.respond(
+                call.response.status(
                     if (Health.alive)
                         HttpStatusCode.OK
                     else
@@ -190,7 +189,7 @@ fun Application.ktorConfig(
                 )
             }
             get("isready") {
-                call.respond(
+                call.response.status(
                     if (Health.ready)
                         HttpStatusCode.OK
                     else

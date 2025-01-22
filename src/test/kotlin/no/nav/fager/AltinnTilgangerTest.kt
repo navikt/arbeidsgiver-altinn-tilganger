@@ -11,10 +11,9 @@ import io.ktor.server.response.*
 import kotlinx.serialization.json.Json
 import no.nav.fager.fakes.FakeApplication
 import org.junit.jupiter.api.extension.RegisterExtension
-import java.util.UUID
+import java.util.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.fail
 
 class AltinnTilgangerTest {
     companion object {

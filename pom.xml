@@ -15,7 +15,7 @@
         <kotlin.compiler.incremental>false</kotlin.compiler.incremental>
         <kotlin.code.style>official</kotlin.code.style>
 
-        <ktor_version>3.0.1</ktor_version>
+        <ktor_version>3.0.3</ktor_version>
         <kotlin_version>2.1.0</kotlin_version>
         <kotlinx_coroutines_version>1.9.0</kotlinx_coroutines_version>
     </properties>
@@ -119,6 +119,12 @@
             <version>${ktor_version}</version>
         </dependency>
         <dependency>
+            <!-- java.lang.ClassNotFoundException: kotlinx.io.unsafe.UnsafeBufferOperations ?? -->
+            <groupId>org.jetbrains.kotlinx</groupId>
+            <artifactId>kotlinx-io-core-jvm</artifactId>
+            <version>0.6.0</version>
+        </dependency>
+        <dependency>
             <groupId>io.ktor</groupId>
             <artifactId>ktor-client-logging-jvm</artifactId>
             <version>${ktor_version}</version>
@@ -166,7 +172,7 @@
         <dependency>
             <groupId>org.jetbrains.kotlinx</groupId>
             <artifactId>kotlinx-coroutines-test</artifactId>
-            <version>1.9.0</version>
+            <version>${kotlinx_coroutines_version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -185,12 +191,6 @@
             <groupId>io.ktor</groupId>
             <artifactId>ktor-client-mock-jvm</artifactId>
             <version>${ktor_version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jetbrains.kotlinx</groupId>
-            <artifactId>kotlinx-coroutines-debug</artifactId>
-            <version>${kotlinx_coroutines_version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
