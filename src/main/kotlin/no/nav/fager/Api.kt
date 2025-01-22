@@ -29,10 +29,8 @@ data class AltinnTilgangerResponse(
     companion object {
         fun AltinnService.AltinnTilgangerResultat.toResponse(): AltinnTilgangerResponse {
             val orgNrTilTilganger: Map<String, Set<String>> =
-                this.altinnTilganger.flatMap { it.underenheter }
-                    .associate {
-                        it.orgnr to it.altinn2Tilganger + it.altinn3Tilganger
-                    }
+                altinnTilganger.flatten { it }
+                    .associate { it.orgnr to it.altinn2Tilganger + it.altinn3Tilganger }
 
             val tilgangToOrgNr = orgNrTilTilganger.flatMap { (orgNr, tjenester) ->
                 tjenester.map { it to orgNr }
@@ -40,14 +38,23 @@ data class AltinnTilgangerResponse(
 
 
             return AltinnTilgangerResponse(
-                isError = this.isError,
-                hierarki = this.altinnTilganger,
+                isError = isError,
+                hierarki = altinnTilganger,
                 orgNrTilTilganger = orgNrTilTilganger,
                 tilgangTilOrgNr = tilgangToOrgNr,
             )
         }
     }
 }
+
+fun <T> List<AltinnTilgang>.flatten(mapFn: (AltinnTilgang) -> T?): List<T> = flatMap { flatten(it, mapFn) }
+
+fun <T> flatten(
+    tilgang: AltinnTilgang,
+    mapFn: (AltinnTilgang) -> T?
+): List<T> = listOfNotNull(
+    mapFn(tilgang)
+) + tilgang.underenheter.flatMap { flatten(it, mapFn) }
 
 @Serializable
 data class Filter(
