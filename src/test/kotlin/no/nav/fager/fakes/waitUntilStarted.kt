@@ -17,15 +17,9 @@ suspend fun ApplicationEngine.waitUntilReady() {
     val client = HttpClient(CIO)
     suspend fun isAlive() = runCatching {
         val port = resolvedConnectors().first().port
-        client.get("http://localhost:$port/internal/isready", {
-            timeout {
-                requestTimeoutMillis = 100
-                connectTimeoutMillis = 100
-                socketTimeoutMillis = 100
-            }
-        }).status == HttpStatusCode.OK
+        client.get("http://localhost:$port/internal/isready").status == HttpStatusCode.OK
     }.getOrElse {
-        log.warn("not alive yet: $it")
+        log.warn("not alive yet: $it", it)
         false
     }
 
