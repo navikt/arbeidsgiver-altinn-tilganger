@@ -5,15 +5,15 @@ import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.cio.*
 import io.ktor.server.engine.*
-import io.ktor.server.plugins.callloging.*
+import io.ktor.server.plugins.calllogging.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.request.*
-import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.util.pipeline.*
 import kotlinx.coroutines.runBlocking
 import no.nav.fager.altinn.Altinn2Config
 import no.nav.fager.texas.TexasAuthConfig
+import org.junit.jupiter.api.extension.BeforeTestExecutionCallback
+import org.junit.jupiter.api.extension.ExtensionContext
 import org.slf4j.event.Level
 import kotlin.test.fail
 
@@ -28,18 +28,19 @@ fun Altinn2Config.Companion.fake(fake: FakeApi) = Altinn2Config(
     apiKey = "someApiKey",
 )
 
-class FakeApi : org.junit.rules.ExternalResource() {
+class FakeApi : BeforeTestExecutionCallback {
 
-    val stubs = mutableMapOf<Pair<HttpMethod, String>, (suspend PipelineContext<Unit, ApplicationCall>.(Any) -> Unit)>()
+    val stubs = mutableMapOf<Pair<HttpMethod, String>, (suspend RoutingContext.(Any) -> Unit)>()
 
     val errors = mutableListOf<Throwable>()
 
-    public override fun before() {
+    override fun beforeTestExecution(ctx: ExtensionContext) = runBlocking {
         start()
     }
 
-    fun start() {
-        server.startAndWaitUntilReady()
+    suspend fun start() {
+        server.start(false)
+        server.engine.waitUntilReady()
     }
 
     fun stop() {
@@ -49,7 +50,6 @@ class FakeApi : org.junit.rules.ExternalResource() {
     private val server = embeddedServer(CIO, port = 0) {
         install(CallLogging) {
             level = Level.INFO
-            filter { call -> !call.request.path().startsWith("/internal/") }
         }
 
         install(ContentNegotiation) {
@@ -58,29 +58,29 @@ class FakeApi : org.junit.rules.ExternalResource() {
 
         routing {
             get("/internal/isready") {
-                call.respond(HttpStatusCode.OK)
+                call.response.status(HttpStatusCode.OK)
             }
 
             post("{...}") {
                 stubs[HttpMethod.Post to call.request.path()]?.let { handler ->
                     try {
-                        handler(it)
+                        handler(this)
                     } catch (e: Exception) {
                         errors.add(e)
                         throw e
                     }
-                } ?: return@post call.respond(HttpStatusCode.NotFound)
+                } ?: return@post call.response.status(HttpStatusCode.NotFound)
             }
 
             get("{...}") {
                 stubs[HttpMethod.Get to call.request.path()]?.let { handler ->
                     try {
-                        handler(it)
+                        handler(this)
                     } catch (e: Exception) {
                         errors.add(e)
                         throw e
                     }
-                } ?: return@get call.respond(HttpStatusCode.NotFound)
+                } ?: return@get call.response.status(HttpStatusCode.NotFound)
             }
         }
     }
@@ -94,7 +94,7 @@ class FakeApi : org.junit.rules.ExternalResource() {
 
     val port
         get() = runBlocking {
-            server.resolvedConnectors().first().port
+            server.application.engine.resolvedConnectors().first().port
         }
 
 }

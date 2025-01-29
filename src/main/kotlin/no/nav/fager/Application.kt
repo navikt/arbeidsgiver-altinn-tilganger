@@ -11,7 +11,7 @@ import io.ktor.server.engine.*
 import io.ktor.server.metrics.micrometer.*
 import io.ktor.server.plugins.*
 import io.ktor.server.plugins.callid.*
-import io.ktor.server.plugins.callloging.*
+import io.ktor.server.plugins.calllogging.*
 import io.ktor.server.plugins.compression.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.statuspages.*
@@ -51,8 +51,7 @@ fun main() {
             texasAuthConfig = TexasAuthConfig.nais(),
             redisConfig = RedisConfig.nais(),
         )
-    })
-        .start(wait = true)
+    }).start(wait = true)
 }
 
 fun Application.ktorConfig(
@@ -87,12 +86,12 @@ fun Application.ktorConfig(
                 is HttpRequestTimeoutException,
                 is ConnectTimeoutException -> {
                     log.warn("Unexpected exception at ktor-toplevel: {}", cause.javaClass.canonicalName, cause)
-                    call.respond(HttpStatusCode.InternalServerError)
+                    call.response.status(HttpStatusCode.InternalServerError)
                 }
 
                 else -> {
                     log.error("Unexpected exception at ktor-toplevel: {}", cause.javaClass.canonicalName, cause)
-                    call.respond(HttpStatusCode.InternalServerError)
+                    call.response.status(HttpStatusCode.InternalServerError)
                 }
             }
         }
@@ -182,7 +181,7 @@ fun Application.ktorConfig(
                 call.respond<String>(Metrics.meterRegistry.scrape())
             }
             get("isalive") {
-                call.respond(
+                call.response.status(
                     if (Health.alive)
                         HttpStatusCode.OK
                     else
@@ -190,7 +189,7 @@ fun Application.ktorConfig(
                 )
             }
             get("isready") {
-                call.respond(
+                call.response.status(
                     if (Health.ready)
                         HttpStatusCode.OK
                     else
@@ -223,7 +222,7 @@ fun Application.ktorConfig(
                         altinnService.hentTilganger(
                             fnr = fnr,
                             filter = filter,
-                            scope = this
+                            scope = call
                         ).toResponse()
                     )
                 }
@@ -270,7 +269,7 @@ fun Application.ktorConfig(
                         altinnService.hentTilganger(
                             fnr = fnr,
                             filter = filter,
-                            scope = this
+                            scope = call
                         ).toResponse()
                     )
                 }

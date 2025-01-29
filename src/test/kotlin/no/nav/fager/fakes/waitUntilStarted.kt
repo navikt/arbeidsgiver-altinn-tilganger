@@ -1,35 +1,29 @@
 package no.nav.fager.fakes
 
-import io.ktor.client.HttpClient
-import io.ktor.client.request.get
-import io.ktor.http.HttpStatusCode
-import io.ktor.server.cio.CIOApplicationEngine
+import io.ktor.client.*
+import io.ktor.client.engine.cio.*
+import io.ktor.client.plugins.*
+import io.ktor.client.request.*
+import io.ktor.http.*
+import io.ktor.server.engine.*
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
 import no.nav.fager.infrastruktur.logger
 
-fun CIOApplicationEngine.startAndWaitUntilReady() {
-    start()
-    waitUntilReady()
-}
 
-fun CIOApplicationEngine.waitUntilReady() {
+
+suspend fun ApplicationEngine.waitUntilReady() {
     val log = logger()
-    val port = runBlocking {
-        resolvedConnectors().first().port
-    }
 
-    val client = HttpClient(io.ktor.client.engine.cio.CIO)
+    val client = HttpClient(CIO)
     suspend fun isAlive() = runCatching {
+        val port = resolvedConnectors().first().port
         client.get("http://localhost:$port/internal/isready").status == HttpStatusCode.OK
     }.getOrElse {
-        log.warn("not alive yet: $it")
+        log.warn("not alive yet: $it", it)
         false
     }
 
-    runBlocking {
-        while (!isAlive()) {
-            delay(1)
-        }
+    while (!isAlive()) {
+        delay(100)
     }
 }

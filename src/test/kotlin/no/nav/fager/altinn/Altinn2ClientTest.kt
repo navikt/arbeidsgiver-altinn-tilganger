@@ -2,12 +2,12 @@ package no.nav.fager.altinn
 
 import io.ktor.http.*
 import io.ktor.http.HttpMethod.Companion.Get
-import io.ktor.server.application.*
 import io.ktor.server.response.*
 import kotlinx.coroutines.runBlocking
 import no.nav.fager.fakes.FakeApi
 import no.nav.fager.fakes.fake
 import no.nav.fager.texas.TexasAuthConfig
+import org.junit.jupiter.api.extension.RegisterExtension
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -16,11 +16,11 @@ import kotlin.test.assertFalse
 class Altinn2ClientTest {
     companion object {
 
-        @org.junit.ClassRule
+        @RegisterExtension
         @JvmField
         val fakeTexas = FakeApi()
 
-        @org.junit.ClassRule
+        @RegisterExtension
         @JvmField
         val fakeAltinn2 = FakeApi()
     }

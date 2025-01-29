@@ -89,12 +89,6 @@ class LogConfig : ContextAwareBase(), Configurator {
             encoder = LogstashEncoder().setup(lc)
         }
 
-        if (naisCluster == null) {
-            lc.getLogger("io.ktor.auth.jwt").apply {
-                level = Level.TRACE
-            }
-        }
-
         lc.getLogger(Logger.ROOT_LOGGER_NAME).apply {
             level = Level.INFO
             addAppender(rootAppender)

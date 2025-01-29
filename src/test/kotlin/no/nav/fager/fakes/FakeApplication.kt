@@ -6,12 +6,11 @@ import io.ktor.client.plugins.*
 import io.ktor.http.*
 import io.ktor.http.HttpMethod.Companion.Get
 import io.ktor.http.HttpMethod.Companion.Post
-import io.ktor.server.application.*
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
-import io.ktor.util.pipeline.*
+import io.ktor.server.routing.*
 import kotlinx.coroutines.runBlocking
 import no.nav.fager.altinn.Altinn2Config
 import no.nav.fager.altinn.Altinn3Config
@@ -19,6 +18,9 @@ import no.nav.fager.ktorConfig
 import no.nav.fager.redis.RedisConfig
 import no.nav.fager.texas.IdentityProvider
 import no.nav.fager.texas.TexasAuthConfig
+import org.junit.jupiter.api.extension.AfterAllCallback
+import org.junit.jupiter.api.extension.BeforeAllCallback
+import org.junit.jupiter.api.extension.ExtensionContext
 
 val mockOboTokens = mapOf(
     "acr-high-11111111111" to mapOf(
@@ -47,7 +49,8 @@ val mockOboTokens = mapOf(
 class FakeApplication(
     private val port: Int = 0,
     private val clientConfig: HttpClientConfig<CIOEngineConfig>.() -> Unit = {}
-) : org.junit.rules.ExternalResource() {
+) : BeforeAllCallback, AfterAllCallback {
+
     private val fakeAltinn3Api = FakeApi().also {
         it.stubs[
             // når det kommer flere ressurser i KnownResources, må det legges til flere svar eller støtte for wildcards i fakeapi
@@ -154,37 +157,14 @@ class FakeApplication(
 
     private var testContext: TestContext? = null
 
-    public override fun before() {
-        start(wait = false)
-    }
-
-    fun start(wait: Boolean = false) {
+    fun start(wait: Boolean = false) = runBlocking {
         fakeTexas.start()
         fakeAltinn3Api.start()
         fakeAltinn2Api.start()
-        server.start(wait = wait)
-        server.waitUntilReady()
 
-        val port = runBlocking {
-            server.resolvedConnectors().first().port
-        }
-
-        val client = HttpClient(io.ktor.client.engine.cio.CIO) {
-            defaultRequest {
-                url("http://localhost:$port/")
-            }
-            clientConfig()
-        }
-
-        testContext = TestContext(client)
+        server.start(wait) // waits until killed
     }
 
-    public override fun after() {
-        server.stop()
-        fakeTexas.stop()
-        fakeAltinn3Api.stop()
-        fakeAltinn2Api.stop()
-    }
 
     class TestContext(
         val client: HttpClient,
@@ -200,7 +180,7 @@ class FakeApplication(
     fun altinn3Response(
         httpMethod: HttpMethod,
         path: String,
-        handlePost: (suspend PipelineContext<Unit, ApplicationCall>.(Any) -> Unit)
+        handlePost: (suspend RoutingContext.(Any) -> Unit)
     ) {
         fakeAltinn3Api.stubs[httpMethod to path] = handlePost
         fakeAltinn3Api.errors.clear()
@@ -209,7 +189,7 @@ class FakeApplication(
     fun altinn2Response(
         httpMethod: HttpMethod,
         path: String,
-        handlePost: (suspend PipelineContext<Unit, ApplicationCall>.(Any) -> Unit)
+        handlePost: (suspend RoutingContext.(Any) -> Unit)
     ) {
         fakeAltinn2Api.stubs[httpMethod to path] = handlePost
         fakeAltinn2Api.errors.clear()
@@ -218,9 +198,29 @@ class FakeApplication(
     fun texasResponse(
         httpMethod: HttpMethod,
         path: String,
-        handlePost: (suspend PipelineContext<Unit, ApplicationCall>.(Any) -> Unit)
+        handlePost: (suspend RoutingContext.(Any) -> Unit)
     ) {
         fakeTexas.stubs[httpMethod to path] = handlePost
         fakeTexas.errors.clear()
+    }
+
+    override fun beforeAll(context: ExtensionContext) = runBlocking {
+        start(false)
+        server.engine.waitUntilReady()
+        val port = server.engine.resolvedConnectors().first().port
+        val client = HttpClient(io.ktor.client.engine.cio.CIO) {
+            defaultRequest {
+                url("http://127.0.0.1:$port/")
+            }
+            clientConfig()
+        }
+        testContext = TestContext(client)
+    }
+
+    override fun afterAll(context: ExtensionContext) {
+        server.stop()
+        fakeTexas.stop()
+        fakeAltinn3Api.stop()
+        fakeAltinn2Api.stop()
     }
 }

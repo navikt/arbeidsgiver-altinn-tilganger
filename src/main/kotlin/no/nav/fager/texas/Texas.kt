@@ -15,6 +15,7 @@ import kotlinx.serialization.*
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.json.*
 import no.nav.fager.infrastruktur.coRecord
+import no.nav.fager.infrastruktur.Principal
 import no.nav.fager.infrastruktur.defaultHttpClient
 import no.nav.fager.infrastruktur.logger
 import no.nav.fager.infrastruktur.withTimer
@@ -160,7 +161,7 @@ val TexasAuth = createRouteScopedPlugin(
             is AuthenticationFailedCause.InvalidCredentials -> log.info("unauthenticated: InvalidCredentials")
         }
 
-        call.respond(HttpStatusCode.Unauthorized)
+        call.respondNullable(HttpStatusCode.Unauthorized)
     }
 
     pluginConfig.apply {
