@@ -76,6 +76,6 @@ spec:
   secureLogs:
     enabled: true
 
-  redis:
+  valkey:
     - instance: tilganger
       access: readwrite
