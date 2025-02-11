@@ -53,9 +53,6 @@ spec:
   accessPolicy:
     inbound:
       rules:
-        - application: tokenx-token-generator
-          namespace: aura
-          cluster: prod-gcp
         - application: notifikasjon-bruker-api
         - application: min-side-arbeidsgiver-api
         - application: permitteringsskjema-api
