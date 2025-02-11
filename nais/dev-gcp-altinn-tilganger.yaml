@@ -62,8 +62,6 @@ spec:
         - application: min-side-arbeidsgiver-api
         - application: permitteringsskjema-api
           namespace: permittering-og-nedbemanning
-        - application: mulighetsrommet-api
-          namespace: team-mulighetsrommet
         - application: fritakagp
           namespace: helsearbeidsgiver
         - application: im-altinn
