@@ -1,7 +1,7 @@
 openapi: 3.1.1
 info:
   title: Tilgangsstyring av arbeidsgivere med Altinn
-  description: >
+  description: |
     Dette api-et lar appen din se hvilke tilganger en innlogget bruker har i
     hvilke virksomheter/bedrifter.
 
@@ -17,18 +17,12 @@ info:
     du lage en [developer
     token](https://doc.nais.io/auth/entra-id/how-to/generate/): 
 
-    1. Åpne i nettleseren: 
-      a) for obo-token:
-        [https://tokenx-token-generator.intern.dev.nav.no/api/obo?aud=dev-gcp:fager:arbeidsgiver-altinn-tilganger&acr=idporten-loa-high](https://tokenx-token-generator.intern.dev.nav.no/api/obo?aud=dev-gcp:fager:arbeidsgiver-altinn-tilganger&acr=idporten-loa-high).
-      b) for m2m-token:
-        [https://azure-token-generator.intern.dev.nav.no/api/m2m?aud=dev-gcp:fager:arbeidsgiver-altinn-tilganger](https://azure-token-generator.intern.dev.nav.no/api/m2m?aud=dev-gcp:fager:arbeidsgiver-altinn-tilganger).
+    1. Åpne i nettleseren:
+        - for obo-token: [https://tokenx-token-generator.intern.dev.nav.no/api/obo?aud=dev-gcp:fager:arbeidsgiver-altinn-tilganger&acr=idporten-loa-high](https://tokenx-token-generator.intern.dev.nav.no/api/obo?aud=dev-gcp:fager:arbeidsgiver-altinn-tilganger&acr=idporten-loa-high).
+        - for m2m-token: [https://azure-token-generator.intern.dev.nav.no/api/m2m?aud=dev-gcp:fager:arbeidsgiver-altinn-tilganger](https://azure-token-generator.intern.dev.nav.no/api/m2m?aud=dev-gcp:fager:arbeidsgiver-altinn-tilganger).
     2. Logg inn med *test*-brukeren du ønsker token for. 
-
-    3. Kopier ut tokenet fra `"access_token"`-feltet. Ikke ta med fnuttene
-    (`"`).
-
-    4. Klikk på *Authorize*-knappen nede til høyre, lim inn tokenet, og trykk på
-    *Authorize* og *Close*.
+    3. Kopier ut tokenet fra `"access_token"`-feltet. Ikke ta med fnuttene (`"`).
+    4. Klikk på *Authorize*-knappen nede til høyre, lim inn tokenet, og trykk på *Authorize* og *Close*.
 
 
     Om du foretrekker curl, postman eller noe annet, må du legge ved tokenet som
