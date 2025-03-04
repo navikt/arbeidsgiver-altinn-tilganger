@@ -56,7 +56,7 @@ spec:
     inbound:
       rules:
         - application: tokenx-token-generator
-          namespace: aura
+          namespace: nais
           cluster: dev-gcp
         - application: notifikasjon-bruker-api
         - application: min-side-arbeidsgiver-api
