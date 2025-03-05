@@ -66,6 +66,8 @@ spec:
           namespace: helsearbeidsgiver
         - application: im-altinn
           namespace: helsearbeidsgiver
+        - application: pia-sykefravarsstatistikk
+          namespace: pia
     outbound:
       external:
         - host: platform.tt02.altinn.no
