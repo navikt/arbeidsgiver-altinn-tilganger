@@ -1,6 +1,11 @@
 # arbeidsgiver-altinn-tilganger
 API for å hente hvilke tilganger en person har i en virksomhet fra Altinn
 
+Denne readme er ment for utviklere av applikasjonen.
+
+Dersom du vurderer å ta i bruk APIet bør du se den kjørende API dokumentasjonen her:
+https://arbeidsgiver-altinn-tilganger.intern.dev.nav.no/swagger-ui
+
 # Token for dev-gcp
 Slik får du et bearer-token som godtas av api-et i dev-gcp (eller hvis du kjører appen 
 lokalt med dev-gcp-oppsett):
