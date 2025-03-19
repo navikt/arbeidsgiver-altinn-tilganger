@@ -68,6 +68,8 @@ spec:
           namespace: helsearbeidsgiver
         - application: pia-sykefravarsstatistikk
           namespace: pia
+        - application: sosialhjelp-avtaler-api-dev
+          namespace: teamdigisos
     outbound:
       external:
         - host: platform.tt02.altinn.no

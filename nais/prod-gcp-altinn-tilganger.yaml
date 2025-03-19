@@ -61,6 +61,8 @@ spec:
           namespace: helsearbeidsgiver
         - application: im-altinn
           namespace: helsearbeidsgiver
+        - application: sosialhjelp-avtaler-api
+          namespace: teamdigisos
     outbound:
       external:
         - host: platform.altinn.no
