@@ -15,7 +15,6 @@ import kotlinx.coroutines.runBlocking
 import no.nav.fager.altinn.Altinn2Config
 import no.nav.fager.altinn.Altinn3Config
 import no.nav.fager.altinn.KnownResourceIds
-import no.nav.fager.altinn.KnownResources
 import no.nav.fager.ktorConfig
 import no.nav.fager.redis.RedisConfig
 import no.nav.fager.texas.IdentityProvider
@@ -24,29 +23,18 @@ import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 
-val mockOboTokens = mapOf(
-    "acr-high-11111111111" to mapOf(
-        "pid" to "11111111111",
-        "acr" to "idporten-loa-high",
-        "client_id" to "local:test",
-    ),
-    "acr-high-22222222222" to mapOf(
-        "pid" to "22222222222",
-        "acr" to "idporten-loa-high",
-        "client_id" to "local:test",
-    ),
-    "acr-low-33333333333" to mapOf(
-        "pid" to "33333333333",
-        "acr" to "idporten-loa-low",
-        "client_id" to "local:test",
-    ),
-//    trenger ikke teste audience validering da dette håndteres i texas
-//    "wrong-audience-44444444444" to mapOf(
-//        "active" to false,
-//        "pid" to "44444444444",
-//        "acr" to "idporten-loa-high",
-//    ),
-)
+private fun resolveMockToken(token: String?): Map<String, String> {
+    return if (token == null || token.count { it == ':' } != 1) {
+        emptyMap()
+    } else {
+        val (acr, pid) = token.split(":")
+        mapOf(
+            "pid" to pid,
+            "acr" to acr,
+            "client_id" to "local:test",
+        )
+    }
+}
 
 class FakeApplication(
     private val port: Int = 0,
@@ -132,7 +120,7 @@ class FakeApplication(
 
             // tokenx = obo, mocke gyldig obo token
             if (form["identity_provider"] == IdentityProvider.TOKEN_X.alias) {
-                val token = mockOboTokens[form["token"]] ?: mapOf()
+                val token = resolveMockToken(form["token"])
 
                 call.respond(
                     HashMap(
