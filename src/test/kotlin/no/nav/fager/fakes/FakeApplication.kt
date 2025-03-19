@@ -14,6 +14,7 @@ import io.ktor.server.routing.*
 import kotlinx.coroutines.runBlocking
 import no.nav.fager.altinn.Altinn2Config
 import no.nav.fager.altinn.Altinn3Config
+import no.nav.fager.altinn.KnownResourceIds
 import no.nav.fager.altinn.KnownResources
 import no.nav.fager.ktorConfig
 import no.nav.fager.redis.RedisConfig
@@ -53,9 +54,9 @@ class FakeApplication(
 ) : BeforeAllCallback, AfterAllCallback {
 
     private val fakeAltinn3Api = FakeApi().also {
-        KnownResources.forEach { resource ->
-            it.stubs[Get to "/resourceregistry/api/v1/resource/${resource.resourceId}/policy/subjects"] = {
-                call.respondText(
+        KnownResourceIds.forEach { resourceId ->
+            val response = when (resourceId) {
+                "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger" ->
                     //language=json
                     """
                     {
@@ -73,8 +74,14 @@ class FakeApplication(
                         }
                       ]
                     }
-                    """.trimIndent(), ContentType.Application.Json
-                )
+                    """.trimIndent()
+
+                else ->
+                    //language=json
+                    """{ "links": {}, "data": [] }"""
+            }
+            it.stubs[Get to "/resourceregistry/api/v1/resource/${resourceId}/policy/subjects"] = {
+                call.respondText(response, ContentType.Application.Json)
             }
         }
     }
