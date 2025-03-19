@@ -14,6 +14,7 @@ import io.ktor.server.routing.*
 import kotlinx.coroutines.runBlocking
 import no.nav.fager.altinn.Altinn2Config
 import no.nav.fager.altinn.Altinn3Config
+import no.nav.fager.altinn.KnownResources
 import no.nav.fager.ktorConfig
 import no.nav.fager.redis.RedisConfig
 import no.nav.fager.texas.IdentityProvider
@@ -52,30 +53,29 @@ class FakeApplication(
 ) : BeforeAllCallback, AfterAllCallback {
 
     private val fakeAltinn3Api = FakeApi().also {
-        it.stubs[
-            // når det kommer flere ressurser i KnownResources, må det legges til flere svar eller støtte for wildcards i fakeapi
-            Get to "/resourceregistry/api/v1/resource/nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger/policy/subjects"
-        ] = {
-            call.respondText(
-                //language=json
-                """
-                {
-                  "links": {},
-                  "data": [
+        KnownResources.forEach { resource ->
+            it.stubs[Get to "/resourceregistry/api/v1/resource/${resource.resourceId}/policy/subjects"] = {
+                call.respondText(
+                    //language=json
+                    """
                     {
-                      "type": "urn:altinn:rolecode",
-                      "value": "dagl",
-                      "urn": "urn:altinn:rolecode:dagl"
-                    },
-                    {
-                      "type": "urn:altinn:rolecode",
-                      "value": "lede",
-                      "urn": "urn:altinn:rolecode:lede"
+                      "links": {},
+                      "data": [
+                        {
+                          "type": "urn:altinn:rolecode",
+                          "value": "dagl",
+                          "urn": "urn:altinn:rolecode:dagl"
+                        },
+                        {
+                          "type": "urn:altinn:rolecode",
+                          "value": "lede",
+                          "urn": "urn:altinn:rolecode:lede"
+                        }
+                      ]
                     }
-                  ]
-                }
-                """.trimIndent(), ContentType.Application.Json
-            )
+                    """.trimIndent(), ContentType.Application.Json
+                )
+            }
         }
     }
     private val fakeAltinn2Api = FakeApi()
