@@ -45,7 +45,7 @@ class AuthTest {
     @Test
     fun `accepts authenticated call`() = app.runTest {
         client.get("/whoami") {
-            header("Authorization", "Bearer acr-high-11111111111")
+            header("Authorization", "Bearer idporten-loa-high:11111111111")
         }.apply {
             assertEquals(HttpStatusCode.OK, status)
         }
@@ -57,7 +57,7 @@ class AuthTest {
     @Test
     fun `rejects low authenticated call`() = app.runTest {
         client.get("/whoami") {
-            header("Authorization", "Bearer acr-low-33333333333")
+            header("Authorization", "Bearer idporten-loa-low:33333333333")
         }.apply {
             assertEquals(HttpStatusCode.Unauthorized, status)
         }
