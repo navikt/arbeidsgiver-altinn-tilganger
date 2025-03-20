@@ -28,6 +28,8 @@ class AltinnTilgangerTest {
         )
     }
 
+    private val fnr = generateSequence { "${(11111111111..99999999999).random()}" }.iterator()
+
     @Test
     fun `henter altinn tilganger`() = app.runTest {
         app.altinn3Response(Post, "/accessmanagement/api/v1/resourceowner/authorizedparties") {
@@ -171,7 +173,7 @@ class AltinnTilgangerTest {
         }
 
         client.post("/altinn-tilganger") {
-            header("Authorization", "Bearer acr-high-11111111111")
+            header("Authorization", "Bearer idporten-loa-high:${fnr.next()}")
             contentType(ContentType.Application.Json)
             setBody("")
         }.apply {
@@ -185,7 +187,7 @@ class AltinnTilgangerTest {
                 //language=json
                 """
                 {
-                    "fnr": "some-fnr"
+                    "fnr": "${fnr.next()}"
                 }
                 """.trimIndent()
             )
@@ -353,7 +355,7 @@ class AltinnTilgangerTest {
 
         repeat(2) {
             client.post("/altinn-tilganger") {
-                header("Authorization", "Bearer acr-high-11111111111")
+                header("Authorization", "Bearer idporten-loa-high:11111111111")
                 contentType(ContentType.Application.Json)
                 setBody(
                     //language=json
@@ -390,7 +392,7 @@ class AltinnTilgangerTest {
             }.body<AltinnTilgangerResponse>().also(assertResponse)
 
             client.post("/altinn-tilganger") {
-                header("Authorization", "Bearer acr-high-11111111111")
+                header("Authorization", "Bearer idporten-loa-high:11111111111")
                 contentType(ContentType.Application.Json)
                 setBody(
                     //language=json
@@ -425,7 +427,7 @@ class AltinnTilgangerTest {
             }.body<AltinnTilgangerResponse>().also(assertResponse)
 
             client.post("/altinn-tilganger") {
-                header("Authorization", "Bearer acr-high-11111111111")
+                header("Authorization", "Bearer idporten-loa-high:11111111111")
                 contentType(ContentType.Application.Json)
                 setBody(
                     //language=json
@@ -460,7 +462,7 @@ class AltinnTilgangerTest {
             }.body<AltinnTilgangerResponse>().also(assertResponse)
 
             client.post("/altinn-tilganger") {
-                header("Authorization", "Bearer acr-high-11111111111")
+                header("Authorization", "Bearer idporten-loa-high:11111111111")
                 contentType(ContentType.Application.Json)
                 setBody(
                     //language=json
@@ -495,7 +497,7 @@ class AltinnTilgangerTest {
     @Test
     fun `ugyldig filter gir feilmelding`() = app.runTest {
         client.post("/altinn-tilganger") {
-            header("Authorization", "Bearer acr-high-11111111111")
+            header("Authorization", "Bearer idporten-loa-high:11111111111")
             contentType(ContentType.Application.Json)
             setBody(
                 //language=json
@@ -512,7 +514,7 @@ class AltinnTilgangerTest {
             assertEquals(HttpStatusCode.BadRequest, status)
         }
         client.post("/altinn-tilganger") {
-            header("Authorization", "Bearer acr-high-11111111111")
+            header("Authorization", "Bearer idporten-loa-high:11111111111")
             contentType(ContentType.Application.Json)
             setBody(
                 //language=json

@@ -353,14 +353,20 @@ class AltinnServiceTest {
             )
         })
         val resourceRegistry = ResourceRegistry(FakeAltinn3Client(), RedisConfig.local(), null).also {
-            it.updatePolicySubjectsForKnownResources {
-                listOf(
-                    PolicySubject(
-                        urn = "urn:altinn:rolecode:lede",
-                        type = "urn:altinn:rolecode",
-                        value = "lede",
-                    )
-                )
+            it.updatePolicySubjectsForKnownResources { resourceId ->
+                when (resourceId) {
+                    "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger" ->
+                        listOf(
+                            PolicySubject(
+                                urn = "urn:altinn:rolecode:lede",
+                                type = "urn:altinn:rolecode",
+                                value = "lede",
+                            )
+                        )
+
+                    else -> listOf() // ingen policy subjects for andre ressurser
+                }
+
             }
         }
 
