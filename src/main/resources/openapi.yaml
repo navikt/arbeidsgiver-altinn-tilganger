@@ -70,7 +70,7 @@ info:
     I Altinn 2 styres tilganger av servicecode og serviceedition. I altinn 3 er det ressurser som styrer tilganger.
     Dersom dere allerede har en altinn 2 tilgang og skal migrere denne, så kan dette apiet også lette overgangen.
 
-    Internt i applikasjonen holder vi oversikt over hvilke altinn 2 tilganger som mapper til hvilke altinn 3 ressurser.
+    Internt i applikasjonen er det en oversikt over hvilke altinn 3 ressurser som erstatter hvilke altinn 2 tilganger.
     For disse ressursene vil vi returnere altinn 2 tilgangen i tillegg til altinn 3 ressursen. 
     På denne måten står man litt mer frikoblet fra "turn-key" migreringen i altinn. 
     Med andre ord vil de som hadde tilgang til for eksempel notifikasjoner for en altinn 2 tjeneste ikke miste disse på grunn av migrering av tjenesten fra altinn 2 servicecode til altinn 3 ressurs.
