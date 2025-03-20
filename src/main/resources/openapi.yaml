@@ -6,10 +6,9 @@ info:
     hvilke virksomheter/bedrifter.
 
     Med innlogget bruker, mener vi at api-et vårt kun godtar kall med
-    on-behalf-of access token 
+    on-behalf-of access token for brukeren.
 
-    for brukeren.
-
+    Dersom dere har en applikasjon hvor bruker ikke er en del av flyten, og dere derfor ikke har en obo-token, kan dere benytte m2m-token. 
 
     ## Hvordan du kaller dev-gcp-api-et fra denne siden
 
@@ -34,6 +33,15 @@ info:
 
     ```
 
+    ## Hvordan ta i bruk APIet
+
+    For at dere skal kunne bruke dette APIet må et par ting på plass. Access policy må settes opp hos dere og oss.    
+    I tillegg så må vi vite hvilken altinn 3 ressurs dere skal benytte.
+    Grunnen til dette er en begrensning i altinn 3 authorizedResources apiet som brukes. Her returneres kun eksplisitt delegerte tilganger.
+    Det vil si at tilganger som delegeres via roller må slås opp i tillegg. Dette gjør APIet vårt for dere dersom dere sier ifra til oss.
+    På sikt skal altinn komme med et nytt api som vil returnere alle tilganger, også de implisitt delegerte via roller og tilgangspakker. 
+    I mellomtiden må dere si ifra til oss om hvilke altinn 3 ressurser dere skal bruke. 
+    Dersom dere ikke gjør dette vil kun eksplisitt delegerte tilganger bli returnert. Dvs de som har gitt eller fått en ressurs delegert på person nivå.
 
     ## Access policy i dev-gcp og prod-gcp
 
@@ -53,14 +61,23 @@ info:
     ```
 
 
-    Du må også be oss om å
+    Du må også be oss om å legge til appen deres i vår inbound access policy.
+    
+    Du kontakter oss i [slack kanalen #team-fager](https://nav-it.slack.com/archives/C01V9FFEHEK).
+    
+    ## Litt om migrering fra altinn 2 til altinn 3
+    
+    I Altinn 2 styres tilganger av servicecode og serviceedition. I altinn 3 er det ressurser som styrer tilganger.
+    Dersom dere allerede har en altinn 2 tilgang og skal migrere denne, så kan dette apiet også lette overgangen.
 
-    legge til appen deres i vår inbound access policy.
+    Internt i applikasjonen er det en oversikt over hvilke altinn 3 ressurser som erstatter hvilke altinn 2 tilganger.
+    For disse ressursene vil vi returnere altinn 2 tilgangen i tillegg til altinn 3 ressursen. 
+    På denne måten står man litt mer frikoblet fra "turn-key" migreringen i altinn. 
+    Med andre ord vil de som hadde tilgang til for eksempel notifikasjoner for en altinn 2 tjeneste ikke miste disse på grunn av migrering av tjenesten fra altinn 2 servicecode til altinn 3 ressurs.
 
-    Du kontakter oss i [slack kanalen 
-
-    #team-fager](https://nav-it.slack.com/archives/C01V9FFEHEK).
-
+    Dersom det ikke er ønskelig at vi returnerer altinn 2 tilganger i tillegg til altinn 3 ressursene, så kan vi enkelt gjøre unntak for enkelte tjenester. Bare gi oss beskjed. 
+  
+    Dette er litt vanskelig å kommunisere skriftlig, så vi tar gjerne en prat om dette dersom det er behov.
 
     ## Ingresser
 
