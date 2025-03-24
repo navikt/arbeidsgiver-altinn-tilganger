@@ -68,8 +68,12 @@ spec:
           namespace: helsearbeidsgiver
         - application: pia-sykefravarsstatistikk
           namespace: pia
+        - application: fia-arbeidsgiver
+          namespace: pia
         - application: forebyggingsplan
           namespace: teamia
+        - application: ia-tjenester-metrikker
+          namespace: arbeidsgiver
         - application: sosialhjelp-avtaler-api-dev
           namespace: teamdigisos
     outbound:
