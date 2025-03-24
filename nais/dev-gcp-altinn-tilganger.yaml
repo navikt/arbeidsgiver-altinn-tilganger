@@ -72,6 +72,8 @@ spec:
           namespace: pia
         - application: forebyggingsplan
           namespace: teamia
+        - application: ia-tjenester-metrikker
+          namespace: arbeidsgiver
         - application: sosialhjelp-avtaler-api-dev
           namespace: teamdigisos
     outbound:
