@@ -5,7 +5,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import no.nav.fager.infrastruktur.RequiresReady
-import no.nav.fager.infrastruktur.basedOnEnv
 import no.nav.fager.infrastruktur.logger
 import no.nav.fager.redis.RedisConfig
 import no.nav.fager.redis.RedisLoadingCache
@@ -20,12 +19,10 @@ val KnownResources = listOfNotNull(
         resourceId = "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger",
         altinn2Tjeneste = listOf(Altinn2Tjeneste("5810", "1"))
     ),
-    basedOnEnv(prod = { null }, other = {
-        Resource(
-            resourceId = "nav_sosialtjenester_digisos-avtale",
-            altinn2Tjeneste = listOf(Altinn2Tjeneste("5867", "1"))
-        )
-    })
+    Resource(
+        resourceId = "nav_sosialtjenester_digisos-avtale",
+        altinn2Tjeneste = listOf(Altinn2Tjeneste("5867", "1"))
+    )
 )
 
 val KnownResourceIds = KnownResources.map { it.resourceId }
