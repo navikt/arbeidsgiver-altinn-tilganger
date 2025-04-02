@@ -19,8 +19,8 @@ fun defaultHttpClient(
 ) = HttpClient(CIO) {
     expectSuccess = true
     install(HttpRequestRetry) {
-        maxRetries = 3
-        retryOnExceptionIf { _, cause ->
+        retryOnServerErrors(3)
+        retryOnExceptionIf(3) { _, cause ->
             when (cause) {
                 is SocketTimeoutException,
                 is EOFException,

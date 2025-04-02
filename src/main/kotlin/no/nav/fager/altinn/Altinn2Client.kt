@@ -1,6 +1,7 @@
 package no.nav.fager.altinn
 
 import io.ktor.client.call.*
+import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.*
 import io.ktor.client.request.*
 import io.ktor.http.*
@@ -65,7 +66,7 @@ class Altinn2ClientImpl(
         }
 
         install(HttpTimeout) {
-            requestTimeoutMillis = 10_000
+            requestTimeoutMillis = 60_000 // noen reqs mot altinn 2 tar lang tid pga stor payload
         }
     }
 
