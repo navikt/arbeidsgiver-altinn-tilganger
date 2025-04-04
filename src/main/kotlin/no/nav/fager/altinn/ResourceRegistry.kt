@@ -5,6 +5,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import no.nav.fager.infrastruktur.RequiresReady
+import no.nav.fager.infrastruktur.basedOnEnv
 import no.nav.fager.infrastruktur.logger
 import no.nav.fager.redis.RedisConfig
 import no.nav.fager.redis.RedisLoadingCache
@@ -14,14 +15,34 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 
-val KnownResources = listOfNotNull(
-    Resource(
-        resourceId = "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger",
-        altinn2Tjeneste = listOf(Altinn2Tjeneste("5810", "1"))
+val KnownResources = basedOnEnv(
+    prod = listOfNotNull(
+        Resource(
+            resourceId = "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger",
+            altinn2Tjeneste = listOf(Altinn2Tjeneste("5810", "1"))
+        ),
+        Resource(
+            resourceId = "nav_sosialtjenester_digisos-avtale",
+            altinn2Tjeneste = listOf(Altinn2Tjeneste("5867", "1"))
+        )
     ),
-    Resource(
-        resourceId = "nav_sosialtjenester_digisos-avtale",
-        altinn2Tjeneste = listOf(Altinn2Tjeneste("5867", "1"))
+    other = listOfNotNull(
+        Resource(
+            resourceId = "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger",
+            altinn2Tjeneste = listOf(Altinn2Tjeneste("5810", "1"))
+        ),
+        Resource(
+            resourceId = "nav_sosialtjenester_digisos-avtale",
+            altinn2Tjeneste = listOf(Altinn2Tjeneste("5867", "1"))
+        ),
+        Resource(
+            resourceId = "nav_forebygge-og-redusere-sykefravar_sykefravarsstatistikk", //OBS! DENNE HAR SERVICE EDITION 2 I PROD
+            altinn2Tjeneste = listOf(Altinn2Tjeneste("3403", "1"))
+        ),
+        Resource(
+            resourceId = "nav_forebygge-og-redusere-sykefravar_samarbeid",
+            altinn2Tjeneste = listOf(Altinn2Tjeneste("5934", "1"))
+        )
     )
 )
 
