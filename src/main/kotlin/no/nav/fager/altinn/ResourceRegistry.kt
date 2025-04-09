@@ -24,6 +24,14 @@ val KnownResources = basedOnEnv(
         Resource(
             resourceId = "nav_sosialtjenester_digisos-avtale",
             altinn2Tjeneste = listOf(Altinn2Tjeneste("5867", "1"))
+        ),
+        Resource(
+            resourceId = "nav_forebygge-og-redusere-sykefravar_sykefravarsstatistikk", //OBS! DENNE HAR SERVICE EDITION 2 I PROD
+            altinn2Tjeneste = listOf(Altinn2Tjeneste("3403", "2"))
+        ),
+        Resource(
+            resourceId = "nav_forebygge-og-redusere-sykefravar_samarbeid",
+            altinn2Tjeneste = listOf(Altinn2Tjeneste("5934", "1"))
         )
     ),
     other = listOfNotNull(
