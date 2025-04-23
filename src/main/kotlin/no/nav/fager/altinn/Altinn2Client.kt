@@ -322,6 +322,18 @@ private val tjenester = listOf(
         serviceEditionName = "Avtale om inkluderingstilskudd",
     ),
     Altinn2TjenesteDefinisjon(
+        serviceCode = "5516",
+        serviceEdition = "6",
+        serviceName = "Tiltakstjenester",
+        serviceEditionName = "Avtale om varig tilrettelagt arbeid i ordinær virksomhet",
+    ),
+    Altinn2TjenesteDefinisjon(
+        serviceCode = "5516",
+        serviceEdition = "7",
+        serviceName = "Tiltakstjenester",
+        serviceEditionName = "Adressesperre — avtaler om arbeidsmarkedstiltak og refusjoner",
+    ),
+    Altinn2TjenesteDefinisjon(
         serviceCode = "5902",
         serviceEdition = "1",
         serviceName = "Skademelding",
