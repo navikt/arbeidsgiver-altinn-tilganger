@@ -43,8 +43,6 @@ jobs:
           team: fager
           tag: ${{ github.sha }}
           salsa: false
-          project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
-          identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
 
     outputs:
       image: ${{ steps.gar-push.outputs.image }}
