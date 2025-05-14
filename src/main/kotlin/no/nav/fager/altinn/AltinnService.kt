@@ -4,9 +4,12 @@ import io.micrometer.core.instrument.Counter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.encodeToString
 import no.nav.fager.AltinnTilgang
 import no.nav.fager.Filter
 import no.nav.fager.infrastruktur.Metrics
+import no.nav.fager.infrastruktur.basedOnEnv
 import no.nav.fager.infrastruktur.coRecord
 import no.nav.fager.infrastruktur.logger
 import no.nav.fager.redis.AltinnTilgangerRedisClient
@@ -21,6 +24,7 @@ class AltinnService(
     private val timer = Metrics.meterRegistry.timer("altinnservice.hentTilgangerFraAltinn")
     private val cacheHit = Counter.builder("altinnservice.cache").tag("result", "hit").register(Metrics.meterRegistry)
     private val cacheMiss = Counter.builder("altinnservice.cache").tag("result", "miss").register(Metrics.meterRegistry)
+    private val log = logger();
 
     suspend fun hentTilganger(
         fnr: String,
@@ -50,8 +54,13 @@ class AltinnService(
 
         val altinn2Tilganger = altinn2TilgangerJob.await()
         val altinn3TilgangerResult = altinn3TilgangerJob.await()
+
         val altinn3Tilganger = altinn3TilgangerResult.fold(
             onSuccess = { altinn3tilganger ->
+                basedOnEnv(
+                    prod = {},
+                    other = log.info("Altinn3 tilganger respons debug: ${Json.encodeToString(altinn3tilganger)}")
+                )
                 altinn3tilganger.addAuthorizedResourcesRecursive { party ->
                     // adds all resources from the resource registry for the roles the party has
                     // this must be done prior to mapping to Altinn2 services
