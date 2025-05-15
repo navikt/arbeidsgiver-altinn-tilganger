@@ -1,15 +1,16 @@
 package no.nav.fager
 
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
-import io.lettuce.core.codec.StringCodec
+import io.valkey.params.SetParams
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import no.nav.fager.altinn.AltinnService.AltinnTilgangerResultat
 import no.nav.fager.redis.*
+import org.junit.jupiter.api.Assertions.assertFalse
 import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 
 class RedisIntegrationTest {
@@ -21,28 +22,32 @@ class RedisIntegrationTest {
         assertEquals(altinnTilganger, redis.get(fakeFnr))
     }
 
-    @OptIn(ExperimentalLettuceCoroutinesApi::class)
     @Test
     fun `corrupt entry is cleared and reloaded`() = runBlocking {
         @Serializable
         class Foo(val foo: String, val bar: String)
 
         val freshEntity = Foo("foo", "bar")
+        var loaderCalled = false
 
         val cache = RedisLoadingCache(
             name = "foo",
-            redisClient = RedisConfig.local().createClient(),
-            codec = createCodec<Foo>("foo"),
-            loader = { freshEntity },
+            redisClient = RedisConfig.local().createClient<Foo>("foo"),
+            loader = {
+                loaderCalled = true
+                freshEntity
+            },
         )
+        assertFalse(loaderCalled, "loader should not be called yet")
 
         // prime redis with corrupt entry
-        RedisConfig.local().createClient().useConnection(StringCodec.UTF8) {
-            it.set("foo:foo", """{"who": "not foo"}""")
-        }
+        RedisConfig.local().createClient<String>("foo")
+            .set("foo", """{"who": "not foo"}""", SetParams().ex(10))
 
         // read entry
-        assertEquals(freshEntity, cache.get("foo"))
+        val actual = cache.get("foo")
+        assertEquals(freshEntity, actual)
+        assertTrue(loaderCalled, "loader should be called")
     }
 }
 

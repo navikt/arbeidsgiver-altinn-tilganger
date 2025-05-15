@@ -2,8 +2,8 @@ package no.nav.fager.infrastruktur
 
 import io.micrometer.core.instrument.Clock
 import io.micrometer.core.instrument.Timer
-import io.micrometer.prometheus.PrometheusConfig
-import io.micrometer.prometheus.PrometheusMeterRegistry
+import io.micrometer.prometheusmetrics.PrometheusConfig
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import java.util.concurrent.TimeUnit
 
 object Metrics {

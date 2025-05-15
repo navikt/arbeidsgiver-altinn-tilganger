@@ -9,7 +9,6 @@ import no.nav.fager.infrastruktur.basedOnEnv
 import no.nav.fager.infrastruktur.logger
 import no.nav.fager.redis.RedisConfig
 import no.nav.fager.redis.RedisLoadingCache
-import no.nav.fager.redis.createCodec
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -56,7 +55,7 @@ val KnownResources = basedOnEnv(
 
 val KnownResourceIds = KnownResources.map { it.resourceId }
 val KnownAltinn2Tjenester = (Altinn2Tjenester + KnownResources.flatMap {
-    it.altinn2Tjeneste.map { "${it.serviceCode}:${it.serviceEdition}" }
+    it.altinn2Tjeneste.map { t -> "${t.serviceCode}:${t.serviceEdition}" }
 }).toSet()
 
 class ResourceRegistry(
@@ -74,8 +73,7 @@ class ResourceRegistry(
 
     private val cache = RedisLoadingCache(
         name = "resource-registry",
-        redisClient = redisConfig.createClient(),
-        codec = createCodec<List<PolicySubject>>("resource-registry"),
+        redisClient = redisConfig.createClient<List<PolicySubject>>("resource-registry"),
         loader = { s -> altinn3Client.resourceRegistry_PolicySubjects(s).getOrThrow() },
         cacheTTL = 7.days.toJavaDuration()
     )
