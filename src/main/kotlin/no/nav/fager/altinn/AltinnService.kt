@@ -25,15 +25,17 @@ class AltinnService(
     suspend fun hentTilganger(
         fnr: String,
         filter: Filter = Filter.empty,
-        scope: CoroutineScope
+        scope: CoroutineScope,
+        inkluderSlettede: Boolean = false
     ): AltinnTilgangerResultat {
-        val result = redisClient.get(fnr)?.also {
+        val cacheKey = if (!inkluderSlettede) fnr else "$fnr-med-slettede"
+        val result = redisClient.get(cacheKey)?.also {
             cacheHit.increment()
         } ?: run {
             cacheMiss.increment()
-            hentTilgangerFraAltinn(fnr, scope).also {
+            hentTilgangerFraAltinn(fnr, scope, inkluderSlettede).also {
                 if (!it.isError) {
-                    redisClient.set(fnr, it)
+                    redisClient.set(cacheKey, it)
                 }
             }
         }
@@ -44,6 +46,7 @@ class AltinnService(
     private suspend fun hentTilgangerFraAltinn(
         fnr: String,
         scope: CoroutineScope,
+        inkluderSlettede: Boolean
     ) = timer.coRecord {
         val altinn2TilgangerJob = scope.async { altinn2Client.hentAltinn2Tilganger(fnr) }
         val altinn3TilgangerJob = scope.async { altinn3Client.resourceOwner_AuthorizedParties(fnr) }
@@ -66,7 +69,8 @@ class AltinnService(
 
         val orgnrTilAltinn2Mapped = altinn3Tilganger.flatMap {
             flatten(it) { party ->
-                if (party.organizationNumber == null || party.unitType == null || party.isDeleted) {
+                val skalEkskluderes = !inkluderSlettede && party.isDeleted
+                if (party.organizationNumber == null || party.unitType == null || skalEkskluderes) {
                     null
                 } else {
                     party.organizationNumber to party.authorizedResources.mapNotNull { resource ->
@@ -85,30 +89,34 @@ class AltinnService(
                 Altinn2Tilganger(
                     altinn2Tilganger.isError,
                     orgnrTilAltinn2Mapped
-                )
+                ),
+                inkluderSlettede
             )
         )
     }
 
     private fun mapToHierarchy(
         authorizedParties: List<AuthorizedParty>,
-        altinn2Tilganger: Altinn2Tilganger
+        altinn2Tilganger: Altinn2Tilganger,
+        inkluderSlettede: Boolean
     ): List<AltinnTilgang> {
 
         return authorizedParties
             .mapNotNull { party ->
-                if (party.organizationNumber == null || party.unitType == null || party.isDeleted) {
+                val skalEkskluderes = !inkluderSlettede && party.isDeleted
+                if (party.organizationNumber == null || party.unitType == null || skalEkskluderes) {
                     null
                 } else {
                     AltinnTilgang(
                         orgnr = party.organizationNumber, // alle orgnr finnes i altinn3 pga includeAltinn2=true
                         navn = party.name,
                         organisasjonsform = party.unitType,
+                        erSlettet = party.isDeleted,
                         altinn3Tilganger = party.authorizedResources,
                         altinn2Tilganger = altinn2Tilganger.orgNrTilTjenester[party.organizationNumber]?.map {
                             """${it.serviceCode}:${it.serviceEdition}"""
                         }?.toSet() ?: emptySet(),
-                        underenheter = mapToHierarchy(party.subunits, altinn2Tilganger),
+                        underenheter = mapToHierarchy(party.subunits, altinn2Tilganger, inkluderSlettede),
                     )
                 }
             }

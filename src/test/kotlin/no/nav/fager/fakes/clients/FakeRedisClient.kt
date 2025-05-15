@@ -8,13 +8,13 @@ class FakeRedisClient(
     private val cache: MutableMap<String, AltinnService.AltinnTilgangerResultat> = mutableMapOf(),
 ) : AltinnTilgangerRedisClient, FakeClientBase() {
 
-    override suspend fun get(fnr: String): AltinnService.AltinnTilgangerResultat? {
-        addFunctionCall(this::get.name, fnr)
-        return cache[fnr]
+    override suspend fun get(cacheKey: String): AltinnService.AltinnTilgangerResultat? {
+        addFunctionCall(this::get.name, cacheKey)
+        return cache[cacheKey]
     }
 
-    override suspend fun set(fnr: String, altinnTilganger: AltinnService.AltinnTilgangerResultat) {
-        addFunctionCall(this::set.name, fnr, altinnTilganger)
-        cache[fnr] = altinnTilganger
+    override suspend fun set(cacheKey: String, altinnTilganger: AltinnService.AltinnTilgangerResultat) {
+        addFunctionCall(this::set.name, cacheKey, altinnTilganger)
+        cache[cacheKey] = altinnTilganger
     }
 }

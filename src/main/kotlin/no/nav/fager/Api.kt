@@ -13,6 +13,7 @@ data class AltinnTilgang(
     val underenheter: List<AltinnTilgang>,
     val navn: String,
     val organisasjonsform: String,
+    val erSlettet: Boolean
 )
 
 annotation class Example(val value: String)
@@ -85,15 +86,18 @@ data class Filter(
 @Serializable
 sealed class AltinnTilgangerRequestBase {
     abstract val filter: Filter
+    abstract val inkluderSlettede: Boolean
 }
 
 @Serializable
 data class AltinnTilgangerRequest(
     override val filter: Filter = Filter.empty,
-) : AltinnTilgangerRequestBase()
+    override val inkluderSlettede: Boolean = false,
+    ) : AltinnTilgangerRequestBase()
 
 @Serializable
 data class AltinnTilgangerM2MRequest(
     val fnr: String,
     override val filter: Filter = Filter.empty,
-) : AltinnTilgangerRequestBase()
+    override val inkluderSlettede: Boolean = false,
+    ) : AltinnTilgangerRequestBase()

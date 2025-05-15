@@ -66,11 +66,13 @@ private val altinnTilganger = AltinnTilgangerResultat(
                     altinn2Tilganger = setOf("4936:1"),
                     underenheter = listOf(),
                     navn = "Donald Duck & Co Avd. Andebyen",
-                    organisasjonsform = "BEDR"
+                    organisasjonsform = "BEDR",
+                    erSlettet = false
                 )
             ),
             navn = "Donald Duck & Co",
-            organisasjonsform = "AS"
+            organisasjonsform = "AS",
+            erSlettet = false
         )
     )
 )

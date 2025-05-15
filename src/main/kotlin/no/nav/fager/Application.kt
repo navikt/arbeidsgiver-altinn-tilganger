@@ -216,13 +216,14 @@ fun Application.ktorConfig(
 
             post("/altinn-tilganger") {
                 val clientId = call.principal<AutentisertM2MPrincipal>()!!.clientId
-                val (fnr, filter) = call.receive<AltinnTilgangerM2MRequest>()
+                val (fnr, filter, inkluderSlettede) = call.receive<AltinnTilgangerM2MRequest>()
                 withTimer(clientId).coRecord {
                     call.respond(
                         altinnService.hentTilganger(
                             fnr = fnr,
                             filter = filter,
-                            scope = call
+                            scope = call,
+                            inkluderSlettede = inkluderSlettede
                         ).toResponse()
                     )
                 }
@@ -252,24 +253,20 @@ fun Application.ktorConfig(
             post {
                 val fnr = call.principal<InnloggetBrukerPrincipal>()!!.fnr
                 val clientId = call.principal<InnloggetBrukerPrincipal>()!!.clientId
-                val filter = call.receiveText().let {
-                    /**
-                     * since filter is optional, and only parameter we need to support posts with empty body
-                     * receive<AltinnTilgangerRequest>() will throw if body is empty,
-                     * so we go via text and parse manually
-                     */
-                    if (it.isBlank()) {
-                        Filter.empty
-                    } else {
-                        Json.decodeFromString(AltinnTilgangerRequest.serializer(), it).filter
-                    }
-                }
+                /**
+                 * since filter and inkluderSlettede is optional, and only parameter we need to support posts with empty body
+                 * receive<AltinnTilgangerRequest>() will throw if body is empty,
+                 * so we go via text and parse manually
+                 */
+                val (filter, inkluderSlettede) = call.receiveOptionalJson<AltinnTilgangerRequest>()
+                    ?: AltinnTilgangerRequest(filter = Filter.empty, inkluderSlettede = false)
                 withTimer(clientId).coRecord {
                     call.respond(
                         altinnService.hentTilganger(
                             fnr = fnr,
                             filter = filter,
-                            scope = call
+                            scope = call,
+                            inkluderSlettede = inkluderSlettede
                         ).toResponse()
                     )
                 }
@@ -289,3 +286,7 @@ private fun withTimer(clientId: String): Timer =
     }
 
 
+private suspend inline fun <reified T> ApplicationCall.receiveOptionalJson(): T? {
+    val body = receiveText()
+    return if (body.isBlank()) null else Json.decodeFromString<T>(body)
+}

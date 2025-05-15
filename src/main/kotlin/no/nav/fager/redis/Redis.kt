@@ -97,18 +97,18 @@ interface RedisCodec<K, V> {
 }
 
 interface AltinnTilgangerRedisClient {
-    suspend fun get(fnr: String): AltinnTilgangerResultat?
-    suspend fun set(fnr: String, altinnTilganger: AltinnTilgangerResultat)
+    suspend fun get(cacheKey: String): AltinnTilgangerResultat?
+    suspend fun set(cacheKey: String, altinnTilganger: AltinnTilgangerResultat)
 }
 
 class AltinnTilgangerRedisClientImpl(redisConfig: RedisConfig) : AltinnTilgangerRedisClient {
     private val redisClient = redisConfig.createClient<AltinnTilgangerResultat>("altinn-tilganger")
 
-    override suspend fun get(fnr: String) = redisClient.get(fnr.hashed())
+    override suspend fun get(cacheKey: String) = redisClient.get(cacheKey.hashed())
 
-    override suspend fun set(fnr: String, altinnTilganger: AltinnTilgangerResultat) {
+    override suspend fun set(cacheKey: String, altinnTilganger: AltinnTilgangerResultat) {
         redisClient.set(
-            fnr.hashed(),
+            cacheKey.hashed(),
             altinnTilganger,
             SetParams().ex(Duration.ofMinutes(10).seconds)
         )

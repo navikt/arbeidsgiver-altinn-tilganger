@@ -569,5 +569,117 @@ class AltinnTilgangerTest {
             assertEquals(HttpStatusCode.BadRequest, status)
         }
     }
+
+    @Test
+    fun `henter altinn tilganger med inkluderSlettede`() = app.runTest {
+        app.altinn3Response(Post, "/accessmanagement/api/v1/resourceowner/authorizedparties") {
+            call.respondText(
+                //language=json
+                """
+                [
+                  {
+                    "partyUuid": "a1c831cf-c7b7-4e5e-9910-2ad9a05b4ec1",
+                    "name": "MALMEFJORDEN OG RIDABU REGNSKAP",
+                    "organizationNumber": "810825472",
+                    "personId": null,
+                    "partyId": 50166368,
+                    "type": "Organization",
+                    "unitType": "AS",
+                    "isDeleted": false,
+                    "onlyHierarchyElementWithNoAccess": true,
+                    "authorizedResources": ["test-fager"],
+                    "authorizedRoles": [],
+                    "subunits": [
+                      {
+                        "partyUuid": "8656eab6-119b-4691-8a8a-6f51a203aba7",
+                        "name": "SLEMMESTAD OG STAVERN REGNSKAP",
+                        "organizationNumber": "910825496",
+                        "personId": null,
+                        "partyId": 50169034,
+                        "type": "Organization",
+                        "unitType": "BEDR",
+                        "isDeleted": false,
+                        "onlyHierarchyElementWithNoAccess": false,
+                        "authorizedResources": [
+                          "test-fager"
+                        ],
+                        "authorizedRoles": [],
+                        "subunits": []
+                      },
+                      {
+                        "partyUuid": "8656bbb6-119b-4691-8a8a-6f51a203bba7",
+                        "name": "SLEMMESTAD OG STAVERN REGNSKAP 2",
+                        "organizationNumber": "910825554",
+                        "personId": null,
+                        "partyId": 50169035,
+                        "type": "Organization",
+                        "unitType": "BEDR",
+                        "isDeleted": false,
+                        "onlyHierarchyElementWithNoAccess": false,
+                        "authorizedResources": [],
+                        "authorizedRoles": [
+                          "DAGL"
+                        ],
+                        "subunits": []
+                      },
+                      {
+                        "partyUuid": "7756eab6-119b-4691-8a8a-6f51a203aba7",
+                        "name": "SLEMMESTAD OG STAVERN REGNSKAP SLETTET",
+                        "organizationNumber": "910825999",
+                        "personId": null,
+                        "partyId": 50169333,
+                        "type": "Organization",
+                        "unitType": "BEDR",
+                        "isDeleted": true,
+                        "onlyHierarchyElementWithNoAccess": false,
+                        "authorizedResources": [
+                          "test-fager"
+                        ],
+                        "authorizedRoles": [],
+                        "subunits": []
+                      }
+                    ]
+                  }
+                ]
+                """.trimIndent(), ContentType.Application.Json
+            )
+        }
+
+        val assertResponse: (AltinnTilgangerResponse) -> Unit = {
+            assertEquals(3, it.hierarki[0].underenheter.size)
+            assertEquals(setOf("test-fager"), it.hierarki[0].underenheter[2].altinn3Tilganger)
+        }
+
+        client.post("/altinn-tilganger") {
+            header("Authorization", "Bearer idporten-loa-high:${fnr.next()}")
+            contentType(ContentType.Application.Json)
+            setBody(
+            //language=json
+            """
+                {
+                    "inkluderSlettede": true
+                }
+                """.trimIndent()
+            )
+        }.apply {
+            assertEquals(HttpStatusCode.OK, status)
+        }.body<AltinnTilgangerResponse>().also(assertResponse)
+
+        client.post("/m2m/altinn-tilganger") {
+            header("Authorization", "Bearer fakem2mtoken")
+            contentType(ContentType.Application.Json)
+            setBody(
+                //language=json
+                """
+                {
+                    "fnr": "${fnr.next()}",
+                    "inkluderSlettede": true
+                }
+                """.trimIndent()
+            )
+        }.apply {
+            assertEquals(HttpStatusCode.OK, status)
+        }.body<AltinnTilgangerResponse>().also(assertResponse)
+    }
 }
 
