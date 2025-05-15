@@ -5,6 +5,7 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import kotlinx.serialization.Serializable
 import no.nav.fager.infrastruktur.defaultHttpClient
+import no.nav.fager.infrastruktur.logger
 import no.nav.fager.texas.AuthClient
 import no.nav.fager.texas.IdentityProvider
 import no.nav.fager.texas.TexasAuthClientPlugin

@@ -15,9 +15,9 @@
         <kotlin.compiler.incremental>false</kotlin.compiler.incremental>
         <kotlin.code.style>official</kotlin.code.style>
 
-        <ktor_version>3.0.3</ktor_version>
-        <kotlin_version>2.1.0</kotlin_version>
-        <kotlinx_coroutines_version>1.9.0</kotlinx_coroutines_version>
+        <ktor_version>3.1.3</ktor_version>
+        <kotlin_version>2.1.21</kotlin_version>
+        <kotlinx_coroutines_version>1.10.2</kotlinx_coroutines_version>
     </properties>
 
     <dependencies>
@@ -94,15 +94,11 @@
             <artifactId>ktor-server-status-pages-jvm</artifactId>
             <version>${ktor_version}</version>
         </dependency>
-
-        <!-- openapi -->
         <dependency>
             <groupId>io.ktor</groupId>
             <artifactId>ktor-server-swagger-jvm</artifactId>
             <version>${ktor_version}</version>
         </dependency>
-
-        <!-- ktor client -->
         <dependency>
             <groupId>io.ktor</groupId>
             <artifactId>ktor-client-core-jvm</artifactId>
@@ -119,25 +115,15 @@
             <version>${ktor_version}</version>
         </dependency>
         <dependency>
-            <!-- java.lang.ClassNotFoundException: kotlinx.io.unsafe.UnsafeBufferOperations ?? -->
-            <groupId>org.jetbrains.kotlinx</groupId>
-            <artifactId>kotlinx-io-core-jvm</artifactId>
-            <version>0.6.0</version>
-        </dependency>
-        <dependency>
             <groupId>io.ktor</groupId>
             <artifactId>ktor-client-logging-jvm</artifactId>
             <version>${ktor_version}</version>
         </dependency>
-
-        <!-- ktor common -->
         <dependency>
             <groupId>io.ktor</groupId>
             <artifactId>ktor-serialization-kotlinx-json-jvm</artifactId>
             <version>${ktor_version}</version>
         </dependency>
-
-        <!-- observability -->
         <dependency>
             <groupId>net.logstash.logback</groupId>
             <artifactId>logstash-logback-encoder</artifactId>
@@ -153,22 +139,16 @@
             <artifactId>logback-classic</artifactId>
             <version>1.5.16</version>
         </dependency>
-
-        <!-- observability -->
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>
-            <version>1.6.13</version>
+            <version>1.14.5</version>
         </dependency>
-
-        <!-- redis -->
         <dependency>
-            <groupId>io.lettuce</groupId>
-            <artifactId>lettuce-core</artifactId>
-            <version>6.5.2.RELEASE</version>
+            <groupId>io.valkey</groupId>
+            <artifactId>valkey-java</artifactId>
+            <version>5.3.0</version>
         </dependency>
-
-        <!-- test -->
         <dependency>
             <groupId>org.jetbrains.kotlinx</groupId>
             <artifactId>kotlinx-coroutines-test</artifactId>
