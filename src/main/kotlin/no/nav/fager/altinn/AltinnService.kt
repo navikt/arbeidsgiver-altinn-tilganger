@@ -66,7 +66,7 @@ class AltinnService(
 
         val orgnrTilAltinn2Mapped = altinn3Tilganger.flatMap {
             flatten(it) { party ->
-                if (party.organizationNumber == null || party.unitType == null || party.isDeleted) {
+                if (party.organizationNumber == null || party.unitType == null) {
                     null
                 } else {
                     party.organizationNumber to party.authorizedResources.mapNotNull { resource ->
@@ -97,7 +97,7 @@ class AltinnService(
 
         return authorizedParties
             .mapNotNull { party ->
-                if (party.organizationNumber == null || party.unitType == null || party.isDeleted) {
+                if (party.organizationNumber == null || party.unitType == null) {
                     null
                 } else {
                     AltinnTilgang(
@@ -109,6 +109,7 @@ class AltinnService(
                             """${it.serviceCode}:${it.serviceEdition}"""
                         }?.toSet() ?: emptySet(),
                         underenheter = mapToHierarchy(party.subunits, altinn2Tilganger),
+                        erSlettet = party.isDeleted
                     )
                 }
             }
@@ -119,14 +120,11 @@ class AltinnService(
         val isError: Boolean,
         val altinnTilganger: List<AltinnTilgang>
     ) {
-        fun filter(filter: Filter) = if (filter.isEmpty) {
-            this
-        } else {
+        fun filter(filter: Filter): AltinnTilgangerResultat =
             AltinnTilgangerResultat(
                 isError,
                 altinnTilganger.filterRecursive(filter)
             )
-        }
     }
 }
 
@@ -142,27 +140,33 @@ class AltinnService(
  * så fjernes også overordnet enhet. Dette uavhengig om overordnet enhet har tilgangen definert eller ikke.
  */
 private fun List<AltinnTilgang>.filterRecursive(filter: Filter, parent: AltinnTilgang? = null): List<AltinnTilgang> =
-    mapNotNull {
-        val underenheter = it.underenheter.filterRecursive(filter, it)
-        val alleUnderenheterFjernet = underenheter.isEmpty() && it.underenheter.isNotEmpty()
-        if (alleUnderenheterFjernet) {
-            val filterMatchAltinn2 = (it.altinn2Tilganger intersect filter.altinn2Tilganger).isNotEmpty()
-            val filterMatchAltinn3 = (it.altinn3Tilganger intersect filter.altinn3Tilganger).isNotEmpty()
+    mapNotNull { tilgang ->
+        if (!filter.inkluderSlettede && tilgang.erSlettet) {
+            return@mapNotNull null
+        }
 
-            if (filterMatchAltinn2 || filterMatchAltinn3) {
+        val filtrerteUnderenheter = tilgang.underenheter.filterRecursive(filter, tilgang)
+
+        val alleUnderenheterFjernet = filtrerteUnderenheter.isEmpty() && tilgang.underenheter.isNotEmpty()
+        if (alleUnderenheterFjernet && !filter.isEmpty) {
+            val matcherAltinn2 = tilgang.altinn2Tilganger intersects filter.altinn2Tilganger
+            val matcherAltinn3 = tilgang.altinn3Tilganger intersects filter.altinn3Tilganger
+
+            if (matcherAltinn2 || matcherAltinn3) {
                 logger().error("Tom overordnet enhet som matcher filter fjernet pga alle underenheter fjernet")
             }
-            null
-        } else {
-            it.copy(underenheter = underenheter)
+            return@mapNotNull null
         }
-    }.filterIndexed { idx, it ->
-        val filterMatchAltinn2 = (it.altinn2Tilganger intersect filter.altinn2Tilganger).isNotEmpty()
-        val filterMatchAltinn3 = (it.altinn3Tilganger intersect filter.altinn3Tilganger).isNotEmpty()
-        val isLeaf = it.underenheter.isEmpty()
 
-        // hopp over hvis dette ikke er en løvnøde (virksomhet)
-        !isLeaf || filterMatchAltinn2 || filterMatchAltinn3
+        tilgang.copy(underenheter = filtrerteUnderenheter)
+    }.filter { tilgang ->
+        if (filter.isEmpty) return@filter true
+
+        val matcherAltinn2 = tilgang.altinn2Tilganger intersects filter.altinn2Tilganger
+        val matcherAltinn3 = tilgang.altinn3Tilganger intersects filter.altinn3Tilganger
+        val erLeaf = tilgang.underenheter.isEmpty()
+
+        !erLeaf || matcherAltinn2 || matcherAltinn3
     }
 
 private fun AuthorizedParty.addAuthorizedResourcesRecursive(
@@ -188,3 +192,6 @@ private fun <T> flatten(
 ): List<T> = listOfNotNull(
     mapFn(party)
 ) + party.subunits.flatMap { flatten(it, mapFn) }
+
+private infix fun <T> Set<T>.intersects(other: Set<T>): Boolean =
+    this.any { it in other }

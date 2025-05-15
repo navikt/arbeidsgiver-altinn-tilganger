@@ -72,7 +72,8 @@ class AltinnServiceTest {
                             altinn2Tilganger = setOf("4936:1"),
                             underenheter = listOf(),
                             navn = "SLEMMESTAD OG STAVERN REGNSKAP",
-                            organisasjonsform = "BEDR"
+                            organisasjonsform = "BEDR",
+                            erSlettet = false
                         )
                     )
                 )
@@ -97,7 +98,8 @@ class AltinnServiceTest {
                             altinn2Tilganger = setOf("4936:1"),
                             underenheter = listOf(),
                             navn = "SLEMMESTAD OG STAVERN REGNSKAP",
-                            organisasjonsform = "BEDR"
+                            organisasjonsform = "BEDR",
+                            erSlettet = false
                         )
                     )
                 )

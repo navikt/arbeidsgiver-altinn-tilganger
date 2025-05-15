@@ -179,6 +179,11 @@ paths:
                 summary: Ingen filter
                 value:
                   fnr: "11123456789"
+              filter_inkluder_slettede:
+                summary: returnerer også slettede underenheter
+                value:
+                  filter:
+                    inkluderSlettede: true
               filter_altinn2:
                 summary: filtrer på en eller flere altinn 2 tjenester
                 value:
@@ -258,6 +263,11 @@ paths:
               no_filter:
                 summary: Ingen filter (trenger ikke noe i body)
                 value: "{}"
+              filter_inkluder_slettede:
+                summary: returnerer også slettede underenheter
+                value:
+                  filter:
+                    inkluderSlettede: true
               filter_altinn2:
                 summary: filtrer på en eller flere altinn 2 tjenester
                 value:
@@ -320,6 +330,13 @@ components:
           items:
             title: String
             type: string
+        inkluderSlettede:
+          title: Inkluder slettede
+          type: boolean
+          description: |
+            Dersom true, vil også slettede virksomheter og underenheter inkluderes i resultatet.
+            Default er false, og slettede enheter filtreres da bort.
+          default: false
       description: >-
 
         Filter for hvilke tilganger som skal hentes. Dersom flere filter er
@@ -400,6 +417,13 @@ components:
           items:
             title: String
             type: string
+        inkluderSlettede:
+          title: Inkluder slettede
+          type: boolean
+          description: |
+            Dersom true, vil også slettede virksomheter og underenheter inkluderes i resultatet.
+            Default er false, og slettede enheter filtreres da bort.
+          default: false
         navn:
           title: String
           type: string

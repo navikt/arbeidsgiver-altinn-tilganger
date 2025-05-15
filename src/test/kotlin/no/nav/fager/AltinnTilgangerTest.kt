@@ -14,6 +14,8 @@ import org.junit.jupiter.api.extension.RegisterExtension
 import java.util.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class AltinnTilgangerTest {
     companion object {
@@ -569,5 +571,127 @@ class AltinnTilgangerTest {
             assertEquals(HttpStatusCode.BadRequest, status)
         }
     }
-}
 
+    @Test
+    fun `inkluderSlettede = true returnerer også slettede underenheter`() = app.runTest {
+        app.altinn3Response(Post, "/accessmanagement/api/v1/resourceowner/authorizedparties") {
+            call.respondText(
+                //language=json
+                """
+                [
+                  {
+                    "partyUuid": "a1c831cf-c7b7-4e5e-9910-2ad9a05b4ec1",
+                    "name": "MALMEFJORDEN OG RIDABU REGNSKAP",
+                    "organizationNumber": "810825472",
+                    "personId": null,
+                    "partyId": 50166368,
+                    "type": "Organization",
+                    "unitType": "AS",
+                    "isDeleted": false,
+                    "onlyHierarchyElementWithNoAccess": true,
+                    "authorizedResources": ["test-fager"],
+                    "authorizedRoles": [],
+                    "subunits": [
+                      {
+                        "partyUuid": "8656eab6-119b-4691-8a8a-6f51a203aba7",
+                        "name": "SLEMMESTAD OG STAVERN REGNSKAP",
+                        "organizationNumber": "910825496",
+                        "personId": null,
+                        "partyId": 50169034,
+                        "type": "Organization",
+                        "unitType": "BEDR",
+                        "isDeleted": false,
+                        "onlyHierarchyElementWithNoAccess": false,
+                        "authorizedResources": [
+                          "test-fager"
+                        ],
+                        "authorizedRoles": [],
+                        "subunits": []
+                      },
+                      {
+                        "partyUuid": "8656bbb6-119b-4691-8a8a-6f51a203bba7",
+                        "name": "SLEMMESTAD OG STAVERN REGNSKAP 2",
+                        "organizationNumber": "910825554",
+                        "personId": null,
+                        "partyId": 50169035,
+                        "type": "Organization",
+                        "unitType": "BEDR",
+                        "isDeleted": false,
+                        "onlyHierarchyElementWithNoAccess": false,
+                        "authorizedResources": [],
+                        "authorizedRoles": [
+                          "DAGL"
+                        ],
+                        "subunits": []
+                      },
+                      {
+                        "partyUuid": "7756eab6-119b-4691-8a8a-6f51a203aba7",
+                        "name": "SLEMMESTAD OG STAVERN REGNSKAP SLETTET",
+                        "organizationNumber": "910825999",
+                        "personId": null,
+                        "partyId": 50169333,
+                        "type": "Organization",
+                        "unitType": "BEDR",
+                        "isDeleted": true,
+                        "onlyHierarchyElementWithNoAccess": false,
+                        "authorizedResources": [
+                          "test-fager"
+                        ],
+                        "authorizedRoles": [],
+                        "subunits": []
+                      }
+                    ]
+                  }
+                ]
+                """.trimIndent(), ContentType.Application.Json
+            )
+        }
+
+        val assertResponse: (AltinnTilgangerResponse) -> Unit = { virksomhet ->
+            val underenheter = virksomhet.hierarki[0].underenheter
+            val aktiv1 = underenheter.first { it.orgnr == "910825496" }
+            val aktiv2 = underenheter.first { it.orgnr == "910825554" }
+            val slettet = underenheter.first { it.orgnr == "910825999" }
+
+            assertEquals(3, underenheter.size)
+            assertFalse(aktiv1.erSlettet)
+            assertFalse(aktiv2.erSlettet)
+            assertTrue(slettet.erSlettet)
+        }
+
+        client.post("/altinn-tilganger") {
+            header("Authorization", "Bearer idporten-loa-high:${fnr.next()}")
+            contentType(ContentType.Application.Json)
+            setBody(
+                //language=json
+                """
+                {
+                  "filter": {
+                    "inkluderSlettede": true
+                  }
+                }
+                """.trimIndent()
+            )
+        }.apply {
+            assertEquals(HttpStatusCode.OK, status)
+        }.body<AltinnTilgangerResponse>().also(assertResponse)
+
+        client.post("/m2m/altinn-tilganger") {
+            header("Authorization", "Bearer fakem2mtoken")
+            contentType(ContentType.Application.Json)
+            setBody(
+                //language=json
+                """
+                {
+                    "fnr": "${fnr.next()}",
+                    "filter": {
+                      "inkluderSlettede": true
+                    }
+                }
+                """.trimIndent()
+            )
+        }.apply {
+            assertEquals(HttpStatusCode.OK, status)
+        }.body<AltinnTilgangerResponse>().also(assertResponse)
+    }
+}

@@ -13,6 +13,7 @@ data class AltinnTilgang(
     val underenheter: List<AltinnTilgang>,
     val navn: String,
     val organisasjonsform: String,
+    val erSlettet: Boolean
 )
 
 annotation class Example(val value: String)
@@ -60,6 +61,7 @@ fun <T> flatten(
 data class Filter(
     val altinn2Tilganger: Set<String> = emptySet(),
     val altinn3Tilganger: Set<String> = emptySet(),
+    val inkluderSlettede: Boolean = false,
 ) {
     init {
         altinn2Tilganger.forEach {
@@ -78,7 +80,7 @@ data class Filter(
         get() = altinn2Tilganger.isEmpty() && altinn3Tilganger.isEmpty()
 
     companion object {
-        val empty = Filter(emptySet(), emptySet())
+        val empty = Filter(emptySet(), emptySet(), false)
     }
 }
 
