@@ -85,6 +85,9 @@ spec:
           namespace: arbeidsgiver
         - application: sosialhjelp-avtaler-api-dev
           namespace: teamdigisos
+        - application: sokos-kontoregister
+          namespace: okonomi
+          cluster: dev-fss
     outbound:
       external:
         - host: platform.tt02.altinn.no
