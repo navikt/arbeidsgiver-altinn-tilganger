@@ -18,6 +18,10 @@ class AltinnService(
     private val redisClient: AltinnTilgangerRedisClient,
     private val resourceRegistry: ResourceRegistry,
 ) {
+    companion object {
+        // Endre versjon for å invalidere eksisterende cache
+        const val CACHE_VERSION = "v1"
+    }
     private val timer = Metrics.meterRegistry.timer("altinnservice.hentTilgangerFraAltinn")
     private val cacheHit = Counter.builder("altinnservice.cache").tag("result", "hit").register(Metrics.meterRegistry)
     private val cacheMiss = Counter.builder("altinnservice.cache").tag("result", "miss").register(Metrics.meterRegistry)
@@ -27,13 +31,14 @@ class AltinnService(
         filter: Filter = Filter.empty,
         scope: CoroutineScope
     ): AltinnTilgangerResultat {
-        val result = redisClient.get(fnr)?.also {
+        val cacheKey = "$fnr-$CACHE_VERSION"
+        val result = redisClient.get(cacheKey)?.also {
             cacheHit.increment()
         } ?: run {
             cacheMiss.increment()
             hentTilgangerFraAltinn(fnr, scope).also {
                 if (!it.isError) {
-                    redisClient.set(fnr, it)
+                    redisClient.set(cacheKey, it)
                 }
             }
         }

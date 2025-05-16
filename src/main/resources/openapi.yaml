@@ -180,7 +180,7 @@ paths:
                 value:
                   fnr: "11123456789"
               filter_inkluder_slettede:
-                summary: returnerer også slettede underenheter
+                summary: returnerer også slettede underenheter, og tilganger tilhørende den slettede enheten vil også returneres dersom de finnes.
                 value:
                   filter:
                     inkluderSlettede: true
@@ -264,7 +264,7 @@ paths:
                 summary: Ingen filter (trenger ikke noe i body)
                 value: "{}"
               filter_inkluder_slettede:
-                summary: returnerer også slettede underenheter
+                summary: returnerer også slettede underenheter, og tilganger tilhørende den slettede enheten vil også returneres dersom de finnes.
                 value:
                   filter:
                     inkluderSlettede: true
@@ -336,6 +336,7 @@ components:
           description: |
             Dersom true, vil også slettede virksomheter og underenheter inkluderes i resultatet.
             Default er false, og slettede enheter filtreres da bort.
+            Tilganger tilhørende den slettede enheten vil også returneres dersom de finnes.
           default: false
       description: >-
 

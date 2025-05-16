@@ -13,7 +13,7 @@ data class AltinnTilgang(
     val underenheter: List<AltinnTilgang>,
     val navn: String,
     val organisasjonsform: String,
-    val erSlettet: Boolean
+    val erSlettet: Boolean = false,
 )
 
 annotation class Example(val value: String)
