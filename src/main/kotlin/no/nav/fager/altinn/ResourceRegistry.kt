@@ -49,6 +49,10 @@ val KnownResources = basedOnEnv(
         Resource(
             resourceId = "nav_forebygge-og-redusere-sykefravar_samarbeid",
             altinn2Tjeneste = listOf(Altinn2Tjeneste("5934", "1"))
+        ),
+        Resource(
+            resourceId = "nav_utbetaling_endre-kontonummer-refusjon-arbeidsgiver",
+            altinn2Tjeneste = listOf(Altinn2Tjeneste("2896", "87"))
         )
     )
 )
