@@ -130,10 +130,10 @@ class Altinn2ClientImpl(
                     accept(ContentType.Application.Json)
                     contentType(ContentType.Application.Json)
                     header("ApiKey", altinn2Config.apiKey)
-                }.body<List<Altinn2Reportee>>().let {
-                    hasMore = it.isNotEmpty()
+                }.body<List<Altinn2Reportee>>().let { fetchedReportees ->
+                    hasMore = fetchedReportees.isNotEmpty()
                     reportees.addAll(
-                        it.filter {
+                        fetchedReportees.filter {
                             // dette skal egentlig filtreres ut i altinn pga filter query param, men vi ser tidvis at noe slipper gjennom.
                             // derfor en dobbeltsjekk her
                             it.organizationNumber != null && it.type != "Person" && it.status == "Active"

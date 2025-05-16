@@ -3,6 +3,7 @@ package no.nav.fager
 import io.valkey.params.SetParams
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
+import no.nav.fager.altinn.AltinnService
 import no.nav.fager.altinn.AltinnService.AltinnTilgangerResultat
 import no.nav.fager.redis.*
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -17,9 +18,9 @@ class RedisIntegrationTest {
     @Test
     fun `cache codec serdes works with redis server`() = runBlocking {
         val redis = AltinnTilgangerRedisClientImpl(RedisConfig.local())
-        assertNull(redis.get(fakeFnr))
-        redis.set(fakeFnr, altinnTilganger)
-        assertEquals(altinnTilganger, redis.get(fakeFnr))
+        assertNull(redis.get(fakeCacheKey))
+        redis.set(fakeCacheKey, altinnTilganger)
+        assertEquals(altinnTilganger, redis.get(fakeCacheKey))
     }
 
     @Test
@@ -52,6 +53,7 @@ class RedisIntegrationTest {
 }
 
 private val fakeFnr = UUID.randomUUID().toString()
+private val fakeCacheKey = "$fakeFnr-${AltinnService.CACHE_VERSION}"
 private val altinnTilganger = AltinnTilgangerResultat(
     isError = false,
     altinnTilganger = listOf(
@@ -66,11 +68,13 @@ private val altinnTilganger = AltinnTilgangerResultat(
                     altinn2Tilganger = setOf("4936:1"),
                     underenheter = listOf(),
                     navn = "Donald Duck & Co Avd. Andebyen",
-                    organisasjonsform = "BEDR"
+                    organisasjonsform = "BEDR",
+                    erSlettet = true
                 )
             ),
             navn = "Donald Duck & Co",
-            organisasjonsform = "AS"
+            organisasjonsform = "AS",
+            erSlettet = true
         )
     )
 )

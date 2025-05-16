@@ -179,6 +179,11 @@ paths:
                 summary: Ingen filter
                 value:
                   fnr: "11123456789"
+              filter_inkluder_slettede:
+                summary: Returnerer også slettede enheter. Tilganger knyttet til slettede enheter vil inkluderes dersom de finnes.
+                value:
+                  filter:
+                    inkluderSlettede: true
               filter_altinn2:
                 summary: filtrer på en eller flere altinn 2 tjenester
                 value:
@@ -258,6 +263,11 @@ paths:
               no_filter:
                 summary: Ingen filter (trenger ikke noe i body)
                 value: "{}"
+              filter_inkluder_slettede:
+                summary: Returnerer også slettede enheter. Tilganger knyttet til slettede enheter vil inkluderes dersom de finnes.
+                value:
+                  filter:
+                    inkluderSlettede: true
               filter_altinn2:
                 summary: filtrer på en eller flere altinn 2 tjenester
                 value:
@@ -320,6 +330,14 @@ components:
           items:
             title: String
             type: string
+        inkluderSlettede:
+          title: Inkluder slettede
+          type: boolean
+          description: |
+            Dersom satt til true, vil også slettede enheter inkluderes i resultatet.
+            Standardverdien er false, og slettede enheter utelates da fra responsen.
+            Eventuelle tilganger knyttet til en slettet enhet vil også returneres dersom de finnes.
+          default: false
       description: >-
 
         Filter for hvilke tilganger som skal hentes. Dersom flere filter er
@@ -400,6 +418,14 @@ components:
           items:
             title: String
             type: string
+        inkluderSlettede:
+          title: Inkluder slettede
+          type: boolean
+          description: |
+            Dersom satt til true, vil også slettede enheter inkluderes i resultatet.
+            Standardverdien er false, og slettede enheter utelates da fra responsen.
+            Eventuelle tilganger knyttet til en slettet enhet vil også returneres dersom de finnes.
+          default: false
         navn:
           title: String
           type: string
