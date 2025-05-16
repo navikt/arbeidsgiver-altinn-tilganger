@@ -180,7 +180,7 @@ paths:
                 value:
                   fnr: "11123456789"
               filter_inkluder_slettede:
-                summary: returnerer også slettede underenheter, og tilganger tilhørende den slettede enheten vil også returneres dersom de finnes.
+                summary: Returnerer også slettede enheter. Tilganger knyttet til slettede enheter vil inkluderes dersom de finnes.
                 value:
                   filter:
                     inkluderSlettede: true
@@ -264,7 +264,7 @@ paths:
                 summary: Ingen filter (trenger ikke noe i body)
                 value: "{}"
               filter_inkluder_slettede:
-                summary: returnerer også slettede underenheter, og tilganger tilhørende den slettede enheten vil også returneres dersom de finnes.
+                summary: Returnerer også slettede enheter. Tilganger knyttet til slettede enheter vil inkluderes dersom de finnes.
                 value:
                   filter:
                     inkluderSlettede: true
@@ -334,9 +334,9 @@ components:
           title: Inkluder slettede
           type: boolean
           description: |
-            Dersom true, vil også slettede virksomheter og underenheter inkluderes i resultatet.
-            Default er false, og slettede enheter filtreres da bort.
-            Tilganger tilhørende den slettede enheten vil også returneres dersom de finnes.
+            Dersom satt til true, vil også slettede enheter inkluderes i resultatet.
+            Standardverdien er false, og slettede enheter utelates da fra responsen.
+            Eventuelle tilganger knyttet til en slettet enhet vil også returneres dersom de finnes.
           default: false
       description: >-
 
@@ -422,8 +422,9 @@ components:
           title: Inkluder slettede
           type: boolean
           description: |
-            Dersom true, vil også slettede virksomheter og underenheter inkluderes i resultatet.
-            Default er false, og slettede enheter filtreres da bort.
+            Dersom satt til true, vil også slettede enheter inkluderes i resultatet.
+            Standardverdien er false, og slettede enheter utelates da fra responsen.
+            Eventuelle tilganger knyttet til en slettet enhet vil også returneres dersom de finnes.
           default: false
         navn:
           title: String
