@@ -29,8 +29,12 @@ import java.io.File
 
 inline fun <reified T> T.logger(): org.slf4j.Logger = LoggerFactory.getLogger(T::class.qualifiedName)
 
-private const val SECURE_LOG_MARKER = "SECURE_LOGGER"
-val SECURE: org.slf4j.Marker = MarkerFactory.getMarker(SECURE_LOG_MARKER)
+private const val TEAM_LOG_MARKER_NAME = "TEAM_LOGS"
+private const val SECURE_LOG_MARKER_NAME = "SECURE_LOGGER"
+val SECURE_LOG_MARKER: org.slf4j.Marker = MarkerFactory.getMarker(SECURE_LOG_MARKER_NAME)
+val TEAM_LOG_MARKER: org.slf4j.Marker = MarkerFactory.getMarker(TEAM_LOG_MARKER_NAME)
+
+
 
 /* used by resources/META-INF/services/ch.qos.logback.classic.spi */
 class LogConfig : ContextAwareBase(), Configurator {
@@ -40,7 +44,7 @@ class LogConfig : ContextAwareBase(), Configurator {
         val rootAppender = MaskingAppender().setup(lc) {
             addFilter(EvaluatorFilter<ILoggingEvent>().setup(lc) {
                 evaluator = OnMarkerEvaluator().setup(lc) {
-                    addMarker(SECURE_LOG_MARKER)
+                    addMarker(SECURE_LOG_MARKER_NAME)
                 }
                 onMismatch = FilterReply.NEUTRAL
                 onMatch = FilterReply.DENY
@@ -81,7 +85,7 @@ class LogConfig : ContextAwareBase(), Configurator {
             }
             addFilter(EvaluatorFilter<ILoggingEvent>().setup(lc) {
                 evaluator = OnMarkerEvaluator().setup(lc) {
-                    addMarker(SECURE_LOG_MARKER)
+                    addMarker(SECURE_LOG_MARKER_NAME)
                 }
                 onMismatch = FilterReply.DENY
                 onMatch = FilterReply.NEUTRAL

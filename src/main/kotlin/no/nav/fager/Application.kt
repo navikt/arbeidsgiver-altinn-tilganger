@@ -28,7 +28,6 @@ import io.micrometer.core.instrument.binder.logging.LogbackMetrics
 import io.micrometer.core.instrument.binder.system.FileDescriptorMetrics
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import no.nav.fager.AltinnTilgangerResponse.Companion.toResponse
 import no.nav.fager.altinn.*
@@ -62,7 +61,9 @@ fun Application.ktorConfig(
 ) {
     val log = logger()
 
-    log.info(SECURE, "Secure logging enabled")
+    log.info(SECURE_LOG_MARKER, "Secure logging enabled")
+    log.info(TEAM_LOG_MARKER, "This log should go only to the the TEAM logger")
+    log.info("This log should go to the default logger in grafana")
 
     install(Compression) {
         gzip {

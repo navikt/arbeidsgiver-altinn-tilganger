@@ -1,6 +1,6 @@
 package no.nav.fager
 
-import no.nav.fager.infrastruktur.SECURE
+import no.nav.fager.infrastruktur.SECURE_LOG_MARKER
 import no.nav.fager.infrastruktur.logger
 import org.junit.jupiter.api.Assertions.assertTrue
 import java.io.ByteArrayOutputStream
@@ -14,7 +14,7 @@ class SecureLogTest {
         val log = logger()
 
         val stdout = captureStdout {
-            log.info(SECURE, "SECRET")
+            log.info(SECURE_LOG_MARKER, "SECRET")
         }
 
         assertFalse(stdout.contains("SECRET"))
