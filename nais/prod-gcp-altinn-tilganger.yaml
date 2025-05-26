@@ -83,6 +83,9 @@ spec:
       external:
         - host: platform.altinn.no
         - host: www.altinn.no
+      rules:
+        - application: logging
+          namespace: nais-system
 
   secureLogs:
     enabled: true

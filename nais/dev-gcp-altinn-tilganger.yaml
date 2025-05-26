@@ -92,6 +92,9 @@ spec:
       external:
         - host: platform.tt02.altinn.no
         - host: tt02.altinn.no
+      rules:
+        - application: logging
+          namespace: nais-system
 
   secureLogs:
     enabled: true
