@@ -96,9 +96,6 @@ spec:
         - application: logging
           namespace: nais-system
 
-  secureLogs:
-    enabled: true
-
   valkey:
     - instance: tilganger
       access: readwrite

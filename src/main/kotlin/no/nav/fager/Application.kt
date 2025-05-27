@@ -61,10 +61,6 @@ fun Application.ktorConfig(
 ) {
     val log = logger()
 
-    log.info(SECURE_LOG_MARKER, "Secure logging enabled")
-    log.info(TEAM_LOG_MARKER, "This log should go only to the the TEAM logger")
-    log.info("This log should go to the default logger in grafana")
-
     install(Compression) {
         gzip {
             priority = 1.0
