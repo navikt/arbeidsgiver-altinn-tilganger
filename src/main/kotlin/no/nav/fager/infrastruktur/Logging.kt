@@ -49,6 +49,13 @@ class LogConfig : ContextAwareBase(), Configurator {
                 onMismatch = FilterReply.NEUTRAL
                 onMatch = FilterReply.DENY
             })
+            addFilter(EvaluatorFilter<ILoggingEvent>().setup(lc) {
+                evaluator = OnMarkerEvaluator().setup(lc) {
+                    addMarker(TEAM_LOG_MARKER_NAME)
+                }
+                onMismatch = FilterReply.NEUTRAL
+                onMatch = FilterReply.DENY
+            })
             appender = ConsoleAppender<ILoggingEvent>().setup(lc) {
                 if (naisCluster != null) {
                     encoder = LogstashEncoder().setup(lc)
@@ -86,6 +93,13 @@ class LogConfig : ContextAwareBase(), Configurator {
             addFilter(EvaluatorFilter<ILoggingEvent>().setup(lc) {
                 evaluator = OnMarkerEvaluator().setup(lc) {
                     addMarker(SECURE_LOG_MARKER_NAME)
+                }
+                onMismatch = FilterReply.DENY
+                onMatch = FilterReply.NEUTRAL
+            })
+            addFilter(EvaluatorFilter<ILoggingEvent>().setup(lc) {
+                evaluator = OnMarkerEvaluator().setup(lc) {
+                    addMarker(TEAM_LOG_MARKER_NAME)
                 }
                 onMismatch = FilterReply.DENY
                 onMatch = FilterReply.NEUTRAL
