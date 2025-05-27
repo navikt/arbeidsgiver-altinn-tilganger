@@ -92,9 +92,9 @@ spec:
       external:
         - host: platform.tt02.altinn.no
         - host: tt02.altinn.no
-
-  secureLogs:
-    enabled: true
+      rules:
+        - application: logging
+          namespace: nais-system
 
   valkey:
     - instance: tilganger

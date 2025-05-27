@@ -1,6 +1,6 @@
 package no.nav.fager
 
-import no.nav.fager.infrastruktur.SECURE
+import no.nav.fager.infrastruktur.TEAM_LOG_MARKER
 import no.nav.fager.infrastruktur.logger
 import org.junit.jupiter.api.Assertions.assertTrue
 import java.io.ByteArrayOutputStream
@@ -8,13 +8,13 @@ import java.io.PrintStream
 import kotlin.test.Test
 import kotlin.test.assertFalse
 
-class SecureLogTest {
+class TeamLogTest {
     @Test
     fun `secure log skal ikke til stdout`() {
         val log = logger()
 
         val stdout = captureStdout {
-            log.info(SECURE, "SECRET")
+            log.info(TEAM_LOG_MARKER, "SECRET")
         }
 
         assertFalse(stdout.contains("SECRET"))
