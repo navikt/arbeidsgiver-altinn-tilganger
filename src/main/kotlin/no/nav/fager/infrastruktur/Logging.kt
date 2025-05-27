@@ -37,123 +37,123 @@ val TEAM_LOG_MARKER: org.slf4j.Marker = MarkerFactory.getMarker(TEAM_LOG_MARKER_
 
 
 /* used by resources/META-INF/services/ch.qos.logback.classic.spi */
-class LogConfig : ContextAwareBase(), Configurator {
-    override fun configure(lc: LoggerContext): ExecutionStatus {
-        val naisCluster = System.getenv("NAIS_CLUSTER_NAME")
-
-        val rootAppender = MaskingAppender().setup(lc) {
-            addFilter(EvaluatorFilter<ILoggingEvent>().setup(lc) {
-                evaluator = OnMarkerEvaluator().setup(lc) {
-                    addMarker(SECURE_LOG_MARKER_NAME)
-                }
-                onMismatch = FilterReply.NEUTRAL
-                onMatch = FilterReply.DENY
-            })
-            addFilter(EvaluatorFilter<ILoggingEvent>().setup(lc) {
-                evaluator = OnMarkerEvaluator().setup(lc) {
-                    addMarker(TEAM_LOG_MARKER_NAME)
-                }
-                onMismatch = FilterReply.NEUTRAL
-                onMatch = FilterReply.DENY
-            })
-            appender = ConsoleAppender<ILoggingEvent>().setup(lc) {
-                if (naisCluster != null) {
-                    encoder = LogstashEncoder().setup(lc)
-                } else {
-                    encoder = LayoutWrappingEncoder<ILoggingEvent>().setup(lc) {
-                        layout = PatternLayout().setup(lc) {
-                            pattern = "%d %-5level [%thread] %logger: %msg %mdc%n"
-                        }
-                    }
-                }
-            }
-        }
-
-        val secureLogFile = if (naisCluster == null)
-            File.createTempFile("secure-", ".log")
-                .apply { deleteOnExit() }
-                .absolutePath
-        else
-            "/secure-logs/secure.log"
-
-        val secureAppender = RollingFileAppender<ILoggingEvent>().setup(lc) {
-            val secureAppender = this
-            file = secureLogFile
-
-            rollingPolicy = FixedWindowRollingPolicy().setup(lc) {
-                setParent(secureAppender)
-                fileNamePattern = "$secureLogFile.%i"
-                maxIndex = 1
-                minIndex = 1
-            }
-
-            triggeringPolicy = SizeBasedTriggeringPolicy<ILoggingEvent>().setup(lc) {
-                maxFileSize = FileSize.valueOf("128MB")
-            }
-            addFilter(EvaluatorFilter<ILoggingEvent>().setup(lc) {
-                evaluator = OnMarkerEvaluator().setup(lc) {
-                    addMarker(SECURE_LOG_MARKER_NAME)
-                }
-                onMismatch = FilterReply.DENY
-                onMatch = FilterReply.NEUTRAL
-            })
-            addFilter(EvaluatorFilter<ILoggingEvent>().setup(lc) {
-                evaluator = OnMarkerEvaluator().setup(lc) {
-                    addMarker(TEAM_LOG_MARKER_NAME)
-                }
-                onMismatch = FilterReply.DENY
-                onMatch = FilterReply.NEUTRAL
-            })
-            encoder = LogstashEncoder().setup(lc)
-        }
-
-        lc.getLogger(Logger.ROOT_LOGGER_NAME).apply {
-            level = Level.INFO
-            addAppender(rootAppender)
-            addAppender(secureAppender)
-        }
-
-        return ExecutionStatus.DO_NOT_INVOKE_NEXT_IF_ANY
-    }
-}
-
-private fun <T> T.setup(context: LoggerContext, body: T.() -> Unit = {}): T
-        where T : ContextAware,
-              T : LifeCycle {
-    this.context = context
-    this.body()
-    this.start()
-    return this
-}
-
-
-class MaskingAppender : AppenderBase<ILoggingEvent>() {
-    var appender: Appender<ILoggingEvent>? = null
-
-    override fun append(event: ILoggingEvent) {
-        appender?.doAppend(
-            object : ILoggingEvent by event {
-                override fun getFormattedMessage(): String? =
-                    mask(event.formattedMessage)
-
-                override fun getThrowableProxy(): IThrowableProxy? {
-                    if (event.throwableProxy == null) {
-                        return null
-                    }
-                    return object : IThrowableProxy by event.throwableProxy {
-                        override fun getMessage(): String? =
-                            mask(event.throwableProxy.message)
-                    }
-                }
-
-            }
-        )
-    }
-
-    companion object {
-        private val FNR = Regex("""(^|\D)\d{11}(?=$|\D)""")
-        fun mask(string: String?): String? {
-            return string?.replace(FNR, "$1***********")
-        }
-    }
-}
+//class LogConfig : ContextAwareBase(), Configurator {
+//    override fun configure(lc: LoggerContext): ExecutionStatus {
+//        val naisCluster = System.getenv("NAIS_CLUSTER_NAME")
+//
+//        val rootAppender = MaskingAppender().setup(lc) {
+//            addFilter(EvaluatorFilter<ILoggingEvent>().setup(lc) {
+//                evaluator = OnMarkerEvaluator().setup(lc) {
+//                    addMarker(SECURE_LOG_MARKER_NAME)
+//                }
+//                onMismatch = FilterReply.NEUTRAL
+//                onMatch = FilterReply.DENY
+//            })
+//            addFilter(EvaluatorFilter<ILoggingEvent>().setup(lc) {
+//                evaluator = OnMarkerEvaluator().setup(lc) {
+//                    addMarker(TEAM_LOG_MARKER_NAME)
+//                }
+//                onMismatch = FilterReply.NEUTRAL
+//                onMatch = FilterReply.DENY
+//            })
+//            appender = ConsoleAppender<ILoggingEvent>().setup(lc) {
+//                if (naisCluster != null) {
+//                    encoder = LogstashEncoder().setup(lc)
+//                } else {
+//                    encoder = LayoutWrappingEncoder<ILoggingEvent>().setup(lc) {
+//                        layout = PatternLayout().setup(lc) {
+//                            pattern = "%d %-5level [%thread] %logger: %msg %mdc%n"
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//
+//        val secureLogFile = if (naisCluster == null)
+//            File.createTempFile("secure-", ".log")
+//                .apply { deleteOnExit() }
+//                .absolutePath
+//        else
+//            "/secure-logs/secure.log"
+//
+//        val secureAppender = RollingFileAppender<ILoggingEvent>().setup(lc) {
+//            val secureAppender = this
+//            file = secureLogFile
+//
+//            rollingPolicy = FixedWindowRollingPolicy().setup(lc) {
+//                setParent(secureAppender)
+//                fileNamePattern = "$secureLogFile.%i"
+//                maxIndex = 1
+//                minIndex = 1
+//            }
+//
+//            triggeringPolicy = SizeBasedTriggeringPolicy<ILoggingEvent>().setup(lc) {
+//                maxFileSize = FileSize.valueOf("128MB")
+//            }
+//            addFilter(EvaluatorFilter<ILoggingEvent>().setup(lc) {
+//                evaluator = OnMarkerEvaluator().setup(lc) {
+//                    addMarker(SECURE_LOG_MARKER_NAME)
+//                }
+//                onMismatch = FilterReply.DENY
+//                onMatch = FilterReply.NEUTRAL
+//            })
+//            addFilter(EvaluatorFilter<ILoggingEvent>().setup(lc) {
+//                evaluator = OnMarkerEvaluator().setup(lc) {
+//                    addMarker(TEAM_LOG_MARKER_NAME)
+//                }
+//                onMismatch = FilterReply.DENY
+//                onMatch = FilterReply.NEUTRAL
+//            })
+//            encoder = LogstashEncoder().setup(lc)
+//        }
+//
+//        lc.getLogger(Logger.ROOT_LOGGER_NAME).apply {
+//            level = Level.INFO
+//            addAppender(rootAppender)
+//            addAppender(secureAppender)
+//        }
+//
+//        return ExecutionStatus.DO_NOT_INVOKE_NEXT_IF_ANY
+//    }
+//}
+//
+//private fun <T> T.setup(context: LoggerContext, body: T.() -> Unit = {}): T
+//        where T : ContextAware,
+//              T : LifeCycle {
+//    this.context = context
+//    this.body()
+//    this.start()
+//    return this
+//}
+//
+//
+//class MaskingAppender : AppenderBase<ILoggingEvent>() {
+//    var appender: Appender<ILoggingEvent>? = null
+//
+//    override fun append(event: ILoggingEvent) {
+//        appender?.doAppend(
+//            object : ILoggingEvent by event {
+//                override fun getFormattedMessage(): String? =
+//                    mask(event.formattedMessage)
+//
+//                override fun getThrowableProxy(): IThrowableProxy? {
+//                    if (event.throwableProxy == null) {
+//                        return null
+//                    }
+//                    return object : IThrowableProxy by event.throwableProxy {
+//                        override fun getMessage(): String? =
+//                            mask(event.throwableProxy.message)
+//                    }
+//                }
+//
+//            }
+//        )
+//    }
+//
+//    companion object {
+//        private val FNR = Regex("""(^|\D)\d{11}(?=$|\D)""")
+//        fun mask(string: String?): String? {
+//            return string?.replace(FNR, "$1***********")
+//        }
+//    }
+//}
