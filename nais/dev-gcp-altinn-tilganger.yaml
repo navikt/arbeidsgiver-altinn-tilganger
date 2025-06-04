@@ -85,6 +85,8 @@ spec:
           namespace: arbeidsgiver
         - application: sosialhjelp-avtaler-api-dev
           namespace: teamdigisos
+        - application: spinntektsmelding-frontend
+          namespace: helsearbeidsgiver
         - application: sokos-kontoregister
           namespace: okonomi
           cluster: dev-fss
