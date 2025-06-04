@@ -28,7 +28,6 @@ import io.micrometer.core.instrument.binder.logging.LogbackMetrics
 import io.micrometer.core.instrument.binder.system.FileDescriptorMetrics
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import no.nav.fager.AltinnTilgangerResponse.Companion.toResponse
 import no.nav.fager.altinn.*

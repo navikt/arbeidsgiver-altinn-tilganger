@@ -938,4 +938,99 @@ class AltinnTilgangerTest {
             assertEquals(HttpStatusCode.OK, status)
         }.body<AltinnTilgangerResponse>().also(assertResponse)
     }
+
+    @Test
+    fun `returnerer ikke enhet fra Altinn 2 dersom den ikke finnes i Altinn 3`() = app.runTest {
+        app.altinn3Response(Post, "/accessmanagement/api/v1/resourceowner/authorizedparties") {
+            call.respondText(
+                //language=json
+                """
+                [
+                  {
+                    "partyUuid": "a1c831cf-c7b7-4e5e-9910-2ad9a05b4ec1",
+                    "name": "MALMEFJORDEN OG RIDABU REGNSKAP",
+                    "organizationNumber": "810825472",
+                    "personId": null,
+                    "partyId": 50166368,
+                    "type": "Organization",
+                    "unitType": "AS",
+                    "isDeleted": false,
+                    "onlyHierarchyElementWithNoAccess": true,
+                    "authorizedResources": ["test-fager"],
+                    "authorizedRoles": [],
+                    "subunits": [
+                      {
+                        "partyUuid": "8656eab6-119b-4691-8a8a-6f51a203aba7",
+                        "name": "SLEMMESTAD OG STAVERN REGNSKAP",
+                        "organizationNumber": "910825496",
+                        "personId": null,
+                        "partyId": 50169034,
+                        "type": "Organization",
+                        "unitType": "BEDR",
+                        "isDeleted": false,
+                        "onlyHierarchyElementWithNoAccess": false,
+                        "authorizedResources": [
+                          "test-fager"
+                        ],
+                        "authorizedRoles": [],
+                        "subunits": []
+                      }
+                    ]
+                  }
+                ]
+                """.trimIndent(), ContentType.Application.Json
+            )
+        }
+        val altinn2Responses = listOf(
+            //language=json
+            """
+            [
+                {
+                    "Name": "SLEMMESTAD OG STAVERN REGNSKAP",
+                    "Type": "Business",
+                    "OrganizationNumber": "910825496",
+                    "ParentOrganizationNumber": "810825472",
+                    "OrganizationForm": "BEDR",
+                    "Status": "Active"
+                }
+            ]
+            """,
+            //language=json
+            """
+            [
+                {
+                    "Name": "SLEMMESTAD OG STAVERN REGNSKAP SLETTET",
+                    "Type": "Business",
+                    "OrganizationNumber": "910825554",
+                    "ParentOrganizationNumber": "810825472",
+                    "OrganizationForm": "BEDR",
+                    "Status": "Inactive"
+                }
+            ]
+            """,
+        )
+
+        app.altinn2Response(Get, "/api/serviceowner/reportees") {
+            if (call.request.queryParameters["serviceCode"] == "4936") {
+                call.request.queryParameters["${'$'}skip"]?.toIntOrNull()?.let {
+                    call.respondText(
+                        altinn2Responses.getOrNull(it) ?: "[]", ContentType.Application.Json
+                    )
+                }
+            }
+        }
+
+        val assertResponse: (AltinnTilgangerResponse) -> Unit = {
+            assertEquals(1, it.hierarki[0].underenheter.size)
+            assertEquals(1, it.hierarki.size)
+        }
+
+        client.post("/altinn-tilganger") {
+            header("Authorization", "Bearer idporten-loa-high:${fnr.next()}")
+            contentType(ContentType.Application.Json)
+            setBody("")
+        }.apply {
+            assertEquals(HttpStatusCode.OK, status)
+        }.body<AltinnTilgangerResponse>().also(assertResponse)
+    }
 }
