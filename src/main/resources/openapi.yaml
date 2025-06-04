@@ -399,6 +399,7 @@ components:
         - navn
         - organisasjonsform
         - orgnr
+        - erSlettet
         - underenheter
       type: object
       properties:
@@ -418,13 +419,11 @@ components:
           items:
             title: String
             type: string
-        inkluderSlettede:
-          title: Inkluder slettede
+        erSlettet:
+          title: Enhet er slettet
           type: boolean
           description: |
-            Dersom satt til true, vil også slettede enheter inkluderes i resultatet.
-            Standardverdien er false, og slettede enheter utelates da fra responsen.
-            Eventuelle tilganger knyttet til en slettet enhet vil også returneres dersom de finnes.
+            Enhet er slettet
           default: false
         navn:
           title: String
@@ -509,10 +508,12 @@ components:
       value:
         hierarki:
           - orgnr: '987654321'
+            erSlettet: false
             altinn3Tilganger: [ ]
             altinn2Tilganger: [ ]
             underenheter:
               - orgnr: '123456789'
+                erSlettet: false
                 altinn3Tilganger:
                   - tilgang1
                   - tilgang2
