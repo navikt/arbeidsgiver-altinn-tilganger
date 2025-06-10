@@ -61,6 +61,8 @@ fun Application.ktorConfig(
 ) {
     val log = logger()
 
+    log.info(TEAM_LOG_MARKER, "Team logging enabled")
+
     install(Compression) {
         gzip {
             priority = 1.0
