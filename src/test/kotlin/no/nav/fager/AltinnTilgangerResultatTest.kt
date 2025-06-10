@@ -18,7 +18,8 @@ class AltinnTilgangerResultatTest {
                     altinn2Tilganger = setOf("4936:1"),
                     underenheter = listOf(),
                     navn = "SLEMMESTAD OG STAVERN REGNSKAP",
-                    organisasjonsform = "BEDR"
+                    organisasjonsform = "BEDR",
+                    erSlettet = false
                 ),
             )
         ).filter(Filter.empty).let {
@@ -38,7 +39,8 @@ class AltinnTilgangerResultatTest {
                     altinn2Tilganger = setOf("4936:1"),
                     underenheter = listOf(),
                     navn = "SLEMMESTAD OG STAVERN REGNSKAP",
-                    organisasjonsform = "BEDR"
+                    organisasjonsform = "BEDR",
+                    erSlettet = false
                 ),
                 AltinnTilgang(
                     orgnr = "2",
@@ -46,7 +48,8 @@ class AltinnTilgangerResultatTest {
                     altinn2Tilganger = setOf("bar:1"),
                     underenheter = listOf(),
                     navn = "SLEMMESTAD OG STAVERN REGNSKAP",
-                    organisasjonsform = "BEDR"
+                    organisasjonsform = "BEDR",
+                    erSlettet = false
                 )
             )
         ).filter(
@@ -67,7 +70,8 @@ class AltinnTilgangerResultatTest {
                     altinn2Tilganger = setOf("bar:1"),
                     underenheter = listOf(),
                     navn = "SLEMMESTAD OG STAVERN REGNSKAP",
-                    organisasjonsform = "BEDR"
+                    organisasjonsform = "BEDR",
+                    erSlettet = false
                 ),
                 AltinnTilgang(
                     orgnr = "2",
@@ -75,7 +79,8 @@ class AltinnTilgangerResultatTest {
                     altinn2Tilganger = setOf("4936:1", "bar:1"),
                     underenheter = listOf(),
                     navn = "SLEMMESTAD OG STAVERN REGNSKAP",
-                    organisasjonsform = "BEDR"
+                    organisasjonsform = "BEDR",
+                    erSlettet = false
                 )
             )
         ).filter(
@@ -105,11 +110,13 @@ class AltinnTilgangerResultatTest {
                             altinn2Tilganger = setOf("4936:1"),
                             underenheter = listOf(),
                             navn = "Donald Duck & Co Avd. Andebyen",
-                            organisasjonsform = "BEDR"
+                            organisasjonsform = "BEDR",
+                            erSlettet = false
                         )
                     ),
                     navn = "Donald Duck & Co",
-                    organisasjonsform = "BEDR"
+                    organisasjonsform = "BEDR",
+                    erSlettet = false
                 )
             )
         ).filter(
@@ -141,7 +148,8 @@ class AltinnTilgangerResultatTest {
                             altinn2Tilganger = setOf("bar:none"),
                             underenheter = listOf(),
                             navn = "2",
-                            organisasjonsform = "BEDR"
+                            organisasjonsform = "BEDR",
+                            erSlettet = false
                         ),
                         AltinnTilgang(
                             orgnr = "3",
@@ -149,11 +157,13 @@ class AltinnTilgangerResultatTest {
                             altinn2Tilganger = setOf("bar:none"),
                             underenheter = listOf(),
                             navn = "3",
-                            organisasjonsform = "BEDR"
+                            organisasjonsform = "BEDR",
+                            erSlettet = false
                         )
                     ),
                     navn = "1",
-                    organisasjonsform = "AS"
+                    organisasjonsform = "AS",
+                    erSlettet = false
                 )
             )
         ).filter(
@@ -301,7 +311,6 @@ class AltinnTilgangerResultatTest {
 private fun List<AltinnTilgang>.alleOrgn(): List<String> = flatten { it.orgnr }
 
 
-
 /* count occurrences of altinn2Tilganger
 sample.altinnTilganger.flatten {
     it.altinn2Tilganger
@@ -330,11 +339,13 @@ private val sampleJSON = """
           ],
           "underenheter": [],
           "navn": "NAV ØKONOMILINJEN",
-          "organisasjonsform": "ORGL"
+          "organisasjonsform": "ORGL",
+          "erSlettet": false
         }
       ],
       "navn": "Arbeids- og Velferdsetaten",
-      "organisasjonsform": "ORGL"
+      "organisasjonsform": "ORGL",
+      "erSlettet": false
     },
     {
       "orgnr": "910825836",
@@ -351,7 +362,8 @@ private val sampleJSON = """
           ],
           "underenheter": [],
           "navn": "HEGGEDAL OG KLOKKARVIK REGNSKAP",
-          "organisasjonsform": "BEDR"
+          "organisasjonsform": "BEDR",
+          "erSlettet": false
         },
         {
           "orgnr": "910825631",
@@ -361,7 +373,8 @@ private val sampleJSON = """
           ],
           "underenheter": [],
           "navn": "AKKARVIK OG MJÅVATN REGNSKAP",
-          "organisasjonsform": "BEDR"
+          "organisasjonsform": "BEDR",
+          "erSlettet": false
         },
         {
           "orgnr": "910825658",
@@ -371,11 +384,13 @@ private val sampleJSON = """
           ],
           "underenheter": [],
           "navn": "KJERRGARDEN OG SIREVÅG REGNSKAP",
-          "organisasjonsform": "BEDR"
+          "organisasjonsform": "BEDR",
+          "erSlettet": false
         }
       ],
       "navn": "BEKKESTUA OG VIKESÅ REGNSKAP",
-      "organisasjonsform": "ORGL"
+      "organisasjonsform": "ORGL",
+      "erSlettet": false
     },
     {
       "orgnr": "811306312",
@@ -400,7 +415,8 @@ private val sampleJSON = """
           ],
           "underenheter": [],
           "navn": "DAVIK OG EIDSLANDET",
-          "organisasjonsform": "BEDR"
+          "organisasjonsform": "BEDR",
+          "erSlettet": false
         },
         {
           "orgnr": "811307432",
@@ -414,7 +430,8 @@ private val sampleJSON = """
           ],
           "underenheter": [],
           "navn": "DAVIK OG ULNES",
-          "organisasjonsform": "BEDR"
+          "organisasjonsform": "BEDR",
+          "erSlettet": false
         },
         {
           "orgnr": "811307122",
@@ -428,7 +445,8 @@ private val sampleJSON = """
           ],
           "underenheter": [],
           "navn": "DAVIK OG SÆTERVIK",
-          "organisasjonsform": "BEDR"
+          "organisasjonsform": "BEDR",
+          "erSlettet": false
         },
         {
           "orgnr": "811306932",
@@ -442,7 +460,8 @@ private val sampleJSON = """
           ],
           "underenheter": [],
           "navn": "DAVIK OG HAMARØY",
-          "organisasjonsform": "BEDR"
+          "organisasjonsform": "BEDR",
+          "erSlettet": false
         },
         {
           "orgnr": "811307602",
@@ -456,11 +475,13 @@ private val sampleJSON = """
           ],
           "underenheter": [],
           "navn": "DAVIK OG ABELVÆR",
-          "organisasjonsform": "BEDR"
+          "organisasjonsform": "BEDR",
+          "erSlettet": false
         }
       ],
       "navn": "DAVIK OG HORTEN",
-      "organisasjonsform": "AS"
+      "organisasjonsform": "AS",
+      "erSlettet": false
     },
     {
       "orgnr": "911000474",
@@ -470,7 +491,8 @@ private val sampleJSON = """
       ],
       "underenheter": [],
       "navn": "ENEBAKK OG SANDSHAMN REVISJON",
-      "organisasjonsform": "STI"
+      "organisasjonsform": "STI",
+      "erSlettet": false
     },
     {
       "orgnr": "910825321",
@@ -483,11 +505,13 @@ private val sampleJSON = """
           "altinn2Tilganger": [],
           "underenheter": [],
           "navn": "BYGSTAD OG VINTERBRO REGNSKAP",
-          "organisasjonsform": "BEDR"
+          "organisasjonsform": "BEDR",
+          "erSlettet": false
         }
       ],
       "navn": "FANNREM OG VIKERSUND REGNSKAP",
-      "organisasjonsform": "AS"
+      "organisasjonsform": "AS",
+      "erSlettet": false
     },
     {
       "orgnr": "910831992",
@@ -504,11 +528,13 @@ private val sampleJSON = """
           ],
           "underenheter": [],
           "navn": "HAUKEDALEN OG SULA REVISJON",
-          "organisasjonsform": "BEDR"
+          "organisasjonsform": "BEDR",
+          "erSlettet": false
         }
       ],
       "navn": "KVALØYSLETTA OG ØRSTA REGNSKAP",
-      "organisasjonsform": "AS"
+      "organisasjonsform": "AS",
+      "erSlettet": false
     },
     {
       "orgnr": "911003155",
@@ -518,7 +544,8 @@ private val sampleJSON = """
       ],
       "underenheter": [],
       "navn": "LALM OG NARVIK REVISJON",
-      "organisasjonsform": "AS"
+      "organisasjonsform": "AS",
+      "erSlettet": false
     },
     {
       "orgnr": "810825472",
@@ -572,7 +599,8 @@ private val sampleJSON = """
           ],
           "underenheter": [],
           "navn": "GAMLE FREDRIKSTAD OG RAMNES REGNSK",
-          "organisasjonsform": "BEDR"
+          "organisasjonsform": "BEDR",
+          "erSlettet": false
         },
         {
           "orgnr": "910825496",
@@ -601,7 +629,8 @@ private val sampleJSON = """
           ],
           "underenheter": [],
           "navn": "SLEMMESTAD OG STAVERN REGNSKAP",
-          "organisasjonsform": "BEDR"
+          "organisasjonsform": "BEDR",
+          "erSlettet": false
         },
         {
           "orgnr": "910825518",
@@ -629,11 +658,13 @@ private val sampleJSON = """
           ],
           "underenheter": [],
           "navn": "MAURA OG KOLBU REGNSKAP",
-          "organisasjonsform": "BEDR"
+          "organisasjonsform": "BEDR",
+          "erSlettet": false
         }
       ],
       "navn": "MALMEFJORDEN OG RIDABU REGNSKAP",
-      "organisasjonsform": "AS"
+      "organisasjonsform": "AS",
+      "erSlettet": false
     },
     {
       "orgnr": "911309068",
@@ -643,7 +674,8 @@ private val sampleJSON = """
       ],
       "underenheter": [],
       "navn": "ORRE OG VIK I SOGN",
-      "organisasjonsform": "AS"
+      "organisasjonsform": "AS",
+      "erSlettet": false
     },
     {
       "orgnr": "314088700",
@@ -660,11 +692,13 @@ private val sampleJSON = """
           ],
           "underenheter": [],
           "navn": "PUSLETE LYSTIG TIGER AS",
-          "organisasjonsform": "BEDR"
+          "organisasjonsform": "BEDR",
+          "erSlettet": false
         }
       ],
       "navn": "PUSLETE LYSTIG TIGER AS",
-      "organisasjonsform": "AS"
+      "organisasjonsform": "AS",
+      "erSlettet": false
     },
     {
       "orgnr": "910712284",
@@ -681,7 +715,8 @@ private val sampleJSON = """
           ],
           "underenheter": [],
           "navn": "HUNNDALEN OG NEVERDAL",
-          "organisasjonsform": "BEDR"
+          "organisasjonsform": "BEDR",
+          "erSlettet": false
         },
         {
           "orgnr": "910712314",
@@ -691,7 +726,8 @@ private val sampleJSON = """
           ],
           "underenheter": [],
           "navn": "STAMSUND OG KVÅS",
-          "organisasjonsform": "BEDR"
+          "organisasjonsform": "BEDR",
+          "erSlettet": false
         },
         {
           "orgnr": "910712330",
@@ -701,11 +737,13 @@ private val sampleJSON = """
           ],
           "underenheter": [],
           "navn": "SALTRØD OG HØNSEBY",
-          "organisasjonsform": "BEDR"
+          "organisasjonsform": "BEDR",
+          "erSlettet": false
         }
       ],
       "navn": "REKDAL OG PORSGRUNN",
-      "organisasjonsform": "AS"
+      "organisasjonsform": "AS",
+      "erSlettet": false
     },
     {
       "orgnr": "910949446",
@@ -715,7 +753,8 @@ private val sampleJSON = """
       ],
       "underenheter": [],
       "navn": "SAND OG TONSTAD REVISJON",
-      "organisasjonsform": "AS"
+      "organisasjonsform": "AS",
+      "erSlettet": false
     },
     {
       "orgnr": "910831259",
@@ -725,7 +764,8 @@ private val sampleJSON = """
       ],
       "underenheter": [],
       "navn": "STABBESTAD OG SILDA REGNSKAP",
-      "organisasjonsform": "ENK"
+      "organisasjonsform": "ENK",
+      "erSlettet": false
     },
     {
       "orgnr": "910753282",
@@ -742,11 +782,13 @@ private val sampleJSON = """
           ],
           "underenheter": [],
           "navn": "ÅFJORD OG GJERSTAD",
-          "organisasjonsform": "BEDR"
+          "organisasjonsform": "BEDR",
+          "erSlettet": false
         }
       ],
       "navn": "STORÅS OG HESSENG",
-      "organisasjonsform": "AS"
+      "organisasjonsform": "AS",
+      "erSlettet": false
     },
     {
       "orgnr": "910712217",
@@ -779,7 +821,8 @@ private val sampleJSON = """
           ],
           "underenheter": [],
           "navn": "ULNES OG SÆBØ",
-          "organisasjonsform": "BEDR"
+          "organisasjonsform": "BEDR",
+          "erSlettet": false
         },
         {
           "orgnr": "910712268",
@@ -797,7 +840,8 @@ private val sampleJSON = """
           ],
           "underenheter": [],
           "navn": "ENEBAKK OG ØYER",
-          "organisasjonsform": "BEDR"
+          "organisasjonsform": "BEDR",
+          "erSlettet": false
         },
         {
           "orgnr": "910712233",
@@ -815,11 +859,13 @@ private val sampleJSON = """
           ],
           "underenheter": [],
           "navn": "UTVIK OG ETNE",
-          "organisasjonsform": "BEDR"
+          "organisasjonsform": "BEDR",
+          "erSlettet": false
         }
       ],
       "navn": "STØ OG BERGER",
-      "organisasjonsform": "AS"
+      "organisasjonsform": "AS",
+      "erSlettet": false
     },
     {
       "orgnr": "910825550",
@@ -853,7 +899,8 @@ private val sampleJSON = """
           ],
           "underenheter": [],
           "navn": "LINESØYA OG LANGANGEN REGNSKAP",
-          "organisasjonsform": "BEDR"
+          "organisasjonsform": "BEDR",
+          "erSlettet": false
         },
         {
           "orgnr": "910825607",
@@ -872,7 +919,8 @@ private val sampleJSON = """
           ],
           "underenheter": [],
           "navn": "BIRTAVARRE OG VÆRLANDET REGNSKAP",
-          "organisasjonsform": "BEDR"
+          "organisasjonsform": "BEDR",
+          "erSlettet": false
         },
         {
           "orgnr": "910825569",
@@ -890,11 +938,13 @@ private val sampleJSON = """
           ],
           "underenheter": [],
           "navn": "STORFOSNA OG FREDRIKSTAD REGNSKAP",
-          "organisasjonsform": "BEDR"
+          "organisasjonsform": "BEDR",
+          "erSlettet": false
         }
       ],
       "navn": "TRANØY OG SANDE I VESTFOLD REGNSKA",
-      "organisasjonsform": "AS"
+      "organisasjonsform": "AS",
+      "erSlettet": false
     }
   ]
 }

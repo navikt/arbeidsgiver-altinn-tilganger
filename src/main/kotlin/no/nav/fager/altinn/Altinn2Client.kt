@@ -7,6 +7,7 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -125,18 +126,18 @@ class Altinn2ClientImpl(
                         parameters.append("serviceEdition", serviceEdition)
                         parameters.append("\$top", "500")
                         parameters.append("\$skip", "${reportees.size}")
-                        parameters.append("\$filter", "Type ne 'Person' and Status eq 'Active'")
+                        parameters.append("\$filter", "Type ne 'Person'")
                     }
                     accept(ContentType.Application.Json)
                     contentType(ContentType.Application.Json)
                     header("ApiKey", altinn2Config.apiKey)
-                }.body<List<Altinn2Reportee>>().let {
-                    hasMore = it.isNotEmpty()
+                }.body<List<Altinn2Reportee>>().let { fetchedReportees ->
+                    hasMore = fetchedReportees.isNotEmpty()
                     reportees.addAll(
-                        it.filter {
+                        fetchedReportees.filter {
                             // dette skal egentlig filtreres ut i altinn pga filter query param, men vi ser tidvis at noe slipper gjennom.
                             // derfor en dobbeltsjekk her
-                            it.organizationNumber != null && it.type != "Person" && it.status == "Active"
+                            it.organizationNumber != null && it.type != "Person"
                         }
                     )
                 }
