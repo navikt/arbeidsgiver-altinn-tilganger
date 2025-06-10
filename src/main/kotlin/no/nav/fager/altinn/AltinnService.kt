@@ -159,8 +159,8 @@ private fun List<AltinnTilgang>.filterRecursive(filter: Filter): List<AltinnTilg
             val matcherAltinn3 = tilgang.altinn3Tilganger.intersects(filter.altinn3Tilganger)
 
             if (matcherAltinn2 || matcherAltinn3) {
-                logger().error(TEAM_LOG_MARKER, "Tom overordnet enhet som matcher filter fjernet pga alle underenheter fjernet. {} {}", tilgang, filter)
-                logger().error("Tom overordnet enhet som matcher filter fjernet pga alle underenheter fjernet")
+                logger().warn(TEAM_LOG_MARKER, "Tom overordnet enhet som matcher filter fjernet pga alle underenheter fjernet. {} {}", tilgang, filter)
+                logger().warn("Tom overordnet enhet som matcher filter fjernet pga alle underenheter fjernet")
             }
             return@mapNotNull null
         }
