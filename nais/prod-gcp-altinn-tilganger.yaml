@@ -79,6 +79,8 @@ spec:
           namespace: teamia
         - application: ia-tjenester-metrikker
           namespace: arbeidsgiver
+        - application: spinntektsmelding-frontend
+          namespace: helsearbeidsgiver
     outbound:
       external:
         - host: platform.altinn.no
