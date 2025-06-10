@@ -7,6 +7,7 @@ import kotlinx.serialization.Serializable
 import no.nav.fager.AltinnTilgang
 import no.nav.fager.Filter
 import no.nav.fager.infrastruktur.Metrics
+import no.nav.fager.infrastruktur.TEAM_LOG_MARKER
 import no.nav.fager.infrastruktur.coRecord
 import no.nav.fager.infrastruktur.logger
 import no.nav.fager.redis.AltinnTilgangerRedisClient
@@ -158,6 +159,7 @@ private fun List<AltinnTilgang>.filterRecursive(filter: Filter): List<AltinnTilg
             val matcherAltinn3 = tilgang.altinn3Tilganger.intersects(filter.altinn3Tilganger)
 
             if (matcherAltinn2 || matcherAltinn3) {
+                logger().error(TEAM_LOG_MARKER, "Tom overordnet enhet som matcher filter fjernet pga alle underenheter fjernet. {} {}", tilgang, filter)
                 logger().error("Tom overordnet enhet som matcher filter fjernet pga alle underenheter fjernet")
             }
             return@mapNotNull null
