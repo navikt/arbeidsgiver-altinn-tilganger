@@ -7,9 +7,7 @@ import kotlinx.serialization.Serializable
 import no.nav.fager.AltinnTilgang
 import no.nav.fager.Filter
 import no.nav.fager.infrastruktur.Metrics
-import no.nav.fager.infrastruktur.TEAM_LOG_MARKER
 import no.nav.fager.infrastruktur.coRecord
-import no.nav.fager.infrastruktur.logger
 import no.nav.fager.redis.AltinnTilgangerRedisClient
 
 
@@ -23,6 +21,7 @@ class AltinnService(
         // Endre versjon for å invalidere eksisterende cache
         const val CACHE_VERSION = "v1"
     }
+
     private val timer = Metrics.meterRegistry.timer("altinnservice.hentTilgangerFraAltinn")
     private val cacheHit = Counter.builder("altinnservice.cache").tag("result", "hit").register(Metrics.meterRegistry)
     private val cacheMiss = Counter.builder("altinnservice.cache").tag("result", "miss").register(Metrics.meterRegistry)
@@ -147,25 +146,13 @@ class AltinnService(
  */
 private fun List<AltinnTilgang>.filterRecursive(filter: Filter): List<AltinnTilgang> =
     mapNotNull { tilgang ->
-        if (!filter.inkluderSlettede && tilgang.erSlettet) {
-            return@mapNotNull null
-        }
+        if (!filter.inkluderSlettede && tilgang.erSlettet) return@mapNotNull null
 
         val filtrerteUnderenheter = tilgang.underenheter.filterRecursive(filter)
 
-        val alleUnderenheterFjernet = filtrerteUnderenheter.isEmpty() && tilgang.underenheter.isNotEmpty()
-        if (alleUnderenheterFjernet && !filter.isEmpty) {
-            val matcherAltinn2 = tilgang.altinn2Tilganger.intersects(filter.altinn2Tilganger)
-            val matcherAltinn3 = tilgang.altinn3Tilganger.intersects(filter.altinn3Tilganger)
-
-            val skalLogge = matcherAltinn2 || matcherAltinn3
-
-            if (skalLogge && !tilgang.erSlettet) {
-                logger().error(TEAM_LOG_MARKER, "Overordnet enhet fjernet fordi alle underenheter ble filtrert bort, selv om enheten matchet filteret. {} {}", tilgang, filter)
-                logger().error("Overordnet enhet fjernet fordi alle underenheter ble filtrert bort, selv om enheten matchet filteret.")
-            }
-            return@mapNotNull null
-        }
+        val haddeUnderenheter = tilgang.underenheter.isNotEmpty()
+        val alleUnderenheterFjernet = haddeUnderenheter && filtrerteUnderenheter.isEmpty()
+        if (alleUnderenheterFjernet) return@mapNotNull null
 
         tilgang.copy(underenheter = filtrerteUnderenheter)
     }.filter { tilgang ->
