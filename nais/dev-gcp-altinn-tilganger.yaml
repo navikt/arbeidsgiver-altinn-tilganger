@@ -92,6 +92,12 @@ spec:
           cluster: dev-fss
         - application: tiltak-refusjon-api
           namespace: arbeidsgiver
+        - application: aareg-tilgangskontroll-q1
+          namespace: arbeidsforhold
+          cluster: dev-fss
+        - application: aareg-tilgangskontroll-q2
+          namespace: arbeidsforhold
+          cluster: dev-fss
     outbound:
       external:
         - host: platform.tt02.altinn.no

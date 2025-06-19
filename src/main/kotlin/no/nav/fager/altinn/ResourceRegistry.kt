@@ -14,6 +14,10 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 
+/**
+ * Denne mappingen kunne vi kanskje slått opp automatisk fra https://platform.tt02.altinn.no/resourceregistry/api/v1/resource/search?Id=nav_arbeidsforhold
+ * se feltet resourceReferences
+ */
 val KnownResources = basedOnEnv(
     prod = listOfNotNull(
         Resource(
@@ -57,7 +61,23 @@ val KnownResources = basedOnEnv(
         Resource(
             resourceId = "nav_tiltak_tiltaksrefusjon",
             altinn2Tjeneste = listOf() // ny tjeneste som før var del av 4936:1. tilgang til ny tjeneste betyr ikke tilgang til gammel tjeneste
-        )
+        ),
+        Resource(
+            resourceId = "nav_arbeidsforhold_aa-registeret-innsyn-arbeidsgiver",
+            altinn2Tjeneste = listOf(Altinn2Tjeneste("5441", "1"))
+        ),
+        Resource(
+            resourceId = "nav_arbeidsforhold_aa-registeret-brukerstotte",
+            altinn2Tjeneste = listOf(Altinn2Tjeneste("5441", "2"))
+        ),
+        Resource(
+            resourceId = "nav_arbeidsforhold_aa-registeret-sok-tilgang",
+            altinn2Tjeneste = listOf(Altinn2Tjeneste("5719", "1"))
+        ),
+        Resource(
+            resourceId = "nav_arbeidsforhold_aa-registeret-oppslag-samarbeidspartnere",
+            altinn2Tjeneste = listOf(Altinn2Tjeneste("5723", "1"))
+        ),
     )
 )
 
