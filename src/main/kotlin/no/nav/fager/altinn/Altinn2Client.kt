@@ -77,13 +77,10 @@ class Altinn2ClientImpl(
     @OptIn(ExperimentalCoroutinesApi::class)
     override suspend fun hentAltinn2Tilganger(fnr: String): Altinn2Tilganger {
         val reportees: List<ReporteeResult> = tjenester.asFlow()
-            .flowOn(Dispatchers.IO)
             .flatMapMerge { tjeneste ->
                 flow {
-                    this.emit(
-                        hentReportees(fnr, tjeneste.serviceCode, tjeneste.serviceEdition)
-                    )
-                }
+                    emit(hentReportees(fnr, tjeneste.serviceCode, tjeneste.serviceEdition))
+                }.flowOn(Dispatchers.IO)
             }.toList()
 
         return Altinn2Tilganger(

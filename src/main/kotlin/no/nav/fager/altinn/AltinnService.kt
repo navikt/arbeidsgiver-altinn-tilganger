@@ -3,6 +3,7 @@ package no.nav.fager.altinn
 import io.micrometer.core.instrument.Counter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.Serializable
 import no.nav.fager.AltinnTilgang
 import no.nav.fager.Filter
@@ -28,15 +29,14 @@ class AltinnService(
 
     suspend fun hentTilganger(
         fnr: String,
-        filter: Filter = Filter.empty,
-        scope: CoroutineScope
+        filter: Filter = Filter.empty
     ): AltinnTilgangerResultat {
         val cacheKey = "$fnr-$CACHE_VERSION"
         val result = redisClient.get(cacheKey)?.also {
             cacheHit.increment()
         } ?: run {
             cacheMiss.increment()
-            hentTilgangerFraAltinn(fnr, scope).also {
+            hentTilgangerFraAltinn(fnr).also {
                 if (!it.isError) {
                     redisClient.set(cacheKey, it)
                 }
@@ -46,54 +46,54 @@ class AltinnService(
         return result.filter(filter)
     }
 
-    private suspend fun hentTilgangerFraAltinn(
-        fnr: String,
-        scope: CoroutineScope,
-    ) = timer.coRecord {
-        val altinn2TilgangerJob = scope.async { altinn2Client.hentAltinn2Tilganger(fnr) }
-        val altinn3TilgangerJob = scope.async { altinn3Client.resourceOwner_AuthorizedParties(fnr) }
+    private suspend fun hentTilgangerFraAltinn(fnr: String) =
+        timer.coRecord {
+            coroutineScope {
+                val altinn2TilgangerJob = async { altinn2Client.hentAltinn2Tilganger(fnr) }
+                val altinn3TilgangerJob = async { altinn3Client.resourceOwner_AuthorizedParties(fnr) }
 
-        val altinn2Tilganger = altinn2TilgangerJob.await()
-        val altinn3TilgangerResult = altinn3TilgangerJob.await()
-        val altinn3Tilganger = altinn3TilgangerResult.fold(
-            onSuccess = { altinn3tilganger ->
-                altinn3tilganger.addAuthorizedResourcesRecursive { party ->
-                    // adds all resources from the resource registry for the roles the party has
-                    // this must be done prior to mapping to Altinn2 services
-                    party.authorizedRolesAsUrn.flatMap { // TODO: replace with party.authorizedRoles.flatMap when new altinn api returns urns
-                        resourceRegistry.getResourceIdForPolicySubject(it)
-                    }.toSet()
-                }
-            },
-            onFailure = { emptyList() }
-        )
-
-
-        val orgnrTilAltinn2Mapped = altinn3Tilganger.flatMap {
-            flatten(it) { party ->
-                if (party.organizationNumber == null || party.unitType == null) {
-                    null
-                } else {
-                    party.organizationNumber to party.authorizedResources.mapNotNull { resource ->
-                        resourceRegistry.resourceIdToAltinn2Tjeneste[resource]
-                    }.flatten()
-                }
-            }
-        }.associate {
-            it.first to it.second + (altinn2Tilganger.orgNrTilTjenester[it.first] ?: emptyList())
-        }
-
-        AltinnTilgangerResultat(
-            altinn2Tilganger.isError || altinn3TilgangerResult.isFailure,
-            mapToHierarchy(
-                altinn3Tilganger,
-                Altinn2Tilganger(
-                    altinn2Tilganger.isError,
-                    orgnrTilAltinn2Mapped
+                val altinn2Tilganger = altinn2TilgangerJob.await()
+                val altinn3TilgangerResult = altinn3TilgangerJob.await()
+                val altinn3Tilganger = altinn3TilgangerResult.fold(
+                    onSuccess = { altinn3tilganger ->
+                        altinn3tilganger.addAuthorizedResourcesRecursive { party ->
+                            // adds all resources from the resource registry for the roles the party has
+                            // this must be done prior to mapping to Altinn2 services
+                            party.authorizedRolesAsUrn.flatMap { // TODO: replace with party.authorizedRoles.flatMap when new altinn api returns urns
+                                resourceRegistry.getResourceIdForPolicySubject(it)
+                            }.toSet()
+                        }
+                    },
+                    onFailure = { emptyList() }
                 )
-            )
-        )
-    }
+
+
+                val orgnrTilAltinn2Mapped = altinn3Tilganger.flatMap {
+                    flatten(it) { party ->
+                        if (party.organizationNumber == null || party.unitType == null) {
+                            null
+                        } else {
+                            party.organizationNumber to party.authorizedResources.mapNotNull { resource ->
+                                resourceRegistry.resourceIdToAltinn2Tjeneste[resource]
+                            }.flatten()
+                        }
+                    }
+                }.associate {
+                    it.first to it.second + (altinn2Tilganger.orgNrTilTjenester[it.first] ?: emptyList())
+                }
+
+                AltinnTilgangerResultat(
+                    altinn2Tilganger.isError || altinn3TilgangerResult.isFailure,
+                    mapToHierarchy(
+                        altinn3Tilganger,
+                        Altinn2Tilganger(
+                            altinn2Tilganger.isError,
+                            orgnrTilAltinn2Mapped
+                        )
+                    )
+                )
+            }
+        }
 
     private fun mapToHierarchy(
         authorizedParties: List<AuthorizedParty>,
