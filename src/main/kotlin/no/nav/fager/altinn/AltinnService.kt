@@ -1,9 +1,10 @@
 package no.nav.fager.altinn
 
 import io.micrometer.core.instrument.Counter
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import no.nav.fager.AltinnTilgang
 import no.nav.fager.Filter
@@ -36,9 +37,11 @@ class AltinnService(
             cacheHit.increment()
         } ?: run {
             cacheMiss.increment()
-            hentTilgangerFraAltinn(fnr).also {
-                if (!it.isError) {
-                    redisClient.set(cacheKey, it)
+            withContext(NonCancellable) { // Midlertidig workaround for å unngå cancellation exceptions (https://youtrack.jetbrains.com/projects/KTOR/issues/KTOR-8478/CIO-There-is-no-graceful-shutdown-when-calling-the-servers-stop-method)
+                hentTilgangerFraAltinn(fnr).also {
+                    if (!it.isError) {
+                        redisClient.set(cacheKey, it)
+                    }
                 }
             }
         }
