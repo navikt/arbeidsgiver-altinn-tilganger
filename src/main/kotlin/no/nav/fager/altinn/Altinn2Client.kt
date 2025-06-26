@@ -8,7 +8,11 @@ import io.ktor.http.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import no.nav.fager.infrastruktur.basedOnEnv
@@ -76,15 +80,13 @@ class Altinn2ClientImpl(
      */
     @OptIn(ExperimentalCoroutinesApi::class)
     override suspend fun hentAltinn2Tilganger(fnr: String): Altinn2Tilganger {
-        val reportees: List<ReporteeResult> = tjenester.asFlow()
-            .flowOn(Dispatchers.IO)
-            .flatMapMerge { tjeneste ->
-                flow {
-                    this.emit(
-                        hentReportees(fnr, tjeneste.serviceCode, tjeneste.serviceEdition)
-                    )
+        val reportees: List<ReporteeResult> = coroutineScope {
+            tjenester.map { tjeneste ->
+                async(Dispatchers.IO) {
+                    hentReportees(fnr, tjeneste.serviceCode, tjeneste.serviceEdition)
                 }
-            }.toList()
+            }.awaitAll()
+        }
 
         return Altinn2Tilganger(
             isError = reportees.any { it.isError },

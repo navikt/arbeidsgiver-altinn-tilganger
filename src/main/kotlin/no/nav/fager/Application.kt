@@ -221,7 +221,6 @@ fun Application.ktorConfig(
                         altinnService.hentTilganger(
                             fnr = fnr,
                             filter = filter,
-                            scope = call
                         ).toResponse()
                     )
                 }
@@ -268,7 +267,6 @@ fun Application.ktorConfig(
                         altinnService.hentTilganger(
                             fnr = fnr,
                             filter = filter,
-                            scope = call
                         ).toResponse()
                     )
                 }

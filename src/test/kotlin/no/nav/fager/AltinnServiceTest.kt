@@ -59,7 +59,7 @@ class AltinnServiceTest {
         val fnr = "16120101181"
         val cacheKey = "$fnr-${AltinnService.CACHE_VERSION}"
 
-        altinnService.hentTilganger(fnr, Filter.empty, this)
+        altinnService.hentTilganger(fnr, Filter.empty)
 
         assertTrue(altinnRedisClient.getCallCountWithArgs(altinnRedisClient::get.name, cacheKey) == 1)
         assertTrue(
@@ -150,7 +150,7 @@ class AltinnServiceTest {
 
         val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, resourceRegistry)
 
-        altinnService.hentTilganger(fnr, Filter.empty, this)
+        altinnService.hentTilganger(fnr, Filter.empty)
 
         assertTrue(altinnRedisClient.getCallCountWithArgs(altinnRedisClient::get.name, cacheKey) == 1)
         assertTrue(altinnRedisClient.getCallCount(altinnRedisClient::set.name) == 0)
@@ -205,7 +205,7 @@ class AltinnServiceTest {
 
         val fnr = "16120101181"
         val cacheKey = "$fnr-${AltinnService.CACHE_VERSION}"
-        altinnService.hentTilganger(fnr, Filter.empty, this)
+        altinnService.hentTilganger(fnr, Filter.empty)
 
         assertTrue(altinnRedisClient.getCallCountWithArgs(altinnRedisClient::get.name, cacheKey) == 1)
         assertTrue(altinnRedisClient.getCallCount(altinnRedisClient::set.name) == 0)
@@ -264,8 +264,8 @@ class AltinnServiceTest {
         val cacheKey1 = "$fnr1-${AltinnService.CACHE_VERSION}"
         val cacheKey2 = "$fnr2-${AltinnService.CACHE_VERSION}"
 
-        altinnService.hentTilganger(fnr1, Filter.empty, this)
-        altinnService.hentTilganger(fnr2, Filter.empty, this)
+        altinnService.hentTilganger(fnr1, Filter.empty)
+        altinnService.hentTilganger(fnr2, Filter.empty)
 
         assertTrue(altinnRedisClient.getCallCount(altinnRedisClient::get.name) == 2)
         assertTrue(altinnRedisClient.getCallCountWithArgs(altinnRedisClient::get.name, cacheKey1) == 1)
@@ -313,7 +313,7 @@ class AltinnServiceTest {
         val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, resourceRegistry)
 
         val fnr = "16120101181"
-        val tilganger = altinnService.hentTilganger(fnr, Filter.empty, this)
+        val tilganger = altinnService.hentTilganger(fnr, Filter.empty)
 
         assertTrue(tilganger.altinnTilganger.count() == 1)
         assertTrue(tilganger.altinnTilganger.first { it.orgnr == "111111111" }.altinn2Tilganger.count() == 1)
@@ -383,7 +383,7 @@ class AltinnServiceTest {
         val fnr = "16120101181"
         val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, resourceRegistry)
 
-        val tilganger = altinnService.hentTilganger(fnr, Filter.empty, this)
+        val tilganger = altinnService.hentTilganger(fnr, Filter.empty)
         assertEquals(2, tilganger.altinnTilganger.size)
 
         tilganger.altinnTilganger.first { it.orgnr == "910825496" }.let { slemmestad ->
@@ -495,12 +495,12 @@ class AltinnServiceTest {
         val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, resourceRegistry)
 
         val fnr = "42"
-        val tilganger = altinnService.hentTilganger(fnr, Filter(setOf("4936:1")), this)
+        val tilganger = altinnService.hentTilganger(fnr, Filter(setOf("4936:1")))
         assertEquals(1, tilganger.altinnTilganger.size)
         assertEquals("2", tilganger.altinnTilganger.first().orgnr)
         assertEquals("2.1", tilganger.altinnTilganger.first().underenheter.first().orgnr)
 
-        val tilganger2 = altinnService.hentTilganger(fnr, Filter(setOf("4936:1")), this)
+        val tilganger2 = altinnService.hentTilganger(fnr, Filter(setOf("4936:1")))
         assertEquals(1, tilganger2.altinnTilganger.size)
         assertEquals("2", tilganger.altinnTilganger.first().orgnr)
         assertEquals("2.1", tilganger.altinnTilganger.first().underenheter.first().orgnr)
