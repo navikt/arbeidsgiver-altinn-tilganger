@@ -1,12 +1,16 @@
 package no.nav.fager.infrastruktur
 
-import io.ktor.client.*
-import io.ktor.client.engine.cio.*
-import io.ktor.client.plugins.*
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.client.plugins.logging.*
-import io.ktor.network.sockets.*
-import io.ktor.serialization.kotlinx.json.*
+import io.ktor.client.HttpClient
+import io.ktor.client.HttpClientConfig
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.engine.cio.CIOEngineConfig
+import io.ktor.client.network.sockets.ConnectTimeoutException
+import io.ktor.client.plugins.HttpRequestRetry
+import io.ktor.client.plugins.HttpRequestTimeoutException
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.logging.Logging
+import io.ktor.network.sockets.SocketTimeoutException
+import io.ktor.serialization.kotlinx.json.json
 import io.micrometer.core.instrument.Timer
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.serialization.json.Json
@@ -23,6 +27,7 @@ fun defaultHttpClient(
         retryOnExceptionIf(3) { _, cause ->
             when (cause) {
                 is SocketTimeoutException,
+                is ConnectTimeoutException,
                 is EOFException,
                 is SSLHandshakeException,
                 is ClosedReceiveChannelException,
