@@ -78,6 +78,10 @@ val KnownResources = basedOnEnv(
             resourceId = "nav_arbeidsforhold_aa-registeret-oppslag-samarbeidspartnere",
             altinn2Tjeneste = listOf(Altinn2Tjeneste("5723", "1"))
         ),
+        Resource(
+            resourceId = "nav_rekruttering_stillingsannonser",
+            altinn2Tjeneste = listOf(Altinn2Tjeneste("5078", "1"))
+        )
     )
 )
 

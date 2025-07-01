@@ -98,6 +98,8 @@ spec:
         - application: aareg-tilgangskontroll-q2
           namespace: arbeidsforhold
           cluster: dev-fss
+        - application: pam-stillingsregistrering-api
+          namespace: teampam
     outbound:
       external:
         - host: platform.tt02.altinn.no
