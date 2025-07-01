@@ -63,6 +63,10 @@ val KnownResources = basedOnEnv(
             altinn2Tjeneste = listOf() // ny tjeneste som før var del av 4936:1. tilgang til ny tjeneste betyr ikke tilgang til gammel tjeneste
         ),
         Resource(
+            resourceId = "nav_foreldrepenger_inntektsmelding",
+            altinn2Tjeneste = listOf() // ny tjeneste som før var del av 4936:1. tilgang til ny tjeneste betyr ikke tilgang til gammel tjeneste
+        ),
+        Resource(
             resourceId = "nav_arbeidsforhold_aa-registeret-innsyn-arbeidsgiver",
             altinn2Tjeneste = listOf(Altinn2Tjeneste("5441", "1"))
         ),

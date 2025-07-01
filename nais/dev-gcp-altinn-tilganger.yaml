@@ -100,6 +100,8 @@ spec:
           cluster: dev-fss
         - application: pam-stillingsregistrering-api
           namespace: teampam
+        - application: fpinntektsmelding
+          namespace: teamforeldrepenger
     outbound:
       external:
         - host: platform.tt02.altinn.no
