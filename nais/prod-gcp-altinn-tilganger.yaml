@@ -81,6 +81,8 @@ spec:
           namespace: arbeidsgiver
         - application: spinntektsmelding-frontend
           namespace: helsearbeidsgiver
+        - application: tiltak-refusjon-api
+          namespace: arbeidsgiver
     outbound:
       external:
         - host: platform.altinn.no
