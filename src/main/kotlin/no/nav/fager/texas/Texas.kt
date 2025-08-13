@@ -1,23 +1,39 @@
 package no.nav.fager.texas
 
-import io.ktor.client.*
-import io.ktor.client.call.*
-import io.ktor.client.plugins.*
-import io.ktor.client.plugins.api.*
-import io.ktor.client.request.*
-import io.ktor.client.request.forms.*
-import io.ktor.http.*
-import io.ktor.server.application.*
-import io.ktor.server.auth.*
-import io.ktor.server.request.*
-import io.ktor.server.response.*
-import kotlinx.serialization.*
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.plugins.ResponseException
+import io.ktor.client.plugins.api.createClientPlugin
+import io.ktor.client.request.bearerAuth
+import io.ktor.client.request.forms.submitForm
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.parameters
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.application.createRouteScopedPlugin
+import io.ktor.server.auth.AuthenticationFailedCause
+import io.ktor.server.auth.authentication
+import io.ktor.server.request.authorization
+import io.ktor.server.response.respondNullable
+import kotlinx.serialization.Contextual
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.Transient
 import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.json.*
-import no.nav.fager.infrastruktur.coRecord
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import no.nav.fager.infrastruktur.Principal
+import no.nav.fager.infrastruktur.coRecord
 import no.nav.fager.infrastruktur.defaultHttpClient
 import no.nav.fager.infrastruktur.logger
+import no.nav.fager.infrastruktur.rethrowIfCancellation
 import no.nav.fager.infrastruktur.withTimer
 
 /**
@@ -175,6 +191,8 @@ val TexasAuth = createRouteScopedPlugin(
             val introspectResponse = try {
                 client.introspect(token)
             } catch (e: Exception) {
+                e.rethrowIfCancellation()
+
                 challenge(call, AuthenticationFailedCause.Error(e.message ?: "introspect request failed"))
                 return@onCall
             }
