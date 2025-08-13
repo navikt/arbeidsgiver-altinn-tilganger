@@ -14,6 +14,7 @@ import kotlinx.serialization.json.Json
 import no.nav.fager.altinn.AltinnService.AltinnTilgangerResultat
 import no.nav.fager.infrastruktur.Metrics
 import no.nav.fager.infrastruktur.logger
+import no.nav.fager.infrastruktur.rethrowIfCancellation
 import java.security.MessageDigest
 import java.time.Duration
 
@@ -83,6 +84,8 @@ suspend fun <T> retryOnException(
         try {
             return block()
         } catch (e: Exception) {
+            e.rethrowIfCancellation()
+            
             delay(delayMillis)
         }
     }

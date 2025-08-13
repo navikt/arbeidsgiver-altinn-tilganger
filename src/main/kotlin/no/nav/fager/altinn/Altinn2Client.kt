@@ -1,23 +1,29 @@
 package no.nav.fager.altinn
 
-import io.ktor.client.call.*
-import io.ktor.client.engine.cio.*
-import io.ktor.client.plugins.*
-import io.ktor.client.request.*
-import io.ktor.http.*
+import io.ktor.client.call.body
+import io.ktor.client.plugins.ClientRequestException
+import io.ktor.client.plugins.HttpRequestTimeoutException
+import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.request.accept
+import io.ktor.client.request.get
+import io.ktor.client.request.header
+import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.appendPathSegments
+import io.ktor.http.contentType
+import io.ktor.http.takeFrom
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import no.nav.fager.infrastruktur.basedOnEnv
 import no.nav.fager.infrastruktur.defaultHttpClient
 import no.nav.fager.infrastruktur.logger
+import no.nav.fager.infrastruktur.rethrowIfCancellation
 import no.nav.fager.texas.AuthClient
 import no.nav.fager.texas.IdentityProvider
 import no.nav.fager.texas.TexasAuthClientPlugin
@@ -152,6 +158,8 @@ class Altinn2ClientImpl(
                 isError = false,
             )
         } catch (e: Exception) {
+            e.rethrowIfCancellation()
+
             return if (e.manglerAltinnProfil()) {
                 ReporteeResult(
                     serviceCode = serviceCode,
