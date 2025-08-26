@@ -83,6 +83,9 @@ spec:
           namespace: helsearbeidsgiver
         - application: tiltak-refusjon-api
           namespace: arbeidsgiver
+        - application: aareg-tilgangskontroll
+          namespace: arbeidsforhold
+          cluster: prod-fss
     outbound:
       external:
         - host: platform.altinn.no
