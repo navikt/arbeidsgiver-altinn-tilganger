@@ -86,6 +86,8 @@ spec:
         - application: aareg-tilgangskontroll
           namespace: arbeidsforhold
           cluster: prod-fss
+        - application: melosys-skjema-api
+          namespace: teammelosys
     outbound:
       external:
         - host: platform.altinn.no
