@@ -102,6 +102,8 @@ spec:
           namespace: teampam
         - application: fpinntektsmelding
           namespace: teamforeldrepenger
+        - application: melosys-skjema-api
+          namespace: teammelosys
     outbound:
       external:
         - host: platform.tt02.altinn.no
