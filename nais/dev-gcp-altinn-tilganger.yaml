@@ -90,6 +90,9 @@ spec:
         - application: sokos-kontoregister
           namespace: okonomi
           cluster: dev-fss
+        - application: sokos-kontoregister-q2
+          namespace: okonomi
+          cluster: dev-fss
         - application: tiltak-refusjon-api
           namespace: arbeidsgiver
         - application: aareg-tilgangskontroll-q1
