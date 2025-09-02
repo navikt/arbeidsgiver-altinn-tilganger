@@ -43,6 +43,10 @@ val KnownResources = basedOnEnv(
     ),
     other = listOfNotNull(
         Resource(
+            resourceId = "test-fager",
+            altinn2Tjeneste = listOf()
+        ),
+        Resource(
             resourceId = "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger",
             altinn2Tjeneste = listOf(Altinn2Tjeneste("5810", "1"))
         ),
