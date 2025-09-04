@@ -7,6 +7,7 @@ import io.valkey.JedisPool
 import io.valkey.JedisPoolConfig
 import io.valkey.params.SetParams
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerializationException
@@ -85,7 +86,7 @@ suspend fun <T> retryOnException(
             return block()
         } catch (e: Exception) {
             e.rethrowIfCancellation()
-            
+
             delay(delayMillis)
         }
     }
