@@ -34,6 +34,7 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
+import io.ktor.utils.io.ClosedWriteChannelException
 import io.micrometer.core.instrument.Timer
 import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics
 import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics
@@ -112,6 +113,11 @@ fun Application.ktorConfig(
                 is ConnectTimeoutException -> {
                     log.warn("Unexpected exception at ktor-toplevel: {}", cause.javaClass.canonicalName, cause)
                     call.response.status(HttpStatusCode.InternalServerError)
+                }
+
+                is ClosedWriteChannelException -> {
+                    log.warn("Client closed connection before response was sent", cause)
+                    // no response, channel already closed
                 }
 
                 else -> {
