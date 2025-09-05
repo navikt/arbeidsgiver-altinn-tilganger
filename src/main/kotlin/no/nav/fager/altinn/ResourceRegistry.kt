@@ -7,6 +7,7 @@ import kotlinx.serialization.Serializable
 import no.nav.fager.infrastruktur.RequiresReady
 import no.nav.fager.infrastruktur.basedOnEnv
 import no.nav.fager.infrastruktur.logger
+import no.nav.fager.infrastruktur.rethrowIfCancellation
 import no.nav.fager.redis.RedisConfig
 import no.nav.fager.redis.RedisLoadingCache
 import kotlin.time.Duration.Companion.days
@@ -136,7 +137,6 @@ class ResourceRegistry(
                 isReady = updatePolicySubjectsForKnownResources { resourceId ->
                     this@ResourceRegistry.cache.get(resourceId)
                 }
-                delay(5.seconds)
             }
             log.info("ResourceRegistry isReady")
         }
@@ -165,7 +165,7 @@ class ResourceRegistry(
     ): Boolean {
         val results = KnownResources.map { resource ->
             val resourceId = resource.resourceId
-            resource to runCatching { fetcher(resourceId) }
+            resource to retryWithBackoff { fetcher(resourceId) }
         }
 
         results.forEach { (resource, result) ->
@@ -180,6 +180,34 @@ class ResourceRegistry(
         }
 
         return results.none { it.second.isFailure }
+    }
+
+    private suspend fun <T> retryWithBackoff(
+        maxRetries: Int = 5,
+        initialDelayMs: Long = 500,
+        maxDelayMs: Long = 5000,
+        backoffFactor: Double = 2.0,
+        action: suspend () -> T
+    ): Result<T> {
+        var currentDelay = initialDelayMs
+        var lastException: Throwable? = null
+
+        repeat(maxRetries) { attempt ->
+            try {
+                return Result.success(action())
+            } catch (e: Exception) {
+                e.rethrowIfCancellation()
+
+                lastException = e
+                if (attempt < maxRetries - 1) {
+                    log.warn("Forsøk ${attempt + 1} feilet, prøver igjen om ${currentDelay}ms", e)
+                    delay(currentDelay)
+                    currentDelay = minOf((currentDelay * backoffFactor).toLong(), maxDelayMs)
+                }
+            }
+        }
+
+        return Result.failure(lastException ?: IllegalStateException("Ukjent feil i retryWithBackoff"))
     }
 }
 

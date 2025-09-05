@@ -2,23 +2,38 @@ package no.nav.fager
 
 import io.ktor.client.network.sockets.ConnectTimeoutException
 import io.ktor.client.plugins.HttpRequestTimeoutException
-import io.ktor.http.*
-import io.ktor.serialization.kotlinx.json.*
-import io.ktor.server.application.*
-import io.ktor.server.auth.*
-import io.ktor.server.cio.*
-import io.ktor.server.engine.*
-import io.ktor.server.metrics.micrometer.*
-import io.ktor.server.plugins.*
-import io.ktor.server.plugins.callid.*
-import io.ktor.server.plugins.calllogging.*
-import io.ktor.server.plugins.compression.*
-import io.ktor.server.plugins.contentnegotiation.*
-import io.ktor.server.plugins.statuspages.*
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
+import io.ktor.serialization.kotlinx.json.json
+import io.ktor.server.application.Application
+import io.ktor.server.application.install
+import io.ktor.server.auth.principal
+import io.ktor.server.cio.CIO
+import io.ktor.server.engine.embeddedServer
+import io.ktor.server.metrics.micrometer.MicrometerMetrics
+import io.ktor.server.plugins.BadRequestException
+import io.ktor.server.plugins.callid.CallId
+import io.ktor.server.plugins.callid.callIdMdc
+import io.ktor.server.plugins.calllogging.CallLogging
+import io.ktor.server.plugins.compression.Compression
+import io.ktor.server.plugins.compression.deflate
+import io.ktor.server.plugins.compression.gzip
+import io.ktor.server.plugins.compression.minimumSize
+import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.plugins.swagger.swaggerUI
-import io.ktor.server.request.*
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
+import io.ktor.server.request.header
+import io.ktor.server.request.httpMethod
+import io.ktor.server.request.path
+import io.ktor.server.request.receive
+import io.ktor.server.request.receiveText
+import io.ktor.server.response.respond
+import io.ktor.server.response.respondRedirect
+import io.ktor.server.response.respondText
+import io.ktor.server.routing.get
+import io.ktor.server.routing.post
+import io.ktor.server.routing.route
+import io.ktor.server.routing.routing
 import io.micrometer.core.instrument.Timer
 import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics
 import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics
@@ -30,8 +45,19 @@ import io.micrometer.core.instrument.binder.system.ProcessorMetrics
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig
 import kotlinx.serialization.json.Json
 import no.nav.fager.AltinnTilgangerResponse.Companion.toResponse
-import no.nav.fager.altinn.*
-import no.nav.fager.infrastruktur.*
+import no.nav.fager.altinn.Altinn2ClientImpl
+import no.nav.fager.altinn.Altinn2Config
+import no.nav.fager.altinn.Altinn3ClientImpl
+import no.nav.fager.altinn.Altinn3Config
+import no.nav.fager.altinn.AltinnService
+import no.nav.fager.altinn.ResourceRegistry
+import no.nav.fager.infrastruktur.AutentisertM2MPrincipal
+import no.nav.fager.infrastruktur.Health
+import no.nav.fager.infrastruktur.InnloggetBrukerPrincipal
+import no.nav.fager.infrastruktur.Metrics
+import no.nav.fager.infrastruktur.TEAM_LOG_MARKER
+import no.nav.fager.infrastruktur.coRecord
+import no.nav.fager.infrastruktur.logger
 import no.nav.fager.redis.AltinnTilgangerRedisClientImpl
 import no.nav.fager.redis.RedisConfig
 import no.nav.fager.texas.AuthClient
@@ -43,14 +69,14 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 fun main() {
-    embeddedServer(CIO, port = 8080, host = "0.0.0.0", module = {
+    embeddedServer(CIO, port = 8080) {
         ktorConfig(
             altinn3Config = Altinn3Config.nais(),
             altinn2Config = Altinn2Config.nais(),
             texasAuthConfig = TexasAuthConfig.nais(),
             redisConfig = RedisConfig.nais(),
         )
-    }).start(wait = true)
+    }.start(wait = true)
 }
 
 fun Application.ktorConfig(
