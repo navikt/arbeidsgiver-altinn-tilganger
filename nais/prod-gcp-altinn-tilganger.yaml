@@ -88,6 +88,9 @@ spec:
           cluster: prod-fss
         - application: melosys-skjema-api
           namespace: teammelosys
+        - application: sokos-kontoregister
+          namespace: okonomi
+          cluster: prod-fss
     outbound:
       external:
         - host: platform.altinn.no

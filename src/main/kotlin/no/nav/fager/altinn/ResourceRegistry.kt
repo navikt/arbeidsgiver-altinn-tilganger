@@ -38,6 +38,10 @@ val KnownResources = basedOnEnv(
             altinn2Tjeneste = listOf(Altinn2Tjeneste("5934", "1"))
         ),
         Resource(
+            resourceId = "nav_utbetaling_endre-kontonummer-refusjon-arbeidsgiver",
+            altinn2Tjeneste = listOf(Altinn2Tjeneste("2896", "87"))
+        ),
+        Resource(
             resourceId = "nav_tiltak_tiltaksrefusjon",
             altinn2Tjeneste = listOf() // ny tjeneste som før var del av 4936:1. tilgang til ny tjeneste betyr ikke tilgang til gammel tjeneste
         )
