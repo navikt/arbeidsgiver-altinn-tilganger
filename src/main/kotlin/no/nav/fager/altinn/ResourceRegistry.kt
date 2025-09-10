@@ -44,6 +44,10 @@ val KnownResources = basedOnEnv(
         Resource(
             resourceId = "nav_tiltak_tiltaksrefusjon",
             altinn2Tjeneste = listOf() // ny tjeneste som før var del av 4936:1. tilgang til ny tjeneste betyr ikke tilgang til gammel tjeneste
+        ),
+        Resource(
+            resourceId = "nav_rekruttering_stillingsannonser",
+            altinn2Tjeneste = listOf(Altinn2Tjeneste("5078", "1"))
         )
     ),
     other = listOfNotNull(
