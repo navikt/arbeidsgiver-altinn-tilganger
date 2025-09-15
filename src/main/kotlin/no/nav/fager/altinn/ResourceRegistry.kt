@@ -34,7 +34,7 @@ val KnownResources = basedOnEnv(
             altinn2Tjeneste = listOf(Altinn2Tjeneste("3403", "2"))
         ),
         Resource(
-            resourceId = "nav_forebygge-og-redusere-sykefravar_samarbeid",
+            resourceId = "nav_forebygge-og-redusere-sykefravar_ia-samarbeid",
             altinn2Tjeneste = listOf()
         ),
         Resource(
@@ -68,7 +68,7 @@ val KnownResources = basedOnEnv(
             altinn2Tjeneste = listOf(Altinn2Tjeneste("3403", "1"))
         ),
         Resource(
-            resourceId = "nav_forebygge-og-redusere-sykefravar_samarbeid",
+            resourceId = "nav_forebygge-og-redusere-sykefravar_ia-samarbeid",
             altinn2Tjeneste = listOf()
         ),
         Resource(
