@@ -35,7 +35,7 @@ val KnownResources = basedOnEnv(
         ),
         Resource(
             resourceId = "nav_forebygge-og-redusere-sykefravar_samarbeid",
-            altinn2Tjeneste = listOf(Altinn2Tjeneste("5934", "1"))
+            altinn2Tjeneste = listOf()
         ),
         Resource(
             resourceId = "nav_utbetaling_endre-kontonummer-refusjon-arbeidsgiver",
@@ -69,7 +69,7 @@ val KnownResources = basedOnEnv(
         ),
         Resource(
             resourceId = "nav_forebygge-og-redusere-sykefravar_samarbeid",
-            altinn2Tjeneste = listOf(Altinn2Tjeneste("5934", "1"))
+            altinn2Tjeneste = listOf()
         ),
         Resource(
             resourceId = "nav_utbetaling_endre-kontonummer-refusjon-arbeidsgiver",
