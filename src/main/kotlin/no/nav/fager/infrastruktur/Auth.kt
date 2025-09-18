@@ -11,7 +11,10 @@ class InnloggetBrukerPrincipal(
     companion object {
         fun validate(token: TokenIntrospectionResponse): InnloggetBrukerPrincipal? = with(token) {
             val acrValid = other["acr"].let {
-                it in listOf("idporten-loa-high", "Level4")
+                it in listOf(
+                    "idporten-loa-high", "Level4",
+                    "idporten-loa-substantial", "Level3",
+                )
             }
             val pid = other["pid"]!!
             val clientId = other["client_id"]!!
