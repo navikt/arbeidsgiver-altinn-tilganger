@@ -350,6 +350,12 @@ private val tjenester = listOf(
         serviceName = "Skademelding",
         serviceEditionName = "Skademelding ved arbeidsulykke eller yrkessykdom",
     ),
+    Altinn2TjenesteDefinisjon(
+        serviceCode = "4596",
+        serviceEdition = "1",
+        serviceName = "Sykmelding - Oppgi nærmeste leder med personalansvar",
+        serviceEditionName = "Sykmelding - oppgi leder",
+    ),
 )
 
 internal val Altinn2Tjenester = tjenester.map { "${it.serviceCode}:${it.serviceEdition}" }

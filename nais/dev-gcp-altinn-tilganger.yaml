@@ -107,6 +107,8 @@ spec:
           namespace: teamforeldrepenger
         - application: melosys-skjema-api
           namespace: teammelosys
+        - application: esyfo-narmesteleder
+          namespace: team-esyfo
     outbound:
       external:
         - host: platform.tt02.altinn.no

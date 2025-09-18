@@ -93,6 +93,8 @@ spec:
           cluster: prod-fss
         - application: pam-stillingsregistrering-api
           namespace: teampam
+        - application: esyfo-narmesteleder
+          namespace: team-esyfo
     outbound:
       external:
         - host: platform.altinn.no
