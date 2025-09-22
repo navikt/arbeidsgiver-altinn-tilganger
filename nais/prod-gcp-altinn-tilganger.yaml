@@ -10,6 +10,9 @@ metadata:
 spec:
   image: {{{ image }}}
 
+  ingresses:
+    - "https://arbeidsgiver-altinn-tilganger.intern.nav.no"
+
   liveness:
     path: /internal/isalive
 

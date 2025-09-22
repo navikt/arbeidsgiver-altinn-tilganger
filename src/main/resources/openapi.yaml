@@ -86,7 +86,8 @@ info:
     - prod-gcp (service discovery):
     `http://arbeidsgiver-altinn-tilganger.fager/`
 
-    - prod-fss: ikke satt opp, ta kontakt ved behov
+    - prod-gcp: (ingress):
+    `https://arbeidsgiver-altinn-tilganger.intern.nav.no`
 
 
     Testmiljø, som bruker Altinns tt02-miljø:
@@ -97,8 +98,7 @@ info:
     - dev-gcp (ingress):
     `https://arbeidsgiver-altinn-tilganger.intern.dev.nav.no`
 
-    - dev-fss: ikke satt opp, ta kontakt ved behov
-
+  
 
     Bruk ingress-versjonen for å lese dokumentasjon og
 
