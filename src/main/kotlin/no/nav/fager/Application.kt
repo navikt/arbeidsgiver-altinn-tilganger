@@ -6,6 +6,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationStopping
 import io.ktor.server.application.install
 import io.ktor.server.auth.principal
 import io.ktor.server.cio.CIO
@@ -69,14 +70,22 @@ import org.slf4j.event.Level
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
+
 fun main() {
     embeddedServer(CIO, port = 8080) {
+        val log = logger()
+
         ktorConfig(
             altinn3Config = Altinn3Config.nais(),
             altinn2Config = Altinn2Config.nais(),
             texasAuthConfig = TexasAuthConfig.nais(),
             redisConfig = RedisConfig.nais(),
         )
+
+        monitor.subscribe(ApplicationStopping) {
+            log.info("ApplicationStopping: signal Health.terminate()")
+            Health.terminate()
+        }
     }.start(wait = true)
 }
 
@@ -306,7 +315,6 @@ fun Application.ktorConfig(
         }
     }
 }
-
 
 private val clientTaggedTimerTimer = ConcurrentHashMap<String, Timer>()
 private fun withTimer(clientId: String): Timer =
