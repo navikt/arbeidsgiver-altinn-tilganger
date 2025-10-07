@@ -34,6 +34,7 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
+import io.ktor.utils.io.CancellationException
 import io.ktor.utils.io.ClosedWriteChannelException
 import io.micrometer.core.instrument.Timer
 import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics
@@ -118,6 +119,10 @@ fun Application.ktorConfig(
                 is ClosedWriteChannelException -> {
                     log.warn("Client closed connection before response was sent", cause)
                     // no response, channel already closed
+                }
+
+                is CancellationException -> {
+                    throw cause
                 }
 
                 else -> {
