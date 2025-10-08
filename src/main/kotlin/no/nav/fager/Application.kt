@@ -9,6 +9,7 @@ import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.auth.principal
 import io.ktor.server.cio.CIO
+import io.ktor.server.engine.connector
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.metrics.micrometer.MicrometerMetrics
 import io.ktor.server.plugins.BadRequestException
@@ -71,7 +72,13 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 fun main() {
-    embeddedServer(CIO, port = 8080) {
+    embeddedServer(CIO, configure = {
+        connector {
+            port = 8080
+        }
+        shutdownGracePeriod = 20_000
+        shutdownTimeout = 30_000
+    }) {
         ktorConfig(
             altinn3Config = Altinn3Config.nais(),
             altinn2Config = Altinn2Config.nais(),
