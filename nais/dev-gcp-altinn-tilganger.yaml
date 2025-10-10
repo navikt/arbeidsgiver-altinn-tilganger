@@ -109,6 +109,8 @@ spec:
           namespace: teammelosys
         - application: esyfo-narmesteleder
           namespace: team-esyfo
+        - application: arkivporten
+          namespace: team-esyfo
     outbound:
       external:
         - host: platform.tt02.altinn.no
