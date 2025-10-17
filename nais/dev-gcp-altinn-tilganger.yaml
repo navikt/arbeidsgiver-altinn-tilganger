@@ -100,9 +100,15 @@ spec:
         - application: aareg-tilgangskontroll-q1
           namespace: arbeidsforhold
           cluster: dev-fss
+        - application: aareg-tilgangskontroll-q1
+          namespace: arbeidsforhold
+          cluster: dev-gcp
         - application: aareg-tilgangskontroll-q2
           namespace: arbeidsforhold
           cluster: dev-fss
+        - application: aareg-tilgangskontroll-q2
+          namespace: arbeidsforhold
+          cluster: dev-gcp
         - application: pam-stillingsregistrering-api
           namespace: teampam
         - application: fpinntektsmelding
