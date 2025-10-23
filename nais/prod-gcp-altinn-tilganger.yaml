@@ -90,7 +90,7 @@ spec:
           namespace: arbeidsgiver
         - application: aareg-tilgangskontroll
           namespace: arbeidsforhold
-          cluster: prod-fss
+          cluster: prod-gcp
         - application: melosys-skjema-api
           namespace: teammelosys
         - application: sokos-kontoregister

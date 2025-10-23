@@ -99,10 +99,10 @@ spec:
           namespace: arbeidsgiver
         - application: aareg-tilgangskontroll-q1
           namespace: arbeidsforhold
-          cluster: dev-fss
+          cluster: dev-gcp
         - application: aareg-tilgangskontroll-q2
           namespace: arbeidsforhold
-          cluster: dev-fss
+          cluster: dev-gcp
         - application: pam-stillingsregistrering-api
           namespace: teampam
         - application: fpinntektsmelding
