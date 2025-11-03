@@ -11,7 +11,6 @@ import no.nav.fager.infrastruktur.logger
 import no.nav.fager.infrastruktur.rethrowIfCancellation
 import no.nav.fager.redis.RedisConfig
 import no.nav.fager.redis.RedisLoadingCache
-import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
@@ -153,11 +152,14 @@ class ResourceRegistry(
 
     override fun isReady() = isReady
 
+    val cacheTTL = 30.minutes
+    val cacheRefreshInterval = cacheTTL / 3
+
     private val cache = RedisLoadingCache(
-        name = "resource-registry",
-        redisClient = redisConfig.createClient<List<PolicySubject>>("resource-registry"),
+        metricsName = "resource-registry",
+        redisClient = redisConfig.createClient<List<PolicySubject>>("resource-registry-v2"),
         loader = { s -> altinn3Client.resourceRegistry_PolicySubjects(s).getOrThrow() },
-        cacheTTL = 30.minutes.toJavaDuration()
+        cacheTTL = cacheTTL.toJavaDuration()
     )
 
     private val policySubjectsPerResourceId = KnownResources.associate { resource ->
@@ -184,7 +186,7 @@ class ResourceRegistry(
                 val success = updatePolicySubjectsForKnownResources { resourceId -> cache.update(resourceId) }
                 if (success) {
                     log.info("Policy subjects for kjente ressurser oppdatert")
-                    delay(30.minutes)
+                    delay(cacheRefreshInterval)
                 } else {
                     log.error("Kunne ikke oppdatere policy subjects for kjente ressurser. Prøver igjen fortløpende")
                     delay(5.seconds)

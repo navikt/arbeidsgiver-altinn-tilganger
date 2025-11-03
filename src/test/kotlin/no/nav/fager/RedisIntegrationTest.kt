@@ -5,9 +5,11 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import no.nav.fager.altinn.AltinnService
 import no.nav.fager.altinn.AltinnService.AltinnTilgangerResultat
-import no.nav.fager.redis.*
+import no.nav.fager.redis.AltinnTilgangerRedisClientImpl
+import no.nav.fager.redis.RedisConfig
+import no.nav.fager.redis.RedisLoadingCache
 import org.junit.jupiter.api.Assertions.assertFalse
-import java.util.UUID
+import java.util.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -32,7 +34,7 @@ class RedisIntegrationTest {
         var loaderCalled = false
 
         val cache = RedisLoadingCache(
-            name = "foo",
+            metricsName = "foo",
             redisClient = RedisConfig.local().createClient<Foo>("foo"),
             loader = {
                 loaderCalled = true
