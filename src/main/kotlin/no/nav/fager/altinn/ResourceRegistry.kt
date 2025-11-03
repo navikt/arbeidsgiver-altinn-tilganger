@@ -146,6 +146,7 @@ class ResourceRegistry(
                 isReady = updatePolicySubjectsForKnownResources { resourceId ->
                     this@ResourceRegistry.cache.get(resourceId)
                 }
+                delay(100)
             }
             log.info("ResourceRegistry isReady")
         }
