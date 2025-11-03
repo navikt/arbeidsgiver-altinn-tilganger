@@ -15,9 +15,11 @@ spec:
 
   liveness:
     path: /internal/isalive
+    initialDelay: 60
 
   readiness:
     path: /internal/isready
+    initialDelay: 60
 
   prometheus:
     enabled: true
@@ -88,7 +90,7 @@ spec:
           namespace: arbeidsgiver
         - application: aareg-tilgangskontroll
           namespace: arbeidsforhold
-          cluster: prod-fss
+          cluster: prod-gcp
         - application: melosys-skjema-api
           namespace: teammelosys
         - application: sokos-kontoregister

@@ -15,9 +15,11 @@ spec:
 
   liveness:
     path: /internal/isalive
+    initialDelay: 60
 
   readiness:
     path: /internal/isready
+    initialDelay: 60
 
   prometheus:
     enabled: true
@@ -97,10 +99,10 @@ spec:
           namespace: arbeidsgiver
         - application: aareg-tilgangskontroll-q1
           namespace: arbeidsforhold
-          cluster: dev-fss
+          cluster: dev-gcp
         - application: aareg-tilgangskontroll-q2
           namespace: arbeidsforhold
-          cluster: dev-fss
+          cluster: dev-gcp
         - application: pam-stillingsregistrering-api
           namespace: teampam
         - application: fpinntektsmelding
@@ -108,6 +110,8 @@ spec:
         - application: melosys-skjema-api
           namespace: teammelosys
         - application: esyfo-narmesteleder
+          namespace: team-esyfo
+        - application: arkivporten
           namespace: team-esyfo
     outbound:
       external:

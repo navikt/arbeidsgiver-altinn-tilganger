@@ -10,6 +10,7 @@ import io.ktor.server.application.ApplicationStopping
 import io.ktor.server.application.install
 import io.ktor.server.auth.principal
 import io.ktor.server.cio.CIO
+import io.ktor.server.engine.connector
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.metrics.micrometer.MicrometerMetrics
 import io.ktor.server.plugins.BadRequestException
@@ -35,6 +36,7 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
+import io.ktor.utils.io.CancellationException
 import io.ktor.utils.io.ClosedWriteChannelException
 import io.micrometer.core.instrument.Timer
 import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics
@@ -72,7 +74,13 @@ import java.util.concurrent.ConcurrentHashMap
 
 
 fun main() {
-    embeddedServer(CIO, port = 8080) {
+    embeddedServer(CIO, configure = {
+        connector {
+            port = 8080
+        }
+        shutdownGracePeriod = 20_000
+        shutdownTimeout = 30_000
+    }) {
         val log = logger()
 
         ktorConfig(
@@ -127,6 +135,10 @@ fun Application.ktorConfig(
                 is ClosedWriteChannelException -> {
                     log.warn("Client closed connection before response was sent", cause)
                     // no response, channel already closed
+                }
+
+                is CancellationException -> {
+                    throw cause
                 }
 
                 else -> {
