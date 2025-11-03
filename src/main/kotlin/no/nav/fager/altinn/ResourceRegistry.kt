@@ -11,6 +11,7 @@ import no.nav.fager.infrastruktur.logger
 import no.nav.fager.infrastruktur.rethrowIfCancellation
 import no.nav.fager.redis.RedisConfig
 import no.nav.fager.redis.RedisLoadingCache
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
@@ -162,9 +163,9 @@ class ResourceRegistry(
         cacheTTL = cacheTTL.toJavaDuration()
     )
 
-    private val policySubjectsPerResourceId = KnownResources.associate { resource ->
-        resource.resourceId to emptyList<PolicySubject>()
-    }.toMutableMap()
+    private val policySubjectsPerResourceId = AtomicReference<Map<ResourceId, List<PolicySubject>>>(
+        KnownResources.associate { it.resourceId to emptyList<PolicySubject>() }
+    )
 
     val resourceIdToAltinn2Tjeneste: Map<ResourceId, List<Altinn2Tjeneste>> = KnownResources.associate { resource ->
         resource.resourceId to resource.altinn2Tjeneste
@@ -196,30 +197,33 @@ class ResourceRegistry(
     }
 
     fun getResourceIdForPolicySubject(urn: PolicySubjectUrn): List<ResourceId> =
-        policySubjectsPerResourceId.filter { (_, policySubjects) ->
+        policySubjectsPerResourceId.get().filter { (_, policySubjects) ->
             policySubjects.any { it.urn == urn }
         }.map { it.key }
 
     suspend fun updatePolicySubjectsForKnownResources(
         fetcher: suspend ResourceRegistry.(resourceId: ResourceId) -> List<PolicySubject>
     ): Boolean {
-        val results = KnownResources.map { resource ->
-            val resourceId = resource.resourceId
-            resource to retryWithBackoff { fetcher(resourceId) }
-        }
+        var hasErrors = false
 
-        results.forEach { (resource, result) ->
-            result.fold(
-                onSuccess = { policySubjects ->
-                    policySubjectsPerResourceId[resource.resourceId] = policySubjects
-                },
-                onFailure = { error ->
-                    log.error("Feil ved henting av policy subjects for ${resource.resourceId}", error)
-                }
-            )
-        }
+        val prev = policySubjectsPerResourceId.get()
+        policySubjectsPerResourceId.set(
+            KnownResources.associate { resource ->
+                val resourceId = resource.resourceId
+                val updatedPolicySubjects = retryWithBackoff { fetcher(resourceId) }
 
-        return results.none { it.second.isFailure }
+                resourceId to updatedPolicySubjects.fold(
+                    onSuccess = { it.toList() },
+                    onFailure = { error ->
+                        hasErrors = true
+                        log.error("Feil ved henting av policy subjects for $resourceId", error)
+                        prev[resourceId].orEmpty()
+                    }
+                )
+            }
+        )
+
+        return !hasErrors
     }
 
     private suspend fun <T> retryWithBackoff(
