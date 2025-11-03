@@ -156,7 +156,7 @@ class ResourceRegistry(
         name = "resource-registry",
         redisClient = redisConfig.createClient<List<PolicySubject>>("resource-registry"),
         loader = { s -> altinn3Client.resourceRegistry_PolicySubjects(s).getOrThrow() },
-        cacheTTL = 7.days.toJavaDuration()
+        cacheTTL = 30.minutes.toJavaDuration()
     )
 
     private val policySubjectsPerResourceId = KnownResources.associate { resource ->
