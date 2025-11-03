@@ -151,7 +151,6 @@ class RedisLoadingCache<T : Any>(
     private val cacheHit = Counter.builder(metricsName).tag("result", "hit").register(Metrics.meterRegistry)
     private val cacheError = Counter.builder(metricsName).tag("result", "error").register(Metrics.meterRegistry)
     private val cacheMiss = Counter.builder(metricsName).tag("result", "miss").register(Metrics.meterRegistry)
-    private val cacheUpdate = Counter.builder(metricsName).tag("result", "update").register(Metrics.meterRegistry)
 
     suspend fun get(key: String): T {
         return try {
@@ -173,7 +172,6 @@ class RedisLoadingCache<T : Any>(
     suspend fun update(key: String): T =
         loader(key).also {
             redisClient.set(key, it, SetParams().ex(cacheTTL.seconds))
-            cacheUpdate.increment()
         }
 }
 
