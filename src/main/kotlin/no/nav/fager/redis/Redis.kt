@@ -7,7 +7,6 @@ import io.valkey.JedisPool
 import io.valkey.JedisPoolConfig
 import io.valkey.params.SetParams
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerializationException
@@ -16,6 +15,7 @@ import no.nav.fager.altinn.AltinnService.AltinnTilgangerResultat
 import no.nav.fager.infrastruktur.Metrics
 import no.nav.fager.infrastruktur.logger
 import no.nav.fager.infrastruktur.rethrowIfCancellation
+import no.nav.fager.redis.RedisConfig.Companion.log
 import java.security.MessageDigest
 import java.time.Duration
 
@@ -24,6 +24,7 @@ class RedisConfig(
 ) {
 
     companion object {
+        val log = logger()
         fun nais() = RedisConfig(
             JedisPool(
                 JedisPoolConfig(),
@@ -67,14 +68,17 @@ class RedisClient<V>(
         }
     }
 
-    suspend fun set(key: String, value: V, params: SetParams): String = retryOnException {
+    suspend fun set(key: String, value: V, params: SetParams): Unit = retryOnException {
         withContext(Dispatchers.IO) {
             jedisPool.resource.use { jedis ->
-                jedis.set(codec.encodeKey(key), codec.encodeValue(value), params)
+                if (jedis.set(codec.encodeKey(key), codec.encodeValue(value), params) != "OK") {
+                    throw RuntimeException("Failed to set value in Redis using params $params")
+                }
             }
         }
     }
 }
+
 
 suspend fun <T> retryOnException(
     maxAttempts: Int = 3,
@@ -86,7 +90,7 @@ suspend fun <T> retryOnException(
             return block()
         } catch (e: Exception) {
             e.rethrowIfCancellation()
-
+            log.error("Operation failed, attempt ${it + 1} of $maxAttempts", e)
             delay(delayMillis)
         }
     }
@@ -138,15 +142,16 @@ fun String.hashed() =
 
 
 class RedisLoadingCache<T : Any>(
-    name: String,
+    metricsName: String,
     private val redisClient: RedisClient<T>,
     private val loader: suspend (String) -> T,
     private val cacheTTL: Duration = Duration.ofMinutes(10),
 ) {
     private val log = logger()
-    private val cacheHit = Counter.builder(name).tag("result", "hit").register(Metrics.meterRegistry)
-    private val cacheError = Counter.builder(name).tag("result", "error").register(Metrics.meterRegistry)
-    private val cacheMiss = Counter.builder(name).tag("result", "miss").register(Metrics.meterRegistry)
+    private val cacheHit = Counter.builder(metricsName).tag("result", "hit").register(Metrics.meterRegistry)
+    private val cacheError = Counter.builder(metricsName).tag("result", "error").register(Metrics.meterRegistry)
+    private val cacheMiss = Counter.builder(metricsName).tag("result", "miss").register(Metrics.meterRegistry)
+    private val cacheUpdate = Counter.builder(metricsName).tag("result", "update").register(Metrics.meterRegistry)
 
     suspend fun get(key: String): T {
         return try {
@@ -168,6 +173,7 @@ class RedisLoadingCache<T : Any>(
     suspend fun update(key: String): T =
         loader(key).also {
             redisClient.set(key, it, SetParams().ex(cacheTTL.seconds))
+            cacheUpdate.increment()
         }
 }
 
