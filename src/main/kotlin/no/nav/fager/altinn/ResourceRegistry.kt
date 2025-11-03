@@ -4,6 +4,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
+import no.nav.fager.infrastruktur.Health
 import no.nav.fager.infrastruktur.RequiresReady
 import no.nav.fager.infrastruktur.basedOnEnv
 import no.nav.fager.infrastruktur.logger
@@ -169,16 +170,17 @@ class ResourceRegistry(
 
     init {
         backgroundCoroutineScope?.launch {
-            while (!isReady) {
+            while (!isReady && !Health.terminating) {
                 isReady = updatePolicySubjectsForKnownResources { resourceId ->
                     this@ResourceRegistry.cache.get(resourceId)
                 }
+                delay(100)
             }
             log.info("ResourceRegistry isReady")
         }
 
         backgroundCoroutineScope?.launch {
-            while (true) {
+            while (!Health.terminating) {
                 val success = updatePolicySubjectsForKnownResources { resourceId -> cache.update(resourceId) }
                 if (success) {
                     log.info("Policy subjects for kjente ressurser oppdatert")
