@@ -204,26 +204,26 @@ class ResourceRegistry(
     suspend fun updatePolicySubjectsForKnownResources(
         fetcher: suspend ResourceRegistry.(resourceId: ResourceId) -> List<PolicySubject>
     ): Boolean {
-        var hasErrors = false
-
-        val prev = policySubjectsPerResourceId.get()
-        policySubjectsPerResourceId.set(
-            KnownResources.associate { resource ->
-                val resourceId = resource.resourceId
-                val updatedPolicySubjects = retryWithBackoff { fetcher(resourceId) }
-
-                resourceId to updatedPolicySubjects.fold(
-                    onSuccess = { it },
-                    onFailure = { error ->
-                        hasErrors = true
-                        log.error("Feil ved henting av policy subjects for $resourceId", error)
-                        prev[resourceId].orEmpty()
-                    }
-                )
+        val results: Map<ResourceId, Result<List<PolicySubject>>> =
+            KnownResources.associate { res ->
+                val rid = res.resourceId
+                rid to retryWithBackoff { fetcher(rid) }
             }
-        )
 
-        return !hasErrors
+        val failures = results.filterValues { it.isFailure }
+        return if (failures.isNotEmpty()) {
+            failures.forEach { (rid, res) ->
+                res.exceptionOrNull()?.let { e ->
+                    log.error("Feil ved henting av policy subjects for $rid", e)
+                }
+            }
+            false
+        } else {
+            policySubjectsPerResourceId.set(
+                results.mapValues { (_, res) -> res.getOrThrow().toList() } // immutable copy
+            )
+            true
+        }
     }
 
     private suspend fun <T> retryWithBackoff(
