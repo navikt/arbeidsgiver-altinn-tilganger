@@ -179,7 +179,7 @@ class ResourceRegistry(
                 }
                 delay(100)
             }
-            log.info("ResourceRegistry isReady")
+            log.info("ResourceRegistry isReady policySubjectsPerResourceId=${policySubjectsPerResourceId.get()}")
         }
 
         backgroundCoroutineScope?.launch {
