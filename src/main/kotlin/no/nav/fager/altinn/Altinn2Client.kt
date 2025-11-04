@@ -231,11 +231,6 @@ private class Altinn2TjenesteDefinisjon(
  * GET https://altinn.no/api/metadata?language=1033&$top=2000&$filter=ServiceOwnerCode eq 'NAV'
  */
 private val tjenester = listOf(
-    Altinn2TjenesteDefinisjon(
-        serviceCode = "2896",
-        serviceEdition = "87",
-        serviceName = "Endre bankkontonummer for refusjoner fra NAV til arbeidsgiver",
-    ),
     basedOnEnv(
         prod = {
             Altinn2TjenesteDefinisjon(
