@@ -118,7 +118,7 @@ val KnownResources = basedOnEnv(
         ),
         Resource(
             resourceId = "nav_rekruttering_stillingsannonser",
-            altinn2Tjeneste = listOf(Altinn2Tjeneste("5078", "1"))
+            altinn2Tjeneste = listOf()
         ),
         Resource(
             resourceId = "nav_syfo_dialogmote",
@@ -179,7 +179,7 @@ class ResourceRegistry(
                 }
                 delay(100)
             }
-            log.info("ResourceRegistry isReady")
+            log.info("ResourceRegistry isReady policySubjectsPerResourceId=${policySubjectsPerResourceId.get()}")
         }
 
         backgroundCoroutineScope?.launch {

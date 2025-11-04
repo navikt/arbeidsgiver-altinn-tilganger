@@ -14,12 +14,12 @@ import io.ktor.http.contentType
 import io.ktor.http.takeFrom
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonArray
 import no.nav.fager.infrastruktur.basedOnEnv
 import no.nav.fager.infrastruktur.defaultHttpClient
 import no.nav.fager.infrastruktur.logger
@@ -81,6 +81,8 @@ class Altinn2ClientImpl(
         }
     }
 
+    private val metadataClient = defaultHttpClient()
+
     /**
      * henter tilganger i altinn 2 og returnerer som et map av orgnummer til tjeneste
      */
@@ -108,6 +110,44 @@ class Altinn2ClientImpl(
                 valueTransform = { it.second }
             ),
         )
+    }
+
+    /**
+     * Selv om en tjeneste migreres, så blir den fortsatt returnert fra reportees-endepunktet i altinn2.
+     * Derfor må vi validere at tjenesten faktisk finnes i metadata-endepunktet.
+     *
+     * Dersom en altinn 3 tjeneste er migrert så skal det være altinn 3 ressursen som gjelder.
+     *
+     * Dersom tjenesten ikke finnes i metadata så er den sannsynligvis migrert, og vi bør ikke prøve å hente tilganger for den fra altinn 2.
+     * Konsekvensen av å sjekke tjenesten i altinn på en migrert tjeneste er at en bruker kanskje får tilgang til noe de ikke skal ha tilgang til.
+     */
+    suspend fun validerKjenteTjenesterFinnesIMetadata() {
+        tjenester.forEach { tjeneste ->
+            try {
+                // https://altinn.no/api/metadata?$filter=ServiceCode eq '5562' and ServiceEditionCode eq 2
+                metadataClient.get {
+                    url {
+                        takeFrom(altinn2Config.baseUrl)
+                        appendPathSegments("/api/metadata")
+                        parameters.append(
+                            "\$filter",
+                            "ServiceCode eq '${tjeneste.serviceCode}' and ServiceEditionCode eq ${tjeneste.serviceEdition}"
+                        )
+                    }
+                    accept(ContentType.Application.Json)
+                    contentType(ContentType.Application.Json)
+                }.body<JsonArray>().let { nodes ->
+                    if (nodes.isEmpty()) {
+                        log.error("Kjent Altinn2-tjeneste ${tjeneste.serviceCode}:${tjeneste.serviceEdition} finnes ikke i metadata-endepunktet. Tjenesten er sannsynligvis migrert.")
+                    }
+                }
+            } catch (e: Exception) {
+                log.error(
+                    "Klarte ikke å validere kjent Altinn2-tjeneste ${tjeneste.serviceCode}:${tjeneste.serviceEdition}",
+                    e
+                )
+            }
+        }
     }
 
     /**
@@ -231,24 +271,6 @@ private class Altinn2TjenesteDefinisjon(
  * GET https://altinn.no/api/metadata?language=1033&$top=2000&$filter=ServiceOwnerCode eq 'NAV'
  */
 private val tjenester = listOf(
-    basedOnEnv(
-        prod = {
-            Altinn2TjenesteDefinisjon(
-                serviceCode = "3403",
-                serviceEdition = "2",
-                serviceName = "Sykefraværsstatistikk for IA-virksomheter",
-                serviceEditionName = "Sykefraværsstatistikk for virksomheter",
-            )
-        },
-        other = {
-            Altinn2TjenesteDefinisjon(
-                serviceCode = "3403",
-                serviceEdition = "1",
-                serviceName = "Sykefraværsstatistikk for IA-virksomheter",
-                serviceEditionName = "Sykefraværsstatistikk for virksomheter TT02",
-            )
-        }
-    ),
     Altinn2TjenesteDefinisjon(
         serviceCode = "4826",
         serviceEdition = "1",
@@ -291,11 +313,6 @@ private val tjenester = listOf(
         serviceCode = "5384",
         serviceEdition = "1",
         serviceName = "Søknad om tilskudd til ekspertbistand",
-    ),
-    Altinn2TjenesteDefinisjon(
-        serviceCode = "5441",
-        serviceEdition = "1",
-        serviceName = "Innsyn i AA-registeret for arbeidsgiver",
     ),
     Altinn2TjenesteDefinisjon(
         serviceCode = "5516",

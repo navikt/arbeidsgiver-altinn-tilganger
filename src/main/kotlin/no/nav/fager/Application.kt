@@ -47,6 +47,8 @@ import io.micrometer.core.instrument.binder.logging.LogbackMetrics
 import io.micrometer.core.instrument.binder.system.FileDescriptorMetrics
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import no.nav.fager.AltinnTilgangerResponse.Companion.toResponse
 import no.nav.fager.altinn.Altinn2ClientImpl
@@ -71,6 +73,7 @@ import no.nav.fager.texas.TexasAuthConfig
 import org.slf4j.event.Level
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.Duration.Companion.minutes
 
 
 fun main() {
@@ -207,7 +210,14 @@ fun Application.ktorConfig(
     val altinn2Client = Altinn2ClientImpl(
         altinn2Config = altinn2Config,
         texasAuthConfig = texasAuthConfig,
-    )
+    ).also {
+        launch {
+            while (!Health.terminating) {
+                it.validerKjenteTjenesterFinnesIMetadata()
+                delay(10.minutes)
+            }
+        }
+    }
 
     val altinn3Client = Altinn3ClientImpl(
         altinn3Config = altinn3Config,
