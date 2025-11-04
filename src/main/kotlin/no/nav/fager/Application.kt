@@ -73,7 +73,7 @@ import no.nav.fager.texas.TexasAuthConfig
 import org.slf4j.event.Level
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.hours
 
 
 fun main() {
@@ -214,7 +214,7 @@ fun Application.ktorConfig(
         launch {
             while (!Health.terminating) {
                 it.validerKjenteTjenesterFinnesIMetadata()
-                delay(10.minutes)
+                delay(2.hours)
             }
         }
     }

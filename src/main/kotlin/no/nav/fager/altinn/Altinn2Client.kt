@@ -124,7 +124,6 @@ class Altinn2ClientImpl(
     suspend fun validerKjenteTjenesterFinnesIMetadata() {
         tjenester.forEach { tjeneste ->
             try {
-                // https://altinn.no/api/metadata?$filter=ServiceCode eq '5562' and ServiceEditionCode eq 2
                 metadataClient.get {
                     url {
                         takeFrom(altinn2Config.baseUrl)
