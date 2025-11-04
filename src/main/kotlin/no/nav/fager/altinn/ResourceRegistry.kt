@@ -213,7 +213,7 @@ class ResourceRegistry(
                 val updatedPolicySubjects = retryWithBackoff { fetcher(resourceId) }
 
                 resourceId to updatedPolicySubjects.fold(
-                    onSuccess = { it.toList() },
+                    onSuccess = { it },
                     onFailure = { error ->
                         hasErrors = true
                         log.error("Feil ved henting av policy subjects for $resourceId", error)
