@@ -180,15 +180,6 @@ class ResourceRegistry(
                 delay(100)
             }
             log.info("ResourceRegistry isReady")
-            log.warn(
-                """${"Her er policy subjects logmeldingen!!\n"}
-                ${
-                    policySubjectsPerResourceId.get().map { (key, value) ->
-                        "$key: ${value.joinToString { "urn: ${it.urn} | type: ${it.type} | value: ${it.value}" }}\n"
-                    }
-                }
-            """.trimIndent()
-            )
         }
 
         backgroundCoroutineScope?.launch {
