@@ -47,7 +47,12 @@ import io.micrometer.core.instrument.binder.logging.LogbackMetrics
 import io.micrometer.core.instrument.binder.system.FileDescriptorMetrics
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import no.nav.fager.AltinnTilgangerResponse.Companion.toResponse
@@ -76,6 +81,8 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.hours
 
 
+val backgroundScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
 fun main() {
     embeddedServer(CIO, configure = {
         connector {
@@ -95,6 +102,7 @@ fun main() {
 
         monitor.subscribe(ApplicationStopping) {
             log.info("ApplicationStopping: signal Health.terminate()")
+            backgroundScope.cancel()
             Health.terminate()
         }
     }.start(wait = true)
@@ -211,8 +219,8 @@ fun Application.ktorConfig(
         altinn2Config = altinn2Config,
         texasAuthConfig = texasAuthConfig,
     ).also {
-        launch {
-            while (!Health.terminating) {
+        backgroundScope.launch {
+            while (!Health.terminating && isActive) {
                 it.validerKjenteTjenesterFinnesIMetadata()
                 delay(2.hours)
             }
@@ -227,7 +235,7 @@ fun Application.ktorConfig(
     val resourceRegistry = ResourceRegistry(
         altinn3Client = altinn3Client,
         redisConfig = redisConfig,
-        backgroundCoroutineScope = this
+        backgroundCoroutineScope = backgroundScope
     ).also { Health.register(it) }
 
     val altinnService = AltinnService(

@@ -141,6 +141,7 @@ class Altinn2ClientImpl(
                     }
                 }
             } catch (e: Exception) {
+                e.rethrowIfCancellation()
                 log.error(
                     "Klarte ikke å validere kjent Altinn2-tjeneste ${tjeneste.serviceCode}:${tjeneste.serviceEdition}",
                     e
