@@ -163,7 +163,7 @@ class ResourceRegistry(
         cacheTTL = cacheTTL.toJavaDuration()
     )
 
-    private val policySubjectsPerResourceId = AtomicReference<Map<ResourceId, List<PolicySubject>>>(
+    private val policySubjectsPerResourceId = AtomicReference(
         KnownResources.associate { it.resourceId to emptyList<PolicySubject>() }
     )
 
