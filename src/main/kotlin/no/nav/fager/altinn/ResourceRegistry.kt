@@ -118,7 +118,7 @@ val KnownResources = basedOnEnv(
         ),
         Resource(
             resourceId = "nav_rekruttering_stillingsannonser",
-            altinn2Tjeneste = listOf(Altinn2Tjeneste("5078", "1"))
+            altinn2Tjeneste = listOf()
         ),
         Resource(
             resourceId = "nav_syfo_dialogmote",

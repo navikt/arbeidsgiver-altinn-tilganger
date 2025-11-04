@@ -271,24 +271,6 @@ private class Altinn2TjenesteDefinisjon(
  * GET https://altinn.no/api/metadata?language=1033&$top=2000&$filter=ServiceOwnerCode eq 'NAV'
  */
 private val tjenester = listOf(
-    basedOnEnv(
-        prod = {
-            Altinn2TjenesteDefinisjon(
-                serviceCode = "3403",
-                serviceEdition = "2",
-                serviceName = "Sykefraværsstatistikk for IA-virksomheter",
-                serviceEditionName = "Sykefraværsstatistikk for virksomheter",
-            )
-        },
-        other = {
-            Altinn2TjenesteDefinisjon(
-                serviceCode = "3403",
-                serviceEdition = "1",
-                serviceName = "Sykefraværsstatistikk for IA-virksomheter",
-                serviceEditionName = "Sykefraværsstatistikk for virksomheter TT02",
-            )
-        }
-    ),
     Altinn2TjenesteDefinisjon(
         serviceCode = "4826",
         serviceEdition = "1",
@@ -331,11 +313,6 @@ private val tjenester = listOf(
         serviceCode = "5384",
         serviceEdition = "1",
         serviceName = "Søknad om tilskudd til ekspertbistand",
-    ),
-    Altinn2TjenesteDefinisjon(
-        serviceCode = "5441",
-        serviceEdition = "1",
-        serviceName = "Innsyn i AA-registeret for arbeidsgiver",
     ),
     Altinn2TjenesteDefinisjon(
         serviceCode = "5516",
