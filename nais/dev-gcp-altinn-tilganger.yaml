@@ -113,6 +113,8 @@ spec:
           namespace: team-esyfo
         - application: arkivporten
           namespace: team-esyfo
+        - application: ekspertbistand-backend
+          namespace: fager
     outbound:
       external:
         - host: platform.tt02.altinn.no
