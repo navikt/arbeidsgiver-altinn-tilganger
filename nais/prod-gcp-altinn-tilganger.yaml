@@ -98,6 +98,8 @@ spec:
           cluster: prod-fss
         - application: pam-stillingsregistrering-api
           namespace: teampam
+        - application: fpinntektsmelding
+          namespace: teamforeldrepenger
         - application: esyfo-narmesteleder
           namespace: team-esyfo
     outbound:
