@@ -1,13 +1,17 @@
 package no.nav.fager
 
-import io.ktor.client.call.*
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.client.request.*
-import io.ktor.http.*
+import io.ktor.client.call.body
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.request.header
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod.Companion.Get
 import io.ktor.http.HttpMethod.Companion.Post
-import io.ktor.serialization.kotlinx.json.*
-import io.ktor.server.response.*
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.contentType
+import io.ktor.serialization.kotlinx.json.json
+import io.ktor.server.response.respondText
 import kotlinx.serialization.json.Json
 import no.nav.fager.fakes.FakeApplication
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -51,6 +55,7 @@ class AltinnTilgangerTest {
                     "onlyHierarchyElementWithNoAccess": true,
                     "authorizedResources": ["test-fager"],
                     "authorizedRoles": [],
+                    "authorizedAccessPackages": [],
                     "subunits": [
                       {
                         "partyUuid": "8656eab6-119b-4691-8a8a-6f51a203aba7",
@@ -66,6 +71,7 @@ class AltinnTilgangerTest {
                           "test-fager"
                         ],
                         "authorizedRoles": [],
+                        "authorizedAccessPackages": [],
                         "subunits": []
                       },
                       {
@@ -79,6 +85,7 @@ class AltinnTilgangerTest {
                         "isDeleted": false,
                         "onlyHierarchyElementWithNoAccess": false,
                         "authorizedResources": [],
+                        "authorizedAccessPackages": [],
                         "authorizedRoles": [
                           "DAGL"
                         ],
@@ -98,6 +105,7 @@ class AltinnTilgangerTest {
                           "test-fager"
                         ],
                         "authorizedRoles": [],
+                        "authorizedAccessPackages": [],
                         "subunits": []
                       }
                     ]
@@ -217,6 +225,7 @@ class AltinnTilgangerTest {
                     "onlyHierarchyElementWithNoAccess": true,
                     "authorizedResources": [],
                     "authorizedRoles": [],
+                    "authorizedAccessPackages": [],
                     "subunits": [
                       {
                         "partyUuid": "${UUID.randomUUID()}",
@@ -232,6 +241,7 @@ class AltinnTilgangerTest {
                           "test-fager"
                         ],
                         "authorizedRoles": [],
+                        "authorizedAccessPackages": [],
                         "subunits": []
                       },
                       {
@@ -248,6 +258,7 @@ class AltinnTilgangerTest {
                           "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"
                         ],
                         "authorizedRoles": [],
+                        "authorizedAccessPackages": [],
                         "subunits": []
                       },
                       {
@@ -264,6 +275,7 @@ class AltinnTilgangerTest {
                         "authorizedRoles": [
                           "DAGL"
                         ],
+                        "authorizedAccessPackages": [],
                         "subunits": []
                       },
                       {
@@ -280,6 +292,7 @@ class AltinnTilgangerTest {
                           "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"
                         ],
                         "authorizedRoles": [],
+                        "authorizedAccessPackages": [],
                         "subunits": []
                       }
                     ]
@@ -591,6 +604,7 @@ class AltinnTilgangerTest {
                     "onlyHierarchyElementWithNoAccess": true,
                     "authorizedResources": ["test-fager"],
                     "authorizedRoles": [],
+                    "authorizedAccessPackages": [],
                     "subunits": [
                       {
                         "partyUuid": "8656eab6-119b-4691-8a8a-6f51a203aba7",
@@ -606,6 +620,7 @@ class AltinnTilgangerTest {
                           "test-fager"
                         ],
                         "authorizedRoles": [],
+                        "authorizedAccessPackages": [],
                         "subunits": []
                       },
                       {
@@ -619,6 +634,7 @@ class AltinnTilgangerTest {
                         "isDeleted": false,
                         "onlyHierarchyElementWithNoAccess": false,
                         "authorizedResources": [],
+                        "authorizedAccessPackages": [],
                         "authorizedRoles": [
                           "DAGL"
                         ],
@@ -638,6 +654,7 @@ class AltinnTilgangerTest {
                           "test-fager"
                         ],
                         "authorizedRoles": [],
+                        "authorizedAccessPackages": [],
                         "subunits": []
                       }
                     ]
@@ -716,6 +733,7 @@ class AltinnTilgangerTest {
                     "onlyHierarchyElementWithNoAccess": true,
                     "authorizedResources": ["test-fager"],
                     "authorizedRoles": [],
+                    "authorizedAccessPackages": [],
                     "subunits": [
                       {
                         "partyUuid": "8656eab6-119b-4691-8a8a-6f51a203aba7",
@@ -731,6 +749,7 @@ class AltinnTilgangerTest {
                           "test-fager"
                         ],
                         "authorizedRoles": [],
+                        "authorizedAccessPackages": [],
                         "subunits": []
                       },
                       {
@@ -747,6 +766,7 @@ class AltinnTilgangerTest {
                         "authorizedRoles": [
                           "DAGL"
                         ],
+                        "authorizedAccessPackages": [],
                         "subunits": []
                       },
                       {
@@ -763,6 +783,7 @@ class AltinnTilgangerTest {
                           "test-fager"
                         ],
                         "authorizedRoles": [],
+                        "authorizedAccessPackages": [],
                         "subunits": []
                       }
                     ]
@@ -841,6 +862,7 @@ class AltinnTilgangerTest {
                     "onlyHierarchyElementWithNoAccess": true,
                     "authorizedResources": ["test-fager"],
                     "authorizedRoles": [],
+                    "authorizedAccessPackages": [],
                     "subunits": [
                       {
                         "partyUuid": "8656eab6-119b-4691-8a8a-6f51a203aba7",
@@ -856,6 +878,7 @@ class AltinnTilgangerTest {
                           "test-fager"
                         ],
                         "authorizedRoles": [],
+                        "authorizedAccessPackages": [],
                         "subunits": []
                       },
                       {
@@ -872,6 +895,7 @@ class AltinnTilgangerTest {
                         "authorizedRoles": [
                           "DAGL"
                         ],
+                        "authorizedAccessPackages": [],
                         "subunits": []
                       },
                       {
@@ -888,6 +912,7 @@ class AltinnTilgangerTest {
                           "test-fager"
                         ],
                         "authorizedRoles": [],
+                        "authorizedAccessPackages": [],
                         "subunits": []
                       }
                     ]
@@ -958,6 +983,7 @@ class AltinnTilgangerTest {
                     "onlyHierarchyElementWithNoAccess": true,
                     "authorizedResources": ["test-fager"],
                     "authorizedRoles": [],
+                    "authorizedAccessPackages": [],
                     "subunits": [
                       {
                         "partyUuid": "8656eab6-119b-4691-8a8a-6f51a203aba7",
@@ -973,6 +999,7 @@ class AltinnTilgangerTest {
                           "test-fager"
                         ],
                         "authorizedRoles": [],
+                        "authorizedAccessPackages": [],
                         "subunits": []
                       }
                     ]
