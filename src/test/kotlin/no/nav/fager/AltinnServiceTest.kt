@@ -1,15 +1,19 @@
 package no.nav.fager
 
 import kotlinx.coroutines.test.runTest
-import no.nav.fager.altinn.*
+import no.nav.fager.altinn.Altinn2Tilganger
+import no.nav.fager.altinn.Altinn2Tjeneste
+import no.nav.fager.altinn.AltinnService
 import no.nav.fager.altinn.AltinnService.AltinnTilgangerResultat
+import no.nav.fager.altinn.AuthorizedParty
+import no.nav.fager.altinn.PolicySubject
+import no.nav.fager.altinn.ResourceRegistry
 import no.nav.fager.fakes.clients.FakeAltinn2Client
 import no.nav.fager.fakes.clients.FakeAltinn3Client
 import no.nav.fager.fakes.clients.FakeRedisClient
 import no.nav.fager.redis.RedisConfig
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class AltinnServiceTest {
     @Test
@@ -35,6 +39,7 @@ class AltinnServiceTest {
                     organizationNumber = "910825496",
                     authorizedResources = setOf("test-fager"),
                     authorizedRoles = setOf(),
+                    authorizedAccessPackages = setOf(),
                     subunits = listOf(),
                     unitType = "BEDR",
                     type = "Business",
@@ -49,7 +54,7 @@ class AltinnServiceTest {
                         urn = "urn:altinn:rolecode:lede",
                         type = "urn:altinn:rolecode",
                         value = "lede",
-                    )
+                    ),
                 )
             }
         }
@@ -61,8 +66,8 @@ class AltinnServiceTest {
 
         altinnService.hentTilganger(fnr, Filter.empty)
 
-        assertTrue(altinnRedisClient.getCallCountWithArgs(altinnRedisClient::get.name, cacheKey) == 1)
-        assertTrue(
+        assertEquals(altinnRedisClient.getCallCountWithArgs(altinnRedisClient::get.name, cacheKey), 1)
+        assertEquals(
             altinnRedisClient.getCallCountWithArgs(
                 altinnRedisClient::set.name, cacheKey,
                 AltinnTilgangerResultat(
@@ -79,11 +84,11 @@ class AltinnServiceTest {
                         )
                     )
                 )
-            ) == 1
+            ), 1
         )
 
-        assertTrue(altinn3Client.getCallCountWithArgs(altinn3Client::resourceOwner_AuthorizedParties.name, fnr) == 1)
-        assertTrue(altinn2Client.getCallCountWithArgs(altinn2Client::hentAltinn2Tilganger.name, fnr) == 1)
+        assertEquals(altinn3Client.getCallCountWithArgs(altinn3Client::resourceOwner_AuthorizedParties.name, fnr), 1)
+        assertEquals(altinn2Client.getCallCountWithArgs(altinn2Client::hentAltinn2Tilganger.name, fnr), 1)
     }
 
 
@@ -129,6 +134,7 @@ class AltinnServiceTest {
                     organizationNumber = "910825496",
                     authorizedResources = setOf("test-fager"),
                     authorizedRoles = setOf(),
+                    authorizedAccessPackages = setOf(),
                     subunits = listOf(),
                     unitType = "BEDR",
                     type = "Business",
@@ -152,11 +158,11 @@ class AltinnServiceTest {
 
         altinnService.hentTilganger(fnr, Filter.empty)
 
-        assertTrue(altinnRedisClient.getCallCountWithArgs(altinnRedisClient::get.name, cacheKey) == 1)
-        assertTrue(altinnRedisClient.getCallCount(altinnRedisClient::set.name) == 0)
+        assertEquals(1, altinnRedisClient.getCallCountWithArgs(altinnRedisClient::get.name, cacheKey))
+        assertEquals(0, altinnRedisClient.getCallCount(altinnRedisClient::set.name))
 
-        assertTrue(altinn3Client.getCallCount(altinn3Client::resourceOwner_AuthorizedParties.name) == 0)
-        assertTrue(altinn2Client.getCallCount(altinn2Client::hentAltinn2Tilganger.name) == 0)
+        assertEquals(0, altinn3Client.getCallCount(altinn3Client::resourceOwner_AuthorizedParties.name))
+        assertEquals(0, altinn2Client.getCallCount(altinn2Client::hentAltinn2Tilganger.name))
     }
 
     @Test
@@ -182,6 +188,7 @@ class AltinnServiceTest {
                     organizationNumber = "910825496",
                     authorizedResources = setOf("test-fager"),
                     authorizedRoles = setOf(),
+                    authorizedAccessPackages = setOf(),
                     subunits = listOf(),
                     unitType = "BEDR",
                     type = "Business",
@@ -207,11 +214,11 @@ class AltinnServiceTest {
         val cacheKey = "$fnr-${AltinnService.CACHE_VERSION}"
         altinnService.hentTilganger(fnr, Filter.empty)
 
-        assertTrue(altinnRedisClient.getCallCountWithArgs(altinnRedisClient::get.name, cacheKey) == 1)
-        assertTrue(altinnRedisClient.getCallCount(altinnRedisClient::set.name) == 0)
+        assertEquals(1, altinnRedisClient.getCallCountWithArgs(altinnRedisClient::get.name, cacheKey))
+        assertEquals(0, altinnRedisClient.getCallCount(altinnRedisClient::set.name))
 
-        assertTrue(altinn3Client.getCallCountWithArgs(altinn3Client::resourceOwner_AuthorizedParties.name, fnr) == 1)
-        assertTrue(altinn2Client.getCallCountWithArgs(altinn2Client::hentAltinn2Tilganger.name, fnr) == 1)
+        assertEquals(1, altinn3Client.getCallCountWithArgs(altinn3Client::resourceOwner_AuthorizedParties.name, fnr))
+        assertEquals(1, altinn2Client.getCallCountWithArgs(altinn2Client::hentAltinn2Tilganger.name, fnr))
     }
 
     @Test
@@ -237,6 +244,7 @@ class AltinnServiceTest {
                     organizationNumber = "910825496",
                     authorizedResources = setOf("test-fager"),
                     authorizedRoles = setOf(),
+                    authorizedAccessPackages = setOf(),
                     subunits = listOf(),
                     unitType = "BEDR",
                     type = "Business",
@@ -267,9 +275,9 @@ class AltinnServiceTest {
         altinnService.hentTilganger(fnr1, Filter.empty)
         altinnService.hentTilganger(fnr2, Filter.empty)
 
-        assertTrue(altinnRedisClient.getCallCount(altinnRedisClient::get.name) == 2)
-        assertTrue(altinnRedisClient.getCallCountWithArgs(altinnRedisClient::get.name, cacheKey1) == 1)
-        assertTrue(altinnRedisClient.getCallCountWithArgs(altinnRedisClient::get.name, cacheKey2) == 1)
+        assertEquals(2, altinnRedisClient.getCallCount(altinnRedisClient::get.name))
+        assertEquals(1, altinnRedisClient.getCallCountWithArgs(altinnRedisClient::get.name, cacheKey1))
+        assertEquals(1, altinnRedisClient.getCallCountWithArgs(altinnRedisClient::get.name, cacheKey2))
 
 
     }
@@ -291,6 +299,7 @@ class AltinnServiceTest {
                     organizationNumber = "111111111",
                     authorizedResources = setOf("nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"),
                     authorizedRoles = setOf(),
+                    authorizedAccessPackages = setOf(),
                     subunits = listOf(),
                     unitType = "BEDR",
                     type = "Business",
@@ -315,9 +324,9 @@ class AltinnServiceTest {
         val fnr = "16120101181"
         val tilganger = altinnService.hentTilganger(fnr, Filter.empty)
 
-        assertTrue(tilganger.altinnTilganger.count() == 1)
-        assertTrue(tilganger.altinnTilganger.first { it.orgnr == "111111111" }.altinn2Tilganger.count() == 1)
-        assertTrue(tilganger.altinnTilganger.first { it.orgnr == "111111111" }.altinn2Tilganger.first() == "5810:1")
+        assertEquals(1, tilganger.altinnTilganger.count())
+        assertEquals(1, tilganger.altinnTilganger.first { it.orgnr == "111111111" }.altinn2Tilganger.count())
+        assertEquals("5810:1", tilganger.altinnTilganger.first { it.orgnr == "111111111" }.altinn2Tilganger.first())
     }
 
 
@@ -344,16 +353,29 @@ class AltinnServiceTest {
                     organizationNumber = "910825496",
                     authorizedResources = setOf("nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"),
                     authorizedRoles = setOf(),
+                    authorizedAccessPackages = setOf(),
                     subunits = listOf(),
                     unitType = "BEDR",
                     type = "Business",
                     isDeleted = false,
                 ),
                 AuthorizedParty(
-                    name = "ET ANNET REGNSKAP",
+                    name = "ET ANNET SELSKAP",
                     organizationNumber = "111111111",
                     authorizedResources = setOf(),
                     authorizedRoles = setOf("LEDE"),
+                    authorizedAccessPackages = setOf(),
+                    subunits = listOf(),
+                    unitType = "BEDR",
+                    type = "Business",
+                    isDeleted = false,
+                ),
+                AuthorizedParty(
+                    name = "ENDA ET ANNET SELSKAP",
+                    organizationNumber = "222222222",
+                    authorizedResources = setOf(),
+                    authorizedRoles = setOf(),
+                    authorizedAccessPackages = setOf("lonn-personopplysninger-saerlig-kategori"),
                     subunits = listOf(),
                     unitType = "BEDR",
                     type = "Business",
@@ -370,7 +392,16 @@ class AltinnServiceTest {
                                 urn = "urn:altinn:rolecode:lede",
                                 type = "urn:altinn:rolecode",
                                 value = "lede",
-                            )
+                            ),
+                        )
+
+                    "nav_foreldrepenger_inntektsmelding" ->
+                        listOf(
+                            PolicySubject(
+                                urn = "urn:altinn:accesspackage:lonn-personopplysninger-saerlig-kategori",
+                                type = "urn:altinn:accesspackage",
+                                value = "lonn-personopplysninger-saerlig-kategori",
+                            ),
                         )
 
                     else -> listOf() // ingen policy subjects for andre ressurser
@@ -384,7 +415,7 @@ class AltinnServiceTest {
         val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, resourceRegistry)
 
         val tilganger = altinnService.hentTilganger(fnr, Filter.empty)
-        assertEquals(2, tilganger.altinnTilganger.size)
+        assertEquals(3, tilganger.altinnTilganger.size)
 
         tilganger.altinnTilganger.first { it.orgnr == "910825496" }.let { slemmestad ->
             // 4936:1 fra altinn2, 5810:1 fra altinn3 resource basert på altinn3 til altinn 2 mapping
@@ -394,6 +425,18 @@ class AltinnServiceTest {
         tilganger.altinnTilganger.first { it.orgnr == "111111111" }.let { annet ->
             // 5810:1 fra altinn3 role(LEDE) basert på altinn3 til altinn 2 mapping
             assertEquals(setOf("5810:1"), annet.altinn2Tilganger)
+            // fra role LEDE via resource mapping
+            assertEquals(
+                setOf("nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"),
+                annet.altinn3Tilganger
+            )
+        }
+
+        tilganger.altinnTilganger.first { it.orgnr == "222222222" }.let { endaAnnet ->
+            // ingen altinn 2 tilganger
+            assertEquals(setOf(), endaAnnet.altinn2Tilganger)
+            // fra accessRightPackage via resource mapping
+            assertEquals(setOf("nav_foreldrepenger_inntektsmelding"), endaAnnet.altinn3Tilganger)
         }
     }
 
@@ -426,12 +469,14 @@ class AltinnServiceTest {
                     organizationNumber = "1",
                     authorizedResources = setOf(),
                     authorizedRoles = setOf(),
+                    authorizedAccessPackages = setOf(),
                     subunits = listOf(
                         AuthorizedParty(
                             name = "1.1",
                             organizationNumber = "1.1",
                             authorizedResources = setOf("nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"),
                             authorizedRoles = setOf(),
+                            authorizedAccessPackages = setOf(),
                             subunits = listOf(),
                             unitType = "BEDR",
                             type = "Business",
@@ -447,12 +492,14 @@ class AltinnServiceTest {
                     organizationNumber = "2",
                     authorizedResources = setOf(),
                     authorizedRoles = setOf(),
+                    authorizedAccessPackages = setOf(),
                     subunits = listOf(
                         AuthorizedParty(
                             name = "2.1",
                             organizationNumber = "2.1",
                             authorizedResources = setOf(),
                             authorizedRoles = setOf(),
+                            authorizedAccessPackages = setOf(),
                             subunits = listOf(),
                             unitType = "BEDR",
                             type = "Business",
@@ -468,12 +515,14 @@ class AltinnServiceTest {
                     organizationNumber = "3",
                     authorizedResources = setOf(),
                     authorizedRoles = setOf(),
+                    authorizedAccessPackages = setOf(),
                     subunits = listOf(
                         AuthorizedParty(
                             name = "3.1",
                             organizationNumber = "3.1",
                             authorizedResources = setOf(),
                             authorizedRoles = setOf(),
+                            authorizedAccessPackages = setOf(),
                             subunits = listOf(),
                             unitType = "BEDR",
                             type = "Business",
