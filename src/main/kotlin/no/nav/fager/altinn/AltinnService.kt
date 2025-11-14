@@ -49,7 +49,7 @@ class AltinnService(
         return result.filter(filter)
     }
 
-    private suspend fun hentTilgangerFraAltinn(fnr: String) =
+    internal suspend fun hentTilgangerFraAltinn(fnr: String) =
         timer.coRecord {
             coroutineScope {
                 val altinn2TilgangerJob = async { altinn2Client.hentAltinn2Tilganger(fnr) }
