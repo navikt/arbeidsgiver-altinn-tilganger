@@ -1,5 +1,6 @@
 package no.nav.fager.altinn
 
+import io.ktor.client.HttpClientConfig
 import io.ktor.client.call.body
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.HttpRequestTimeoutException
@@ -67,6 +68,7 @@ interface Altinn2Client {
 class Altinn2ClientImpl(
     val altinn2Config: Altinn2Config,
     val texasAuthConfig: TexasAuthConfig,
+    val configureHttp: HttpClientConfig<*>.() -> Unit = {}
 ) : Altinn2Client {
     private val log = logger()
 
@@ -79,6 +81,8 @@ class Altinn2ClientImpl(
         install(HttpTimeout) {
             requestTimeoutMillis = 60_000 // noen reqs mot altinn 2 tar lang tid pga stor payload
         }
+
+        configureHttp()
     }
 
     private val metadataClient = defaultHttpClient()
