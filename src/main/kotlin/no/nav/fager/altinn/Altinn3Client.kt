@@ -107,7 +107,7 @@ class AuthorizedParty(
     val unitType: String?,
     val authorizedResources: Set<String>,
     val authorizedRoles: Set<String>,
-    val authorizedAccessPackages: Set<String>,
+    val authorizedAccessPackages: Set<String> = emptySet(),
     val isDeleted: Boolean,
     val subunits: List<AuthorizedParty>
 ) {
