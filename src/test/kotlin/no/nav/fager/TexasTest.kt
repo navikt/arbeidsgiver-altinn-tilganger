@@ -1,33 +1,34 @@
 package no.nav.fager
 
-import io.ktor.client.*
-import io.ktor.client.engine.mock.*
-import io.ktor.client.request.*
-import io.ktor.http.*
-import io.ktor.server.response.*
-import kotlinx.coroutines.test.runTest
-import no.nav.fager.fakes.FakeApi
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.mock.MockEngine
+import io.ktor.client.engine.mock.MockEngineConfig
+import io.ktor.client.engine.mock.respond
+import io.ktor.client.request.get
+import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.headersOf
+import io.ktor.server.response.respondText
 import no.nav.fager.fakes.fake
-import no.nav.fager.texas.*
-import org.junit.jupiter.api.extension.RegisterExtension
+import no.nav.fager.fakes.testWithFakeApi
+import no.nav.fager.texas.AuthClient
+import no.nav.fager.texas.IdentityProvider
+import no.nav.fager.texas.TexasAuthClientPlugin
+import no.nav.fager.texas.TexasAuthConfig
+import no.nav.fager.texas.TokenResponse
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.collections.set
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 
 class TexasTest {
-    companion object {
-        private val token = AtomicReference("")
-
-        @JvmField
-        @RegisterExtension
-        val fakeTexas = FakeApi()
-    }
 
     @Test
-    fun `plugin legger på token`() = runTest {
+    fun `plugin legger på token`() = testWithFakeApi { fakeTexas ->
+        val token = AtomicReference("")
         fakeTexas.stubs[HttpMethod.Post to "/token"] = {
             call.respondText(
                 //language=json
