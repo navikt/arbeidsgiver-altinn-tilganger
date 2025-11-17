@@ -1,12 +1,12 @@
 package no.nav.fager.altinn
 
+import io.ktor.client.HttpClientConfig
 import io.ktor.client.call.body
 import io.ktor.client.request.accept
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
-import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.appendPathSegments
 import io.ktor.http.contentType
@@ -43,6 +43,7 @@ interface Altinn3Client {
 class Altinn3ClientImpl(
     val altinn3Config: Altinn3Config,
     val texasAuthConfig: TexasAuthConfig,
+    val configureHttp: HttpClientConfig<*>.() -> Unit = {}
 ) : Altinn3Client {
 
     private val resourceOwnerClient = defaultHttpClient {
@@ -50,6 +51,8 @@ class Altinn3ClientImpl(
             authClient = AuthClient(texasAuthConfig, IdentityProvider.MASKINPORTEN)
             fetchToken = { it.token("altinn:accessmanagement/authorizedparties.resourceowner") }
         }
+
+        configureHttp()
     }
 
     /**
