@@ -115,6 +115,8 @@ spec:
           namespace: team-esyfo
         - application: ekspertbistand-backend
           namespace: fager
+        - application: presenterte-kandidater-api
+          namespace: toi
     outbound:
       external:
         - host: platform.tt02.altinn.no
