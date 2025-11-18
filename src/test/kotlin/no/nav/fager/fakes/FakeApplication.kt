@@ -1,17 +1,24 @@
 package no.nav.fager.fakes
 
-import io.ktor.client.*
-import io.ktor.client.engine.cio.*
-import io.ktor.client.plugins.*
-import io.ktor.http.*
+import io.ktor.client.HttpClient
+import io.ktor.client.HttpClientConfig
+import io.ktor.client.engine.cio.CIOEngineConfig
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.defaultRequest
+import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
 import io.ktor.http.HttpMethod.Companion.Get
 import io.ktor.http.HttpMethod.Companion.Post
+import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.cio.CIO
-import io.ktor.server.engine.*
-import io.ktor.server.request.*
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
+import io.ktor.server.engine.embeddedServer
+import io.ktor.server.request.contentType
+import io.ktor.server.request.receiveParameters
+import io.ktor.server.response.respond
+import io.ktor.server.response.respondText
+import io.ktor.server.routing.RoutingContext
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
 import no.nav.fager.altinn.Altinn2Config
 import no.nav.fager.altinn.Altinn3Config
 import no.nav.fager.altinn.KnownResourceIds
@@ -19,9 +26,6 @@ import no.nav.fager.ktorConfig
 import no.nav.fager.redis.RedisConfig
 import no.nav.fager.texas.IdentityProvider
 import no.nav.fager.texas.TexasAuthConfig
-import org.junit.jupiter.api.extension.AfterAllCallback
-import org.junit.jupiter.api.extension.BeforeAllCallback
-import org.junit.jupiter.api.extension.ExtensionContext
 
 private fun resolveMockToken(token: String?): Map<String, String> {
     return if (token == null || token.count { it == ':' } != 1) {
@@ -39,7 +43,7 @@ private fun resolveMockToken(token: String?): Map<String, String> {
 class FakeApplication(
     private val port: Int = 0,
     private val clientConfig: HttpClientConfig<CIOEngineConfig>.() -> Unit = {}
-) : BeforeAllCallback, AfterAllCallback {
+) : AutoCloseable {
 
     private val fakeAltinn3Api = FakeApi().also {
         KnownResourceIds.forEach { resourceId ->
@@ -199,7 +203,7 @@ class FakeApplication(
         fakeTexas.errors.clear()
     }
 
-    override fun beforeAll(context: ExtensionContext) = runBlocking {
+    fun setupTestContext() = runBlocking {
         start(false)
         server.engine.waitUntilReady()
         val port = server.engine.resolvedConnectors().first().port
@@ -212,10 +216,25 @@ class FakeApplication(
         testContext = TestContext(client)
     }
 
-    override fun afterAll(context: ExtensionContext) {
+    override fun close() {
         server.stop()
         fakeTexas.stop()
         fakeAltinn3Api.stop()
         fakeAltinn2Api.stop()
+    }
+}
+
+fun testWithFakeApplication(
+    block: suspend FakeApplication.TestContext.(fakeApplication: FakeApplication) -> Unit
+) = FakeApplication(
+    clientConfig = {
+        install(ContentNegotiation) {
+            json(Json { ignoreUnknownKeys = true })
+        }
+    }
+).use { fakeApp ->
+    fakeApp.setupTestContext()
+    fakeApp.runTest {
+        block(fakeApp)
     }
 }

@@ -1,19 +1,23 @@
 package no.nav.fager.fakes
 
-import io.ktor.http.*
-import io.ktor.serialization.kotlinx.json.*
-import io.ktor.server.application.*
-import io.ktor.server.cio.*
-import io.ktor.server.engine.*
-import io.ktor.server.plugins.calllogging.*
-import io.ktor.server.plugins.contentnegotiation.*
-import io.ktor.server.request.*
-import io.ktor.server.routing.*
+import io.ktor.http.HttpMethod
+import io.ktor.http.HttpStatusCode
+import io.ktor.serialization.kotlinx.json.json
+import io.ktor.server.application.install
+import io.ktor.server.cio.CIO
+import io.ktor.server.engine.embeddedServer
+import io.ktor.server.plugins.calllogging.CallLogging
+import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.server.request.path
+import io.ktor.server.routing.RoutingContext
+import io.ktor.server.routing.get
+import io.ktor.server.routing.post
+import io.ktor.server.routing.routing
+import io.ktor.server.testing.ApplicationTestBuilder
+import io.ktor.server.testing.testApplication
 import kotlinx.coroutines.runBlocking
 import no.nav.fager.altinn.Altinn2Config
 import no.nav.fager.texas.TexasAuthConfig
-import org.junit.jupiter.api.extension.BeforeTestExecutionCallback
-import org.junit.jupiter.api.extension.ExtensionContext
 import org.slf4j.event.Level
 import kotlin.test.fail
 
@@ -28,15 +32,11 @@ fun Altinn2Config.Companion.fake(fake: FakeApi) = Altinn2Config(
     apiKey = "someApiKey",
 )
 
-class FakeApi : BeforeTestExecutionCallback {
+class FakeApi : AutoCloseable {
 
     val stubs = mutableMapOf<Pair<HttpMethod, String>, (suspend RoutingContext.(Any) -> Unit)>()
 
     val errors = mutableListOf<Throwable>()
-
-    override fun beforeTestExecution(ctx: ExtensionContext) = runBlocking {
-        start()
-    }
 
     suspend fun start() {
         server.start(false)
@@ -97,5 +97,20 @@ class FakeApi : BeforeTestExecutionCallback {
             server.application.engine.resolvedConnectors().first().port
         }
 
+    override fun close() {
+        stop()
+    }
+
+}
+
+fun testWithFakeApi(
+    block: suspend ApplicationTestBuilder.(fakeApi: FakeApi) -> Unit
+) = testApplication {
+    FakeApi().use { fakeApi ->
+        runBlocking {
+            fakeApi.start()
+        }
+        block(fakeApi)
+    }
 }
 

@@ -107,16 +107,25 @@ class AuthorizedParty(
     val unitType: String?,
     val authorizedResources: Set<String>,
     val authorizedRoles: Set<String>,
+    val authorizedAccessPackages: Set<String> = emptySet(),
     val isDeleted: Boolean,
     val subunits: List<AuthorizedParty>
 ) {
     /**
-     * in current api authorizedRoles is a list of  LEDE/DAGL etc, an upper case variant og PolicySubject.value
+     * in current api authorizedRoles is a list of LEDE/DAGL etc, an upper case variant of PolicySubject.value
      * in v2 this will be a PolicySubjectUrn. So this is a temporary method to convert to urn.
      * this method should be removed when v2 is in place.
      */
     val authorizedRolesAsUrn: Set<String>
         get() = authorizedRoles.map { "urn:altinn:rolecode:${it.lowercase()}" }.toSet()
+
+    /**
+     * in current api authorizedAccessPackages is a list of PolicySubject.value, not urn..
+     * So this is a temporary method to convert to urn.
+     * this method should be removed when v2 is in place given the values are urns.
+     */
+    val authorizedAccessPackagesAsUrn: Set<String>
+        get() = authorizedAccessPackages.map { "urn:altinn:accesspackage:$it" }.toSet()
 }
 
 

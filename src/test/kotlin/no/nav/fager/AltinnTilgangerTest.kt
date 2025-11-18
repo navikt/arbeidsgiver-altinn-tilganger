@@ -1,16 +1,16 @@
 package no.nav.fager
 
-import io.ktor.client.call.*
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.client.request.*
-import io.ktor.http.*
+import io.ktor.client.call.body
+import io.ktor.client.request.header
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod.Companion.Get
 import io.ktor.http.HttpMethod.Companion.Post
-import io.ktor.serialization.kotlinx.json.*
-import io.ktor.server.response.*
-import kotlinx.serialization.json.Json
-import no.nav.fager.fakes.FakeApplication
-import org.junit.jupiter.api.extension.RegisterExtension
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.contentType
+import io.ktor.server.response.respondText
+import no.nav.fager.fakes.testWithFakeApplication
 import java.util.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -18,22 +18,10 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class AltinnTilgangerTest {
-    companion object {
-        @JvmField
-        @RegisterExtension
-        val app = FakeApplication(
-            clientConfig = {
-                install(ContentNegotiation) {
-                    json(Json { ignoreUnknownKeys = true })
-                }
-            }
-        )
-    }
-
     private val fnr = generateSequence { "${(11111111111..99999999999).random()}" }.iterator()
 
     @Test
-    fun `henter altinn tilganger`() = app.runTest {
+    fun `henter altinn tilganger`() = testWithFakeApplication { app ->
         app.altinn3Response(Post, "/accessmanagement/api/v1/resourceowner/authorizedparties") {
             call.respondText(
                 //language=json
@@ -51,6 +39,7 @@ class AltinnTilgangerTest {
                     "onlyHierarchyElementWithNoAccess": true,
                     "authorizedResources": ["test-fager"],
                     "authorizedRoles": [],
+                    "authorizedAccessPackages": [],
                     "subunits": [
                       {
                         "partyUuid": "8656eab6-119b-4691-8a8a-6f51a203aba7",
@@ -66,6 +55,7 @@ class AltinnTilgangerTest {
                           "test-fager"
                         ],
                         "authorizedRoles": [],
+                        "authorizedAccessPackages": [],
                         "subunits": []
                       },
                       {
@@ -79,6 +69,7 @@ class AltinnTilgangerTest {
                         "isDeleted": false,
                         "onlyHierarchyElementWithNoAccess": false,
                         "authorizedResources": [],
+                        "authorizedAccessPackages": [],
                         "authorizedRoles": [
                           "DAGL"
                         ],
@@ -98,6 +89,7 @@ class AltinnTilgangerTest {
                           "test-fager"
                         ],
                         "authorizedRoles": [],
+                        "authorizedAccessPackages": [],
                         "subunits": []
                       }
                     ]
@@ -199,7 +191,7 @@ class AltinnTilgangerTest {
     }
 
     @Test
-    fun `henter altinn tilganger for filter`() = app.runTest {
+    fun `henter altinn tilganger for filter`() = testWithFakeApplication { app ->
         app.altinn3Response(Post, "/accessmanagement/api/v1/resourceowner/authorizedparties") {
             call.respondText(
                 //language=json
@@ -217,6 +209,7 @@ class AltinnTilgangerTest {
                     "onlyHierarchyElementWithNoAccess": true,
                     "authorizedResources": [],
                     "authorizedRoles": [],
+                    "authorizedAccessPackages": [],
                     "subunits": [
                       {
                         "partyUuid": "${UUID.randomUUID()}",
@@ -232,6 +225,7 @@ class AltinnTilgangerTest {
                           "test-fager"
                         ],
                         "authorizedRoles": [],
+                        "authorizedAccessPackages": [],
                         "subunits": []
                       },
                       {
@@ -248,6 +242,7 @@ class AltinnTilgangerTest {
                           "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"
                         ],
                         "authorizedRoles": [],
+                        "authorizedAccessPackages": [],
                         "subunits": []
                       },
                       {
@@ -264,6 +259,7 @@ class AltinnTilgangerTest {
                         "authorizedRoles": [
                           "DAGL"
                         ],
+                        "authorizedAccessPackages": [],
                         "subunits": []
                       },
                       {
@@ -280,6 +276,7 @@ class AltinnTilgangerTest {
                           "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"
                         ],
                         "authorizedRoles": [],
+                        "authorizedAccessPackages": [],
                         "subunits": []
                       }
                     ]
@@ -497,7 +494,7 @@ class AltinnTilgangerTest {
     }
 
     @Test
-    fun `ugyldig filter gir feilmelding`() = app.runTest {
+    fun `ugyldig filter gir feilmelding`() = testWithFakeApplication {
         client.post("/altinn-tilganger") {
             header("Authorization", "Bearer idporten-loa-high:11111111111")
             contentType(ContentType.Application.Json)
@@ -573,7 +570,7 @@ class AltinnTilgangerTest {
     }
 
     @Test
-    fun `inkluderSlettede = true returnerer også slettede underenheter for altinn3`() = app.runTest {
+    fun `inkluderSlettede = true returnerer også slettede underenheter for altinn3`() = testWithFakeApplication { app ->
         app.altinn3Response(Post, "/accessmanagement/api/v1/resourceowner/authorizedparties") {
             call.respondText(
                 //language=json
@@ -591,6 +588,7 @@ class AltinnTilgangerTest {
                     "onlyHierarchyElementWithNoAccess": true,
                     "authorizedResources": ["test-fager"],
                     "authorizedRoles": [],
+                    "authorizedAccessPackages": [],
                     "subunits": [
                       {
                         "partyUuid": "8656eab6-119b-4691-8a8a-6f51a203aba7",
@@ -606,6 +604,7 @@ class AltinnTilgangerTest {
                           "test-fager"
                         ],
                         "authorizedRoles": [],
+                        "authorizedAccessPackages": [],
                         "subunits": []
                       },
                       {
@@ -619,6 +618,7 @@ class AltinnTilgangerTest {
                         "isDeleted": false,
                         "onlyHierarchyElementWithNoAccess": false,
                         "authorizedResources": [],
+                        "authorizedAccessPackages": [],
                         "authorizedRoles": [
                           "DAGL"
                         ],
@@ -638,6 +638,7 @@ class AltinnTilgangerTest {
                           "test-fager"
                         ],
                         "authorizedRoles": [],
+                        "authorizedAccessPackages": [],
                         "subunits": []
                       }
                     ]
@@ -698,7 +699,7 @@ class AltinnTilgangerTest {
     }
 
     @Test
-    fun `inkluderSlettede = true returnerer også slettede hovedenheter for altinn3`() = app.runTest {
+    fun `inkluderSlettede = true returnerer også slettede hovedenheter for altinn3`() = testWithFakeApplication { app ->
         app.altinn3Response(Post, "/accessmanagement/api/v1/resourceowner/authorizedparties") {
             call.respondText(
                 //language=json
@@ -716,6 +717,7 @@ class AltinnTilgangerTest {
                     "onlyHierarchyElementWithNoAccess": true,
                     "authorizedResources": ["test-fager"],
                     "authorizedRoles": [],
+                    "authorizedAccessPackages": [],
                     "subunits": [
                       {
                         "partyUuid": "8656eab6-119b-4691-8a8a-6f51a203aba7",
@@ -731,6 +733,7 @@ class AltinnTilgangerTest {
                           "test-fager"
                         ],
                         "authorizedRoles": [],
+                        "authorizedAccessPackages": [],
                         "subunits": []
                       },
                       {
@@ -747,6 +750,7 @@ class AltinnTilgangerTest {
                         "authorizedRoles": [
                           "DAGL"
                         ],
+                        "authorizedAccessPackages": [],
                         "subunits": []
                       },
                       {
@@ -763,6 +767,7 @@ class AltinnTilgangerTest {
                           "test-fager"
                         ],
                         "authorizedRoles": [],
+                        "authorizedAccessPackages": [],
                         "subunits": []
                       }
                     ]
@@ -823,11 +828,12 @@ class AltinnTilgangerTest {
     }
 
     @Test
-    fun `inkluderSlettede = false returnerer ikke slettede hovedenheter for altinn3`() = app.runTest {
-        app.altinn3Response(Post, "/accessmanagement/api/v1/resourceowner/authorizedparties") {
-            call.respondText(
-                //language=json
-                """
+    fun `inkluderSlettede = false returnerer ikke slettede hovedenheter for altinn3`() =
+        testWithFakeApplication { app ->
+            app.altinn3Response(Post, "/accessmanagement/api/v1/resourceowner/authorizedparties") {
+                call.respondText(
+                    //language=json
+                    """
                 [
                   {
                     "partyUuid": "a1c831cf-c7b7-4e5e-9910-2ad9a05b4ec1",
@@ -841,6 +847,7 @@ class AltinnTilgangerTest {
                     "onlyHierarchyElementWithNoAccess": true,
                     "authorizedResources": ["test-fager"],
                     "authorizedRoles": [],
+                    "authorizedAccessPackages": [],
                     "subunits": [
                       {
                         "partyUuid": "8656eab6-119b-4691-8a8a-6f51a203aba7",
@@ -856,6 +863,7 @@ class AltinnTilgangerTest {
                           "test-fager"
                         ],
                         "authorizedRoles": [],
+                        "authorizedAccessPackages": [],
                         "subunits": []
                       },
                       {
@@ -872,6 +880,7 @@ class AltinnTilgangerTest {
                         "authorizedRoles": [
                           "DAGL"
                         ],
+                        "authorizedAccessPackages": [],
                         "subunits": []
                       },
                       {
@@ -888,44 +897,45 @@ class AltinnTilgangerTest {
                           "test-fager"
                         ],
                         "authorizedRoles": [],
+                        "authorizedAccessPackages": [],
                         "subunits": []
                       }
                     ]
                   }
                 ]
                 """.trimIndent(), ContentType.Application.Json
-            )
-        }
+                )
+            }
 
-        val assertResponse: (AltinnTilgangerResponse) -> Unit = { virksomhet ->
-            assertTrue(virksomhet.hierarki.isEmpty())
-            assertTrue(virksomhet.tilgangTilOrgNr.isEmpty())
-            assertTrue(virksomhet.orgNrTilTilganger.isEmpty())
-        }
+            val assertResponse: (AltinnTilgangerResponse) -> Unit = { virksomhet ->
+                assertTrue(virksomhet.hierarki.isEmpty())
+                assertTrue(virksomhet.tilgangTilOrgNr.isEmpty())
+                assertTrue(virksomhet.orgNrTilTilganger.isEmpty())
+            }
 
-        client.post("/altinn-tilganger") {
-            header("Authorization", "Bearer idporten-loa-high:${fnr.next()}")
-            contentType(ContentType.Application.Json)
-            setBody(
-                //language=json
-                """
+            client.post("/altinn-tilganger") {
+                header("Authorization", "Bearer idporten-loa-high:${fnr.next()}")
+                contentType(ContentType.Application.Json)
+                setBody(
+                    //language=json
+                    """
                 {
                   "filter": {
                     "inkluderSlettede": false
                   }
                 }
                 """.trimIndent()
-            )
-        }.apply {
-            assertEquals(HttpStatusCode.OK, status)
-        }.body<AltinnTilgangerResponse>().also(assertResponse)
+                )
+            }.apply {
+                assertEquals(HttpStatusCode.OK, status)
+            }.body<AltinnTilgangerResponse>().also(assertResponse)
 
-        client.post("/m2m/altinn-tilganger") {
-            header("Authorization", "Bearer fakem2mtoken")
-            contentType(ContentType.Application.Json)
-            setBody(
-                //language=json
-                """
+            client.post("/m2m/altinn-tilganger") {
+                header("Authorization", "Bearer fakem2mtoken")
+                contentType(ContentType.Application.Json)
+                setBody(
+                    //language=json
+                    """
                 {
                     "fnr": "${fnr.next()}",
                     "filter": {
@@ -933,14 +943,14 @@ class AltinnTilgangerTest {
                     }
                 }
                 """.trimIndent()
-            )
-        }.apply {
-            assertEquals(HttpStatusCode.OK, status)
-        }.body<AltinnTilgangerResponse>().also(assertResponse)
-    }
+                )
+            }.apply {
+                assertEquals(HttpStatusCode.OK, status)
+            }.body<AltinnTilgangerResponse>().also(assertResponse)
+        }
 
     @Test
-    fun `returnerer ikke enhet fra Altinn 2 dersom den ikke finnes i Altinn 3`() = app.runTest {
+    fun `returnerer ikke enhet fra Altinn 2 dersom den ikke finnes i Altinn 3`() = testWithFakeApplication { app ->
         app.altinn3Response(Post, "/accessmanagement/api/v1/resourceowner/authorizedparties") {
             call.respondText(
                 //language=json
@@ -958,6 +968,7 @@ class AltinnTilgangerTest {
                     "onlyHierarchyElementWithNoAccess": true,
                     "authorizedResources": ["test-fager"],
                     "authorizedRoles": [],
+                    "authorizedAccessPackages": [],
                     "subunits": [
                       {
                         "partyUuid": "8656eab6-119b-4691-8a8a-6f51a203aba7",
@@ -973,6 +984,7 @@ class AltinnTilgangerTest {
                           "test-fager"
                         ],
                         "authorizedRoles": [],
+                        "authorizedAccessPackages": [],
                         "subunits": []
                       }
                     ]
@@ -1032,5 +1044,67 @@ class AltinnTilgangerTest {
         }.apply {
             assertEquals(HttpStatusCode.OK, status)
         }.body<AltinnTilgangerResponse>().also(assertResponse)
+    }
+
+    @Test
+    fun `feiler ikke dersom authorizedAccessPackages mangler`() = testWithFakeApplication { app ->
+
+        app.altinn3Response(Post, "/accessmanagement/api/v1/resourceowner/authorizedparties") {
+            call.respondText(
+                //language=json
+                """
+                [
+                  {
+                    "partyUuid": "a1c831cf-c7b7-4e5e-9910-2ad9a05b4ec1",
+                    "name": "MALMEFJORDEN OG RIDABU REGNSKAP",
+                    "organizationNumber": "810825472",
+                    "personId": null,
+                    "partyId": 50166368,
+                    "type": "Organization",
+                    "unitType": "AS",
+                    "isDeleted": false,
+                    "onlyHierarchyElementWithNoAccess": true,
+                    "authorizedResources": ["test-fager"],
+                    "authorizedRoles": [],
+                    "subunits": [
+                      {
+                        "partyUuid": "8656eab6-119b-4691-8a8a-6f51a203aba7",
+                        "name": "SLEMMESTAD OG STAVERN REGNSKAP",
+                        "organizationNumber": "910825496",
+                        "personId": null,
+                        "partyId": 50169034,
+                        "type": "Organization",
+                        "unitType": "BEDR",
+                        "isDeleted": false,
+                        "onlyHierarchyElementWithNoAccess": false,
+                        "authorizedResources": [
+                          "test-fager"
+                        ],
+                        "authorizedRoles": [],
+                        "subunits": []
+                      }
+                    ]
+                  }
+                ]
+                """.trimIndent(), ContentType.Application.Json
+            )
+        }
+        app.altinn2Response(Get, "/api/serviceowner/reportees") {
+            call.respondText("[]", ContentType.Application.Json)
+        }
+
+        client.post("/altinn-tilganger") {
+            header("Authorization", "Bearer idporten-loa-high:${fnr.next()}")
+            contentType(ContentType.Application.Json)
+            setBody("")
+        }.apply {
+            assertEquals(HttpStatusCode.OK, status)
+        }.body<AltinnTilgangerResponse>().also {
+            assertFalse(it.isError)
+            assertEquals(1, it.hierarki.size)
+            assertEquals(1, it.hierarki[0].underenheter.size)
+            assertEquals(setOf("test-fager"), it.orgNrTilTilganger["910825496"])
+        }
+
     }
 }

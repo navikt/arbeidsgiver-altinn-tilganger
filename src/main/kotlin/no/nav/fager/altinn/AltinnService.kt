@@ -60,11 +60,13 @@ class AltinnService(
                 val altinn3Tilganger = altinn3TilgangerResult.fold(
                     onSuccess = { altinn3tilganger ->
                         altinn3tilganger.addAuthorizedResourcesRecursive { party ->
-                            // adds all resources from the resource registry for the roles the party has
+                            // adds all resources from the resource registry for the roles and accesspackages the party has
                             // this must be done prior to mapping to Altinn2 services
-                            party.authorizedRolesAsUrn.flatMap { // TODO: replace with party.authorizedRoles.flatMap when new altinn api returns urns
+                            (party.authorizedRolesAsUrn.flatMap { // TODO: replace with party.authorizedRoles.flatMap when new altinn api returns urns
                                 resourceRegistry.getResourceIdForPolicySubject(it)
-                            }.toSet()
+                            } + party.authorizedAccessPackagesAsUrn.flatMap { // TODO: replace with party.authorizedAccessPackages.flatMap when new altinn api returns urns
+                                resourceRegistry.getResourceIdForPolicySubject(it)
+                            }).toSet()
                         }
                     },
                     onFailure = { emptyList() }
@@ -176,6 +178,7 @@ private fun AuthorizedParty.addAuthorizedResourcesRecursive(
     type = type,
     unitType = unitType,
     authorizedResources = authorizedResources + addResources(this),
+    authorizedAccessPackages = authorizedAccessPackages,
     authorizedRoles = authorizedRoles,
     isDeleted = isDeleted,
     subunits = subunits.map { it.addAuthorizedResourcesRecursive(addResources) }

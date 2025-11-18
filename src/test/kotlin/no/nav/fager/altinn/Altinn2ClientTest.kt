@@ -1,32 +1,21 @@
 package no.nav.fager.altinn
 
-import io.ktor.http.*
+import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
 import io.ktor.http.HttpMethod.Companion.Get
-import io.ktor.server.response.*
-import kotlinx.coroutines.runBlocking
-import no.nav.fager.fakes.FakeApi
+import io.ktor.server.response.respondText
 import no.nav.fager.fakes.fake
+import no.nav.fager.fakes.testWithFakeApi
 import no.nav.fager.texas.TexasAuthConfig
-import org.junit.jupiter.api.extension.RegisterExtension
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 
 
 class Altinn2ClientTest {
-    companion object {
-
-        @RegisterExtension
-        @JvmField
-        val fakeTexas = FakeApi()
-
-        @RegisterExtension
-        @JvmField
-        val fakeAltinn2 = FakeApi()
-    }
 
     @Test
-    fun `altinn 2 klient håndterer null verdier`() = runBlocking {
+    fun `altinn 2 klient håndterer null verdier`() = testWithFakeApi { fakeTexas ->
         fakeTexas.stubs[HttpMethod.Post to "/token"] = {
             call.respondText(
                 //language=json
@@ -39,9 +28,11 @@ class Altinn2ClientTest {
                 ContentType.Application.Json
             )
         }
-        val responses = mutableListOf(
-            //language=json
-            """[
+
+        testWithFakeApi { fakeAltinn2 ->
+            val responses = mutableListOf(
+                //language=json
+                """[
             {
               "Name": "Nore Ply",
               "Type": "Person",
@@ -55,21 +46,22 @@ class Altinn2ClientTest {
               "Type": "Person"
             }
             ]""".trimIndent(),
-        )
-        fakeAltinn2.stubs[Get to "/api/serviceowner/reportees"] = {
-            call.respondText(
-                responses.removeFirstOrNull() ?: "[]", ContentType.Application.Json
             )
-        }
+            fakeAltinn2.stubs[Get to "/api/serviceowner/reportees"] = {
+                call.respondText(
+                    responses.removeFirstOrNull() ?: "[]", ContentType.Application.Json
+                )
+            }
 
-        val altinn2Client = Altinn2ClientImpl(
-            altinn2Config = Altinn2Config.fake(fakeAltinn2),
-            texasAuthConfig = TexasAuthConfig.fake(fakeTexas)
-        )
+            val altinn2Client = Altinn2ClientImpl(
+                altinn2Config = Altinn2Config.fake(fakeAltinn2),
+                texasAuthConfig = TexasAuthConfig.fake(fakeTexas)
+            )
 
-        altinn2Client.hentAltinn2Tilganger("42").let {
-            assertFalse(it.isError)
-            assertEquals(0, it.orgNrTilTjenester.size)
+            altinn2Client.hentAltinn2Tilganger("42").let {
+                assertFalse(it.isError)
+                assertEquals(0, it.orgNrTilTjenester.size)
+            }
         }
     }
 }
