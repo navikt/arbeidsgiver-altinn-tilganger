@@ -102,6 +102,8 @@ spec:
           namespace: teamforeldrepenger
         - application: esyfo-narmesteleder
           namespace: team-esyfo
+        - application: arkivporten
+          namespace: team-esyfo
     outbound:
       external:
         - host: platform.altinn.no
