@@ -74,7 +74,19 @@ val KnownResources = basedOnEnv(
         Resource(
             resourceId = "nav_rekruttering_stillingsannonser",
             altinn2Tjeneste = listOf()
-        )
+        ),
+        Resource(
+            resourceId = "nav_syfo_dialogmote",
+            altinn2Tjeneste = listOf(),
+        ),
+        Resource(
+            resourceId = "nav_syfo_oppfolgingsplan",
+            altinn2Tjeneste = listOf(),
+        ),
+        Resource(
+            resourceId = "nav_syfo_oppgi-narmesteleder",
+            altinn2Tjeneste = listOf(),
+        ),
     ),
     other = listOfNotNull(
         Resource(
