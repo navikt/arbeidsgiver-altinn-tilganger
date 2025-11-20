@@ -38,11 +38,13 @@ val KnownResources = listOfNotNull(
         resourceId = "nav_forebygge-og-redusere-sykefravar_sykefravarsstatistikk", //OBS! DENNE HAR SERVICE EDITION 2 I PROD
         altinn2Tjeneste = listOf(Altinn2Tjeneste("3403", "2")),
         availableInOther = false,
+        availableInProduction = true,
     ),
     Resource(
         resourceId = "nav_forebygge-og-redusere-sykefravar_sykefravarsstatistikk", //OBS! DENNE HAR SERVICE EDITION 2 I PROD
         altinn2Tjeneste = listOf(Altinn2Tjeneste("3403", "1")),
         availableInProduction = false,
+        availableInOther = true,
     ),
     Resource(
         resourceId = "nav_forebygge-og-redusere-sykefravar_ia-samarbeid",
