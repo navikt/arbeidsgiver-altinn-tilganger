@@ -20,145 +20,89 @@ import kotlin.time.toJavaDuration
  * Denne mappingen kunne vi kanskje slått opp automatisk fra https://platform.tt02.altinn.no/resourceregistry/api/v1/resource/search?Id=nav_arbeidsforhold
  * se feltet resourceReferences
  */
-val KnownResources = basedOnEnv(
-    prod = listOfNotNull(
-        Resource(
-            resourceId = "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger",
-            altinn2Tjeneste = listOf(Altinn2Tjeneste("5810", "1"))
-        ),
-        Resource(
-            resourceId = "nav_sosialtjenester_digisos-avtale",
-            altinn2Tjeneste = listOf(Altinn2Tjeneste("5867", "1"))
-        ),
-        Resource(
-            resourceId = "nav_forebygge-og-redusere-sykefravar_sykefravarsstatistikk", //OBS! DENNE HAR SERVICE EDITION 2 I PROD
-            altinn2Tjeneste = listOf(Altinn2Tjeneste("3403", "2"))
-        ),
-        Resource(
-            resourceId = "nav_forebygge-og-redusere-sykefravar_ia-samarbeid",
-            altinn2Tjeneste = listOf()
-        ),
-        Resource(
-            resourceId = "nav_utbetaling_endre-kontonummer-refusjon-arbeidsgiver",
-            altinn2Tjeneste = listOf(Altinn2Tjeneste("2896", "87"))
-        ),
-        Resource(
-            resourceId = "nav_tiltak_tiltaksrefusjon",
-            altinn2Tjeneste = listOf() // ny tjeneste som før var del av 4936:1. tilgang til ny tjeneste betyr ikke tilgang til gammel tjeneste
-        ),
-//        ikke tilgjengelig i prod enda
-//        Resource(
-//            resourceId = "nav_tiltak_ekspertbistand",
-//            altinn2Tjeneste = listOf() // ny tjeneste som før var 5384:1. tilgang til ny tjeneste betyr ikke tilgang til gammel tjeneste
-//        ),
-        Resource(
-            resourceId = "nav_foreldrepenger_inntektsmelding",
-            altinn2Tjeneste = listOf() // ny tjeneste som før var del av 4936:1. tilgang til ny tjeneste betyr ikke tilgang til gammel tjeneste
-        ),
-        Resource(
-            resourceId = "nav_arbeidsforhold_aa-registeret-innsyn-arbeidsgiver",
-            altinn2Tjeneste = listOf(Altinn2Tjeneste("5441", "1"))
-        ),
-        Resource(
-            resourceId = "nav_arbeidsforhold_aa-registeret-brukerstotte",
-            altinn2Tjeneste = listOf(Altinn2Tjeneste("5441", "2"))
-        ),
-        Resource(
-            resourceId = "nav_arbeidsforhold_aa-registeret-sok-tilgang",
-            altinn2Tjeneste = listOf(Altinn2Tjeneste("5719", "1"))
-        ),
-        Resource(
-            resourceId = "nav_arbeidsforhold_aa-registeret-oppslag-samarbeidspartnere",
-            altinn2Tjeneste = listOf(Altinn2Tjeneste("5723", "1"))
-        ),
-        Resource(
-            resourceId = "nav_rekruttering_stillingsannonser",
-            altinn2Tjeneste = listOf()
-        ),
-        Resource(
-            resourceId = "nav_syfo_dialogmote",
-            altinn2Tjeneste = listOf(),
-        ),
-        Resource(
-            resourceId = "nav_syfo_oppfolgingsplan",
-            altinn2Tjeneste = listOf(),
-        ),
-        Resource(
-            resourceId = "nav_syfo_oppgi-narmesteleder",
-            altinn2Tjeneste = listOf(),
-        ),
+val KnownResources = listOfNotNull(
+    Resource(
+        resourceId = "test-fager",
+        altinn2Tjeneste = listOf(),
+        availableInProduction = false,
     ),
-    other = listOfNotNull(
-        Resource(
-            resourceId = "test-fager",
-            altinn2Tjeneste = listOf()
-        ),
-        Resource(
-            resourceId = "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger",
-            altinn2Tjeneste = listOf(Altinn2Tjeneste("5810", "1"))
-        ),
-        Resource(
-            resourceId = "nav_sosialtjenester_digisos-avtale",
-            altinn2Tjeneste = listOf(Altinn2Tjeneste("5867", "1"))
-        ),
-        Resource(
-            resourceId = "nav_forebygge-og-redusere-sykefravar_sykefravarsstatistikk", //OBS! DENNE HAR SERVICE EDITION 2 I PROD
-            altinn2Tjeneste = listOf(Altinn2Tjeneste("3403", "1"))
-        ),
-        Resource(
-            resourceId = "nav_forebygge-og-redusere-sykefravar_ia-samarbeid",
-            altinn2Tjeneste = listOf()
-        ),
-        Resource(
-            resourceId = "nav_utbetaling_endre-kontonummer-refusjon-arbeidsgiver",
-            altinn2Tjeneste = listOf(Altinn2Tjeneste("2896", "87"))
-        ),
-        Resource(
-            resourceId = "nav_tiltak_tiltaksrefusjon",
-            altinn2Tjeneste = listOf() // ny tjeneste som før var del av 4936:1. tilgang til ny tjeneste betyr ikke tilgang til gammel tjeneste
-        ),
-        Resource(
-            resourceId = "nav_tiltak_ekspertbistand",
-            altinn2Tjeneste = listOf() // ny tjeneste som før var 5384:1. tilgang til ny tjeneste betyr ikke tilgang til gammel tjeneste
-        ),
-        Resource(
-            resourceId = "nav_foreldrepenger_inntektsmelding",
-            altinn2Tjeneste = listOf() // ny tjeneste som før var del av 4936:1. tilgang til ny tjeneste betyr ikke tilgang til gammel tjeneste
-        ),
-        Resource(
-            resourceId = "nav_arbeidsforhold_aa-registeret-innsyn-arbeidsgiver",
-            altinn2Tjeneste = listOf(Altinn2Tjeneste("5441", "1"))
-        ),
-        Resource(
-            resourceId = "nav_arbeidsforhold_aa-registeret-brukerstotte",
-            altinn2Tjeneste = listOf(Altinn2Tjeneste("5441", "2"))
-        ),
-        Resource(
-            resourceId = "nav_arbeidsforhold_aa-registeret-sok-tilgang",
-            altinn2Tjeneste = listOf(Altinn2Tjeneste("5719", "1"))
-        ),
-        Resource(
-            resourceId = "nav_arbeidsforhold_aa-registeret-oppslag-samarbeidspartnere",
-            altinn2Tjeneste = listOf(Altinn2Tjeneste("5723", "1"))
-        ),
-        Resource(
-            resourceId = "nav_rekruttering_stillingsannonser",
-            altinn2Tjeneste = listOf()
-        ),
-        Resource(
-            resourceId = "nav_syfo_dialogmote",
-            altinn2Tjeneste = listOf(),
-        ),
-        Resource(
-            resourceId = "nav_syfo_oppfolgingsplan",
-            altinn2Tjeneste = listOf(),
-        ),
-        Resource(
-            resourceId = "nav_syfo_oppgi-narmesteleder",
-            altinn2Tjeneste = listOf(),
-        ),
+    Resource(
+        resourceId = "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger",
+        altinn2Tjeneste = listOf(Altinn2Tjeneste("5810", "1")),
+    ),
+    Resource(
+        resourceId = "nav_sosialtjenester_digisos-avtale",
+        altinn2Tjeneste = listOf(Altinn2Tjeneste("5867", "1")),
+    ),
+    Resource(
+        resourceId = "nav_forebygge-og-redusere-sykefravar_sykefravarsstatistikk", //OBS! DENNE HAR SERVICE EDITION 2 I PROD
+        altinn2Tjeneste = listOf(Altinn2Tjeneste("3403", "2")),
+        availableInOther = false,
+    ),
+    Resource(
+        resourceId = "nav_forebygge-og-redusere-sykefravar_sykefravarsstatistikk", //OBS! DENNE HAR SERVICE EDITION 2 I PROD
+        altinn2Tjeneste = listOf(Altinn2Tjeneste("3403", "1")),
+        availableInProduction = false,
+    ),
+    Resource(
+        resourceId = "nav_forebygge-og-redusere-sykefravar_ia-samarbeid",
+        altinn2Tjeneste = listOf(),
+    ),
+    Resource(
+        resourceId = "nav_utbetaling_endre-kontonummer-refusjon-arbeidsgiver",
+        altinn2Tjeneste = listOf(Altinn2Tjeneste("2896", "87")),
+    ),
+    Resource(
+        resourceId = "nav_tiltak_tiltaksrefusjon",
+        altinn2Tjeneste = listOf(), // ny tjeneste som før var del av 4936:1. tilgang til ny tjeneste betyr ikke tilgang til gammel tjeneste
+    ),
+    Resource(
+        resourceId = "nav_tiltak_ekspertbistand",
+        altinn2Tjeneste = listOf(), // ny tjeneste som før var 5384:1. tilgang til ny tjeneste betyr ikke tilgang til gammel tjeneste
+        availableInProduction = false,
+    ),
+    Resource(
+        resourceId = "nav_foreldrepenger_inntektsmelding",
+        altinn2Tjeneste = listOf(), // ny tjeneste som før var del av 4936:1. tilgang til ny tjeneste betyr ikke tilgang til gammel tjeneste
+    ),
+    Resource(
+        resourceId = "nav_arbeidsforhold_aa-registeret-innsyn-arbeidsgiver",
+        altinn2Tjeneste = listOf(Altinn2Tjeneste("5441", "1")),
+    ),
+    Resource(
+        resourceId = "nav_arbeidsforhold_aa-registeret-brukerstotte",
+        altinn2Tjeneste = listOf(Altinn2Tjeneste("5441", "2")),
+    ),
+    Resource(
+        resourceId = "nav_arbeidsforhold_aa-registeret-sok-tilgang",
+        altinn2Tjeneste = listOf(Altinn2Tjeneste("5719", "1")),
+    ),
+    Resource(
+        resourceId = "nav_arbeidsforhold_aa-registeret-oppslag-samarbeidspartnere",
+        altinn2Tjeneste = listOf(Altinn2Tjeneste("5723", "1")),
+    ),
+    Resource(
+        resourceId = "nav_rekruttering_stillingsannonser",
+        altinn2Tjeneste = listOf(),
+    ),
+    Resource(
+        resourceId = "nav_syfo_dialogmote",
+        altinn2Tjeneste = listOf(),
+    ),
+    Resource(
+        resourceId = "nav_syfo_oppfolgingsplan",
+        altinn2Tjeneste = listOf(),
+    ),
+    Resource(
+        resourceId = "nav_syfo_oppgi-narmesteleder",
+        altinn2Tjeneste = listOf(),
+    ),
+).filter {
+    basedOnEnv(
+        prod = { it.availableInProduction },
+        other = { it.availableInOther },
     )
-)
+}
 
 val KnownResourceIds = KnownResources.map { it.resourceId }
 val KnownAltinn2Tjenester = (Altinn2Tjenester + KnownResources.flatMap {
@@ -282,7 +226,9 @@ class ResourceRegistry(
 
 data class Resource(
     val resourceId: ResourceId,
-    val altinn2Tjeneste: List<Altinn2Tjeneste>
+    val altinn2Tjeneste: List<Altinn2Tjeneste>,
+    val availableInProduction: Boolean = true,
+    val availableInOther: Boolean = true,
 )
 
 typealias ResourceId = String
