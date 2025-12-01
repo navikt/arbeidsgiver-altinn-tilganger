@@ -23,15 +23,16 @@ fun defaultHttpClient(
 ) = HttpClient(CIO) {
     expectSuccess = true
     install(HttpRequestRetry) {
-        retryOnServerErrors(3)
+//        retryOnServerErrors(3)
         retryOnExceptionIf(3) { _, cause ->
             when (cause) {
-                is SocketTimeoutException,
-                is ConnectTimeoutException,
+//                is SocketTimeoutException,
+//                is ConnectTimeoutException,
                 is EOFException,
                 is SSLHandshakeException,
                 is ClosedReceiveChannelException,
-                is HttpRequestTimeoutException -> true
+//                is HttpRequestTimeoutException
+                    -> true
 
                 else -> false
             }
