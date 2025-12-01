@@ -236,6 +236,9 @@ data class Resource(
 typealias ResourceId = String
 
 
+typealias PolicySubjectUrn = String
+typealias PolicySubjectType = String
+
 @Serializable
 class PolicySubject(
     /**
@@ -256,7 +259,3 @@ class PolicySubject(
 class PolicySubjectResponseWrapper(
     val data: List<PolicySubject>
 )
-
-
-typealias PolicySubjectUrn = String
-typealias PolicySubjectType = String
