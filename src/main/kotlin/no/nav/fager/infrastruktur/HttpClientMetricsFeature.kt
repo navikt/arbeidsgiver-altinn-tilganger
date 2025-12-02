@@ -1,7 +1,6 @@
 package no.nav.fager.infrastruktur
 
 import io.ktor.client.HttpClient
-import io.ktor.client.call.HttpClientCall
 import io.ktor.client.plugins.HttpClientPlugin
 import io.ktor.client.plugins.HttpSend
 import io.ktor.client.plugins.plugin
@@ -23,10 +22,12 @@ import io.micrometer.core.instrument.Timer
  */
 class HttpClientMetricsFeature internal constructor(
     private val registry: MeterRegistry,
-    private val clientName: String,
+    clientName: String,
     private val staticPath: String?,
     private val canonicalizer: ((String) -> String)? = null,
 ) {
+    private val requestTimeTimerName = "$clientName.requests"
+
     /**
      * [HttpClientMetricsFeature] configuration that is used during installation
      */
@@ -48,18 +49,18 @@ class HttpClientMetricsFeature internal constructor(
         )
     }
 
-    private fun after(call: HttpClientCall, context: HttpRequestBuilder) {
-        val measure = call.attributes.getOrNull(measureKey) ?: return
+    private fun record(context: HttpRequestBuilder, method: String, status: String) {
+        val measure = context.attributes.getOrNull(measureKey) ?: return
 
         measure.timer.stop(
             Timer.builder(requestTimeTimerName).tags(
                 listOf(
-                    Tag.of("method", call.request.method.value),
+                    Tag.of("method", method),
                     Tag.of(
                         "url",
                         "${context.url.protocol.name}://${context.url.host}:${context.url.port}${measure.path}"
                     ),
-                    Tag.of("status", call.response.status.value.toString()),
+                    Tag.of("status", status),
                 )
             ).register(registry)
         )
@@ -70,11 +71,6 @@ class HttpClientMetricsFeature internal constructor(
      */
     @Suppress("EXPERIMENTAL_API_USAGE_FUTURE_ERROR")
     companion object Feature : HttpClientPlugin<Config, HttpClientMetricsFeature> {
-        private var clientName: String = "ktor.http.client"
-
-        val requestTimeTimerName: String
-            get() = "$clientName.requests"
-
         private val measureKey = AttributeKey<ClientCallMeasure>("HttpClientMetricsFeature")
         override val key: AttributeKey<HttpClientMetricsFeature> = AttributeKey("HttpClientMetricsFeature")
 
@@ -89,15 +85,17 @@ class HttpClientMetricsFeature internal constructor(
             }
 
         override fun install(plugin: HttpClientMetricsFeature, scope: HttpClient) {
-            clientName = plugin.clientName
-
             scope.plugin(HttpSend).intercept { context ->
                 plugin.before(context)
 
-                val origin = execute(context)
-                plugin.after(origin, context)
-
-                origin
+                try {
+                    val call = execute(context)
+                    plugin.record(context, call.request.method.value, call.response.status.value.toString())
+                    call
+                } catch (cause: Throwable) {
+                    plugin.record(context, context.method.value, "EXCEPTION:${cause::class.simpleName ?: "Unknown"}")
+                    throw cause
+                }
             }
         }
     }
