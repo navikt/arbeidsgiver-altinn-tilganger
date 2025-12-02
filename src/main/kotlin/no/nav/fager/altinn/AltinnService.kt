@@ -1,6 +1,5 @@
 package no.nav.fager.altinn
 
-import io.micrometer.core.instrument.Counter
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -25,16 +24,8 @@ class AltinnService(
     }
 
     private val timer = Metrics.meterRegistry.timer("altinnservice.hentTilgangerFraAltinn")
-    private val cacheHit = Counter.builder("altinnservice.cache").tag("result", "hit").register(Metrics.meterRegistry)
-    private val cacheMiss = Counter.builder("altinnservice.cache").tag("result", "miss").register(Metrics.meterRegistry)
-    private val altinnCountOk =
-        Counter.builder("altinnservice.hentTilgangerFraAltinn.counter")
-            .tag("isError", "false")
-            .register(Metrics.meterRegistry)
-    private val altinnCountError =
-        Counter.builder("altinnservice.hentTilgangerFraAltinn.counter")
-            .tag("isError", "true")
-            .register(Metrics.meterRegistry)
+    private val cacheCount = Metrics.counter("altinnservice.cache")
+    private val altinnCount = Metrics.counter("altinnservice.altinn")
 
     suspend fun hentTilganger(
         fnr: String,
@@ -42,15 +33,14 @@ class AltinnService(
     ): AltinnTilgangerResultat {
         val cacheKey = "$fnr-$CACHE_VERSION"
         val result = redisClient.get(cacheKey)?.also {
-            cacheHit.increment()
+            cacheCount.increment("result" to "hit")
         } ?: run {
-            cacheMiss.increment()
+            cacheCount.increment("result" to "miss")
+
             withContext(NonCancellable) { // Midlertidig workaround for å unngå cancellation exceptions (https://youtrack.jetbrains.com/projects/KTOR/issues/KTOR-8478/CIO-There-is-no-graceful-shutdown-when-calling-the-servers-stop-method)
                 hentTilgangerFraAltinn(fnr).also {
-                    if (it.isError) {
-                        altinnCountError.increment()
-                    } else {
-                        altinnCountOk.increment()
+                    altinnCount.increment("isError" to "${it.isError}")
+                    if (!it.isError) {
                         redisClient.set(cacheKey, it)
                     }
                 }
