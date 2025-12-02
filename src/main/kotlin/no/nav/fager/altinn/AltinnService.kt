@@ -27,6 +27,14 @@ class AltinnService(
     private val timer = Metrics.meterRegistry.timer("altinnservice.hentTilgangerFraAltinn")
     private val cacheHit = Counter.builder("altinnservice.cache").tag("result", "hit").register(Metrics.meterRegistry)
     private val cacheMiss = Counter.builder("altinnservice.cache").tag("result", "miss").register(Metrics.meterRegistry)
+    private val altinnCountOk =
+        Counter.builder("altinnservice.hentTilgangerFraAltinn.counter")
+            .tag("isError", "false")
+            .register(Metrics.meterRegistry)
+    private val altinnCountError =
+        Counter.builder("altinnservice.hentTilgangerFraAltinn.counter")
+            .tag("isError", "true")
+            .register(Metrics.meterRegistry)
 
     suspend fun hentTilganger(
         fnr: String,
@@ -39,7 +47,10 @@ class AltinnService(
             cacheMiss.increment()
             withContext(NonCancellable) { // Midlertidig workaround for å unngå cancellation exceptions (https://youtrack.jetbrains.com/projects/KTOR/issues/KTOR-8478/CIO-There-is-no-graceful-shutdown-when-calling-the-servers-stop-method)
                 hentTilgangerFraAltinn(fnr).also {
-                    if (!it.isError) {
+                    if (it.isError) {
+                        altinnCountError.increment()
+                    } else {
+                        altinnCountOk.increment()
                         redisClient.set(cacheKey, it)
                     }
                 }
