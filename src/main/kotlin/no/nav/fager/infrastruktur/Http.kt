@@ -4,9 +4,11 @@ import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.engine.cio.CIOEngineConfig
+import io.ktor.client.network.sockets.ConnectTimeoutException
 import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.Logging
+import io.ktor.network.sockets.SocketTimeoutException
 import io.ktor.serialization.kotlinx.json.json
 import io.micrometer.core.instrument.Timer
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
@@ -21,15 +23,14 @@ fun defaultHttpClient(
 ) = HttpClient(CIO) {
     expectSuccess = true
     install(HttpRequestRetry) {
-//        retryOnServerErrors(3)
+        retryOnServerErrors(3)
         retryOnExceptionIf(3) { _, cause ->
             when (cause) {
-//                is SocketTimeoutException,
-//                is ConnectTimeoutException,
+                is SocketTimeoutException,
+                is ConnectTimeoutException,
                 is EOFException,
                 is SSLHandshakeException,
                 is ClosedReceiveChannelException,
-//                is HttpRequestTimeoutException
                     -> true
 
                 else -> false
