@@ -36,7 +36,7 @@ class HttpClientMetricsFeature internal constructor(
     private val registry: MeterRegistry,
     private val clientName: String,
     private val staticPath: String?,
-    private val canonicalizer: ((String) -> String)? = defaultCanonicalizer,
+    private val canonicalizer: ((String) -> String)?,
 ) {
     /**
      * [HttpClientMetricsFeature] configuration that is used during installation
@@ -45,7 +45,7 @@ class HttpClientMetricsFeature internal constructor(
         var clientName: String = "ktor.http.client"
         lateinit var registry: MeterRegistry
         var staticPath: String? = null
-        var canonicalizer: ((String) -> String)? = null
+        var canonicalizer: ((String) -> String)? = defaultCanonicalizer
 
         internal fun isRegistryInitialized() = this::registry.isInitialized
     }
