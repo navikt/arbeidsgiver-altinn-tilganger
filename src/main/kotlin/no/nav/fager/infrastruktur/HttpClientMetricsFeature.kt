@@ -12,6 +12,17 @@ import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.Tag
 import io.micrometer.core.instrument.Timer
 
+val defaultCanonicalizer: (String) -> String = { path ->
+    path
+        // match standard UUIDs (36 chars, including dashes)
+        .replace(Regex("[0-9a-fA-F-]{36}"), "{uuid}")
+        // match 11-digit FNR
+        .replace(Regex("\\b\\d{11}\\b"), "{fnr}")
+        // match 9-digit ORGNR
+        .replace(Regex("\\b\\d{9}\\b"), "{orgnr}")
+        // match other numeric IDs
+        .replace(Regex("\\b\\d+\\b"), "{numeric}")
+}
 
 /**
  * inspired by [io.ktor.server.metrics.micrometer.MicrometerMetrics], but for clients.
@@ -25,7 +36,7 @@ class HttpClientMetricsFeature internal constructor(
     private val registry: MeterRegistry,
     private val clientName: String,
     private val staticPath: String?,
-    private val canonicalizer: ((String) -> String)? = null,
+    private val canonicalizer: ((String) -> String)? = defaultCanonicalizer,
 ) {
     /**
      * [HttpClientMetricsFeature] configuration that is used during installation
