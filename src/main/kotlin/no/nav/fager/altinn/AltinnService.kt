@@ -39,7 +39,7 @@ class AltinnService(
 
             withContext(NonCancellable) { // Midlertidig workaround for å unngå cancellation exceptions (https://youtrack.jetbrains.com/projects/KTOR/issues/KTOR-8478/CIO-There-is-no-graceful-shutdown-when-calling-the-servers-stop-method)
                 hentTilgangerFraAltinn(fnr).also {
-                    altinnCount.increment("isError" to "${it.isError}")
+                    altinnCount.increment("result" to if (it.isError) "isError" else "isOk")
                     if (!it.isError) {
                         redisClient.set(cacheKey, it)
                     }
