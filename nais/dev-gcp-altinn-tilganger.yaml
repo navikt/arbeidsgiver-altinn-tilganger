@@ -117,6 +117,9 @@ spec:
           namespace: fager
         - application: presenterte-kandidater-api
           namespace: toi
+        - application: dsop-kontroll
+          namespace: dsopkontroll
+          cluster: dev-fss
     outbound:
       external:
         - host: platform.tt02.altinn.no
