@@ -104,6 +104,9 @@ spec:
           namespace: team-esyfo
         - application: arkivporten
           namespace: team-esyfo
+        - application: dsop-kontroll
+          namespace: dsopkontroll
+          cluster: prod-fss
     outbound:
       external:
         - host: platform.altinn.no
