@@ -120,6 +120,8 @@ spec:
         - application: dsop-kontroll
           namespace: dsopkontroll
           cluster: dev-fss
+        - application: syfo-dokumentporten
+          namespace: team-esyfo
     outbound:
       external:
         - host: platform.tt02.altinn.no
