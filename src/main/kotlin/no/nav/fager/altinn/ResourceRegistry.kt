@@ -105,6 +105,11 @@ val KnownResources = listOfNotNull(
         altinn2Tjeneste = listOf(),
     ),
     Resource(
+        resourceId = "nav_kontroll_kontoopplysninger",
+        altinn2Tjeneste = listOf(),
+        availableInProduction = false,
+    ),
+    Resource(
         resourceId = "nav_rekruttering_kandidater",
         altinn2Tjeneste = listOf(Altinn2Tjeneste("5078", "1")),
         availableInProduction = false, // TODO: avklar om 5078:1 skal være med her før prodsetting
