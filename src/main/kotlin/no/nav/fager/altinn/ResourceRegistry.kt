@@ -104,6 +104,11 @@ val KnownResources = listOfNotNull(
         resourceId = "nav_syfo_oppgi-narmesteleder",
         altinn2Tjeneste = listOf(),
     ),
+    Resource(
+        resourceId = "nav_rekruttering_kandidater",
+        altinn2Tjeneste = listOf(Altinn2Tjeneste("5078", "1")),
+        availableInProduction = false, // TODO: avklar om 5078:1 skal være med her før prodsetting
+    ),
 ).filter {
     basedOnEnv(
         prod = { it.availableInProduction },
