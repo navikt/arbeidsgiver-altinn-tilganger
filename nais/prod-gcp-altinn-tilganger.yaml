@@ -109,6 +109,8 @@ spec:
           cluster: prod-fss
         - application: syfo-dokumentporten
           namespace: team-esyfo
+        - application: presenterte-kandidater-api
+          namespace: toi
     outbound:
       external:
         - host: platform.altinn.no
