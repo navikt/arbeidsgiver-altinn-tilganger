@@ -126,32 +126,36 @@ class Altinn2ClientImpl(
      * Konsekvensen av å sjekke tjenesten i altinn på en migrert tjeneste er at en bruker kanskje får tilgang til noe de ikke skal ha tilgang til.
      */
     suspend fun validerKjenteTjenesterFinnesIMetadata() {
-        tjenester.forEach { tjeneste ->
-            try {
-                metadataClient.get {
-                    url {
-                        takeFrom(altinn2Config.baseUrl)
-                        appendPathSegments("/api/metadata")
-                        parameters.append(
-                            "\$filter",
-                            "ServiceCode eq '${tjeneste.serviceCode}' and ServiceEditionCode eq ${tjeneste.serviceEdition}"
-                        )
-                    }
-                    accept(ContentType.Application.Json)
-                    contentType(ContentType.Application.Json)
-                }.body<JsonArray>().let { nodes ->
-                    if (nodes.isEmpty()) {
-                        log.error("Kjent Altinn2-tjeneste ${tjeneste.serviceCode}:${tjeneste.serviceEdition} finnes ikke i metadata-endepunktet. Tjenesten er sannsynligvis migrert.")
-                    }
-                }
-            } catch (e: Exception) {
-                e.rethrowIfCancellation()
-                log.error(
-                    "Klarte ikke å validere kjent Altinn2-tjeneste ${tjeneste.serviceCode}:${tjeneste.serviceEdition}",
-                    e
-                )
+        tjenester
+            .filterNot {
+                it.serviceCode == "5078" && it.serviceEdition == "1" // TODO: rekruttering er migrert, men skal fortsatt slås opp frem til beomtilgang er tilgjengelig
             }
-        }
+            .forEach { tjeneste ->
+                try {
+                    metadataClient.get {
+                        url {
+                            takeFrom(altinn2Config.baseUrl)
+                            appendPathSegments("/api/metadata")
+                            parameters.append(
+                                "\$filter",
+                                "ServiceCode eq '${tjeneste.serviceCode}' and ServiceEditionCode eq ${tjeneste.serviceEdition}"
+                            )
+                        }
+                        accept(ContentType.Application.Json)
+                        contentType(ContentType.Application.Json)
+                    }.body<JsonArray>().let { nodes ->
+                        if (nodes.isEmpty()) {
+                            log.error("Kjent Altinn2-tjeneste ${tjeneste.serviceCode}:${tjeneste.serviceEdition} finnes ikke i metadata-endepunktet. Tjenesten er sannsynligvis migrert.")
+                        }
+                    }
+                } catch (e: Exception) {
+                    e.rethrowIfCancellation()
+                    log.error(
+                        "Klarte ikke å validere kjent Altinn2-tjeneste ${tjeneste.serviceCode}:${tjeneste.serviceEdition}",
+                        e
+                    )
+                }
+            }
     }
 
     /**
