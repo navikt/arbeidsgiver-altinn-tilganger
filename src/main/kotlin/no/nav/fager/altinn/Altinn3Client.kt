@@ -2,6 +2,7 @@ package no.nav.fager.altinn
 
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.call.body
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.request.accept
 import io.ktor.client.request.get
 import io.ktor.client.request.header
@@ -50,6 +51,10 @@ class Altinn3ClientImpl(
         install(TexasAuthClientPlugin) {
             authClient = AuthClient(texasAuthConfig, IdentityProvider.MASKINPORTEN)
             fetchToken = { it.token("altinn:accessmanagement/authorizedparties.resourceowner") }
+        }
+
+        install(HttpTimeout) {
+            this.requestTimeoutMillis = 60_000
         }
 
         configureHttp()

@@ -4,6 +4,7 @@ import io.ktor.client.HttpClientConfig
 import io.ktor.client.call.body
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.HttpRequestTimeoutException
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.request.accept
 import io.ktor.client.request.get
 import io.ktor.client.request.header
@@ -75,6 +76,10 @@ class Altinn2ClientImpl(
         install(TexasAuthClientPlugin) {
             authClient = AuthClient(texasAuthConfig, IdentityProvider.MASKINPORTEN)
             fetchToken = { it.token("altinn:serviceowner/reportees") }
+        }
+
+        install(HttpTimeout) {
+            requestTimeoutMillis = 60_000 // noen reqs mot altinn 2 tar lang tid pga stor payload
         }
 
         configureHttp()
