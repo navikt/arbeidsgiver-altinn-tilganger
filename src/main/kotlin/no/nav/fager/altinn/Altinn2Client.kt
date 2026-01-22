@@ -21,6 +21,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
+import no.nav.fager.infrastruktur.NaisEnvironment
 import no.nav.fager.infrastruktur.basedOnEnv
 import no.nav.fager.infrastruktur.defaultHttpClient
 import no.nav.fager.infrastruktur.logger
@@ -126,6 +127,11 @@ class Altinn2ClientImpl(
      * Konsekvensen av å sjekke tjenesten i altinn på en migrert tjeneste er at en bruker kanskje får tilgang til noe de ikke skal ha tilgang til.
      */
     suspend fun validerKjenteTjenesterFinnesIMetadata() {
+        if (NaisEnvironment.clusterName != "prod-gcp") {
+            // kun kjør validering i prod
+            return
+        }
+
         tjenester
             .filterNot {
                 it.serviceCode == "5078" && it.serviceEdition == "1" // TODO: rekruttering er migrert, men skal fortsatt slås opp frem til beomtilgang er tilgjengelig
