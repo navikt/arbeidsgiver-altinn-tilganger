@@ -72,6 +72,16 @@ val KnownResources = listOfNotNull(
         resourceId = "nav_foreldrepenger_inntektsmelding",
         altinn2Tjeneste = listOf(), // ny tjeneste som før var del av 4936:1. tilgang til ny tjeneste betyr ikke tilgang til gammel tjeneste
     ),
+    Resource( // TODO: HAG undersøker hvordan 4936:1 (altinn2 inntektsmelding) skal mappes til altinn3 ressurser
+        resourceId = "nav_sykepenger_inntektsmelding",
+        altinn2Tjeneste = listOf(),
+        availableInProduction = false
+    ),
+    Resource(
+        resourceId = "nav_sykepenger_fritak-arbeidsgiverperiode",
+        altinn2Tjeneste = listOf(),
+        availableInProduction = false,
+    ),
     Resource(
         resourceId = "nav_arbeidsforhold_aa-registeret-innsyn-arbeidsgiver",
         altinn2Tjeneste = listOf(Altinn2Tjeneste("5441", "1")),
