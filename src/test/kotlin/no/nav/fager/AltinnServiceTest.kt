@@ -433,8 +433,8 @@ class AltinnServiceTest {
         }
 
         tilganger.altinnTilganger.first { it.orgnr == "222222222" }.let { endaAnnet ->
-            // ingen altinn 2 tilganger
-            assertEquals(setOf(), endaAnnet.altinn2Tilganger)
+            // inntektsmelding fra vi urn:altinn:accesspackage:lonn-personopplysninger-saerlig-kategori som gir nav_foreldrepenger_inntektsmelding
+            assertEquals(setOf("4936:1"), endaAnnet.altinn2Tilganger)
             // fra accessRightPackage via resource mapping
             assertEquals(setOf("nav_foreldrepenger_inntektsmelding"), endaAnnet.altinn3Tilganger)
         }
