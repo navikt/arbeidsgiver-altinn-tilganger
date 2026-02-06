@@ -122,6 +122,8 @@ spec:
           cluster: dev-fss
         - application: syfo-dokumentporten
           namespace: team-esyfo
+        - application: melding-api
+          namespace: yrkesskade
     outbound:
       external:
         - host: platform.tt02.altinn.no

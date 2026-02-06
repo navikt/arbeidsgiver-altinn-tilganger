@@ -123,6 +123,11 @@ val KnownResources = listOfNotNull(
         resourceId = "nav_rekruttering_kandidater",
         altinn2Tjeneste = listOf(Altinn2Tjeneste("5078", "1")),
     ),
+    Resource(
+        resourceId = "nav_yrkesskade_skademelding",
+        altinn2Tjeneste = listOf(Altinn2Tjeneste("5902", "1")),
+        availableInProduction = false,
+    ),
 ).filter {
     basedOnEnv(
         prod = { it.availableInProduction },
