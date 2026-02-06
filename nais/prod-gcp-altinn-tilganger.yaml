@@ -113,6 +113,8 @@ spec:
           namespace: team-esyfo
         - application: presenterte-kandidater-api
           namespace: toi
+        - application: melding-api
+          namespace: yrkesskade
     outbound:
       external:
         - host: platform.altinn.no
