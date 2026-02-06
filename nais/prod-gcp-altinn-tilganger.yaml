@@ -104,6 +104,8 @@ spec:
           namespace: team-esyfo
         - application: arkivporten
           namespace: team-esyfo
+        - application: ekspertbistand-backend
+          namespace: fager
         - application: dsop-kontroll
           namespace: dsopkontroll
           cluster: prod-fss
