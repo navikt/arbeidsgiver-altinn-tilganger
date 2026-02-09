@@ -62,7 +62,7 @@ class Altinn3ClientImpl(
 
     /**
      * Swagger for api:
-     * https://docs.altinn.studio/api/accessmanagement/resourceowneropenapi/#/Authorized%20Parties/post_resourceowner_authorizedparties
+     * https://docs.altinn.studio/nb/api/accessmanagement/resourceowneropenapi/#/Authorized%20Parties/post_resourceowner_authorizedparties
      *
      * Se også:
      * https://docs.altinn.studio/nb/authorization/guides/integrating-link-service/
@@ -73,6 +73,31 @@ class Altinn3ClientImpl(
                 takeFrom(altinn3Config.baseUrl)
                 appendPathSegments("/accessmanagement/api/v1/resourceowner/authorizedparties")
                 parameters.append("includeAltinn2", "true")
+                parameters.append("includeAltinn3", "true")
+                parameters.append("includeRoles", "true")
+                parameters.append("includeAccessPackages", "true")
+                parameters.append("includeResources", "true")
+                parameters.append("includePartiesViaKeyRoles", "true")
+                parameters.append("includeSubParties", "true")
+                parameters.append("includeInactiveParties", "true")
+
+                /**
+                 * vi støtter ikke instansdelegering P.T.
+                 */
+                parameters.append("includeInstances", "false")
+
+                /**
+                 * burde på sikt være knyttet til [no.nav.fager.Filter.inkluderSlettede]
+                 */
+                parameters.append("includeInactiveParties", "true")
+
+                /**
+                 * følgende verdier kan ikke settes før altinn 2 er faset ut, da de vil resultere i virksomehter
+                 * som kommer via altinn 2 tjenester forsvinner fra resultatet. ref: https://digdir-samarbeid.slack.com/archives/C068V9FJQTD/p1769070020152079?thread_ts=1769064967.976879&cid=C068V9FJQTD
+                 */
+                //parameters.append("orgCode", "nav")
+                //parameters.appendAll("resourceId", KnownResourceIds)
+
             }
             accept(ContentType.Application.Json)
             contentType(ContentType.Application.Json)
