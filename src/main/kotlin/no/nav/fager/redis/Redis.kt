@@ -45,8 +45,8 @@ class RedisConfig(
                 JedisPoolConfig(),
                 /* host */ "127.0.0.1",
                 /* port */ 6379,
-                /* timeout */ 0,
-                /* password */ "123",
+                /* timeout */ 5000,
+                /* password */ null,
             )
         )
     }
