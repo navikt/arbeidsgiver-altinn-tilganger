@@ -60,8 +60,7 @@ val KnownResources = listOfNotNull(
     ),
     Resource(
         resourceId = "nav_tiltak_ekspertbistand",
-        altinn2Tjeneste = listOf(), // ny tjeneste som før var 5384:1. tilgang til ny tjeneste betyr ikke tilgang til gammel tjeneste
-        availableInProduction = false,
+        altinn2Tjeneste = listOf(Altinn2Tjeneste("5384", "1")),
     ),
     Resource(
         resourceId = "nav_foreldrepenger_inntektsmelding",
