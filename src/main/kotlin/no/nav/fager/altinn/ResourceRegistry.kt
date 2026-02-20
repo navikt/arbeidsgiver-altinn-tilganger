@@ -27,11 +27,6 @@ val KnownResources = listOfNotNull(
         availableInProduction = false,
     ),
     Resource(
-        resourceId = "nav_test_melding",
-        altinn2Tjeneste = listOf(),
-        availableInProduction = false,
-    ),
-    Resource(
         resourceId = "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger",
         altinn2Tjeneste = listOf(Altinn2Tjeneste("5810", "1")),
     ),
@@ -116,7 +111,6 @@ val KnownResources = listOfNotNull(
     Resource(
         resourceId = "nav_kontroll_kontoopplysninger",
         altinn2Tjeneste = listOf(),
-        availableInProduction = false,
     ),
     Resource(
         resourceId = "nav_rekruttering_kandidater",
