@@ -1,9 +1,6 @@
 name: Test, bygg, deploy
 on:
   push:
-    paths-ignore:
-      - nais/dev-gcp-redis.yaml
-      - nais/prod-gcp-redis.yaml
   workflow_dispatch:
   schedule:
     - cron: '0 6 * * 1' # bygg nytt image hver mandag morgen
@@ -18,7 +15,7 @@ jobs:
       id-token: write
     services:
       valkey:
-        image: valkey/valkey:7.2-alpine
+        image: valkey/valkey:8-alpine
         ports:
           - 6379:6379
         options: >-
@@ -46,35 +43,9 @@ jobs:
         with:
           team: fager
           tag: ${{ github.sha }}
-          salsa: false
 
     outputs:
       image: ${{ steps.gar-push.outputs.image }}
-      digest: ${{ steps.gar-push.outputs.digest }}
-
-  salsa:
-    name: attest and sign image
-    needs: [ build ]
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-    steps:
-      - uses: nais/login@v0
-        id: login
-        with:
-          project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
-          identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
-          team: fager
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: ${{ github.sha }}.bom.json
-          path: ./
-
-      - uses: nais/attest-sign@v1
-        with:
-          image_ref: ${{ needs.build.outputs.image }}@${{ needs.build.outputs.digest }}
-          sbom: bom.json
 
   deploy-dev:
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
