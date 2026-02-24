@@ -324,11 +324,6 @@ private val tjenester = listOf(
         }
     ),
     Altinn2TjenesteDefinisjon(
-        serviceCode = "5384",
-        serviceEdition = "1",
-        serviceName = "Søknad om tilskudd til ekspertbistand",
-    ),
-    Altinn2TjenesteDefinisjon(
         serviceCode = "5516",
         serviceEdition = "1",
         serviceName = "Tiltakstjenester",
