@@ -73,7 +73,6 @@ val KnownResources = listOfNotNull(
     Resource(
         resourceId = "nav_sykepenger_fritak-arbeidsgiverperiode",
         altinn2Tjeneste = listOf(Altinn2Tjeneste("4936", "1")),
-        availableInProduction = false,
     ),
     Resource(
         resourceId = "nav_arbeidsforhold_aa-registeret-innsyn-arbeidsgiver",
