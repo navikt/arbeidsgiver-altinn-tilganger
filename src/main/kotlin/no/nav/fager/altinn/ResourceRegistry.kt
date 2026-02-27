@@ -77,7 +77,6 @@ val KnownResources = listOfNotNull(
     Resource(
         resourceId = "nav_sykdom-i-familien_inntektsmelding",
         altinn2Tjeneste = listOf(Altinn2Tjeneste("4936", "1")),
-        availableInProduction = false, // Kan settes til true når ressursen finnes i altinn prod: https://platform.altinn.no/resourceregistry/api/v1/resource/nav_sykdom-i-familien_inntektsmelding
     ),
     Resource(
         resourceId = "nav_arbeidsforhold_aa-registeret-innsyn-arbeidsgiver",
