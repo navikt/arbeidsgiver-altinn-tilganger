@@ -88,6 +88,9 @@ spec:
           namespace: helsearbeidsgiver
         - application: tiltak-refusjon-api
           namespace: arbeidsgiver
+        - application: tiltaksgjennomforing-api
+          namespace: arbeidsgiver
+          cluster: prod-fss
         - application: aareg-tilgangskontroll
           namespace: arbeidsforhold
           cluster: prod-gcp
