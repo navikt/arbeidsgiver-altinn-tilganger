@@ -97,6 +97,9 @@ spec:
           cluster: dev-fss
         - application: tiltak-refusjon-api
           namespace: arbeidsgiver
+        - application: tiltaksgjennomforing-api
+          namespace: arbeidsgiver
+          cluster: dev-fss
         - application: aareg-tilgangskontroll-q1
           namespace: arbeidsforhold
           cluster: dev-gcp
