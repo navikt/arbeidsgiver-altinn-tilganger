@@ -120,6 +120,8 @@ spec:
           namespace: yrkesskade
         - application: k9-inntektsmelding
           namespace: k9saksbehandling
+        - application: hm-roller
+          namespace: teamdigihot
     outbound:
       external:
         - host: platform.altinn.no
