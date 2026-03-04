@@ -123,6 +123,11 @@ val KnownResources = listOfNotNull(
         altinn2Tjeneste = listOf(Altinn2Tjeneste("5902", "1")),
         availableInProduction = false,
     ),
+    Resource(
+        resourceId = "nav_hjelpemidler_behovsmelding",
+        altinn2Tjeneste = listOf(), // migrert fra 5614:1, men ingen saker på dette i notifikasjonslpattformen
+        availableInProduction = false,
+    ),
 ).filter {
     basedOnEnv(
         prod = { it.availableInProduction },
