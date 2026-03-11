@@ -128,6 +128,11 @@ val KnownResources = listOfNotNull(
         altinn2Tjeneste = listOf(), // migrert fra 5614:1, men ingen saker på dette i notifikasjonslpattformen
         availableInProduction = false,
     ),
+    Resource(
+        resourceId = "nav_medlemskap-lovvalg_soknad",
+        altinn2Tjeneste = listOf(),
+        availableInProduction = false,
+    ),
 ).filter {
     basedOnEnv(
         prod = { it.availableInProduction },
