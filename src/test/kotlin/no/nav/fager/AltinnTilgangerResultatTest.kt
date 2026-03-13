@@ -4,6 +4,7 @@ import kotlinx.serialization.json.Json
 import no.nav.fager.altinn.AltinnService.AltinnTilgangerResultat
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class AltinnTilgangerResultatTest {
 
@@ -305,6 +306,8 @@ class AltinnTilgangerResultatTest {
                 altinnTilganger.alleOrgn()
             )
         }
+
+        assertTrue(sample.altinnTilganger.flatten { it.roller }.all { it.isEmpty() })
     }
 }
 

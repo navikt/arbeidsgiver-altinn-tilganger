@@ -396,6 +396,7 @@ components:
       required:
         - altinn2Tilganger
         - altinn3Tilganger
+        - roller
         - navn
         - organisasjonsform
         - orgnr
@@ -416,6 +417,14 @@ components:
           uniqueItems: true
           type: array
           description: Tilganger til Altinn 3
+          items:
+            title: String
+            type: string
+        roller:
+          title: Set<String>
+          uniqueItems: true
+          type: array
+          description: roller fra AuthorizedParty.authorizedRoles
           items:
             title: String
             type: string
@@ -511,6 +520,7 @@ components:
             erSlettet: false
             altinn3Tilganger: [ ]
             altinn2Tilganger: [ ]
+            roller: [ ]
             underenheter:
               - orgnr: '123456789'
                 erSlettet: false
@@ -519,6 +529,8 @@ components:
                   - tilgang2
                 altinn2Tilganger:
                   - serviceCode:serviceEdition
+                roller:
+                  - DAGL
                 underenheter: [ ]
                 navn: Organisasjon 2
                 organisasjonsform: BEDR
