@@ -119,6 +119,7 @@ class AltinnService(
                         altinn2Tilganger = altinn2Tilganger.orgNrTilTjenester[party.organizationNumber]?.map {
                             """${it.serviceCode}:${it.serviceEdition}"""
                         }?.toSet() ?: emptySet(),
+                        roller = party.authorizedRoles,
                         underenheter = mapToHierarchy(party.subunits, altinn2Tilganger),
                         erSlettet = party.isDeleted
                     )
