@@ -137,7 +137,7 @@ info:
     
     Siden vi kan legge til nye felter i responsene våre over tid, anbefaler vi at dere konfigurerer deserialisering til å tolerere ukjente felter.
     
-    ### Jackson (Kotlin/Java)
+    ### Jackson
     ```kotlin
         @JsonIgnoreProperties(ignoreUnknown = true)
         data class Foo ...
