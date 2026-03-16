@@ -6,6 +6,11 @@ Denne readme er ment for utviklere av applikasjonen.
 Dersom du vurderer å ta i bruk APIet bør du se den kjørende API dokumentasjonen her:
 https://arbeidsgiver-altinn-tilganger.intern.dev.nav.no/swagger-ui
 
+# Integrasjon med virksomhetsvelger
+API-responsen fra arbeidsgiver-altinn-tilganger er kompatibel med
+[virksomhetsvelger](https://github.com/navikt/virksomhetsvelger) og kan sendes
+videre uten transformering.
+
 # Token for dev-gcp
 Slik får du et bearer-token som godtas av api-et i dev-gcp (eller hvis du kjører appen 
 lokalt med dev-gcp-oppsett):
