@@ -142,7 +142,10 @@ class AltinnTilgangerTest {
             assertEquals(2, it.hierarki[0].underenheter.size)
             assertEquals(setOf("test-fager"), it.hierarki[0].underenheter[0].altinn3Tilganger)
             assertEquals(setOf("4936:1"), it.hierarki[0].underenheter[0].altinn2Tilganger)
+            assertEquals(emptySet(), it.hierarki[0].underenheter[0].roller)
+            assertEquals(setOf("DAGL"), it.hierarki[0].underenheter[1].roller)
             assertEquals(setOf("910825496", "910825554"), it.tilgangTilOrgNr["4936:1"])
+            assertEquals(null, it.tilgangTilOrgNr["DAGL"])
             assertEquals(setOf("test-fager", "4936:1"), it.orgNrTilTilganger["910825496"])
             assertEquals(
                 setOf(
@@ -334,6 +337,8 @@ class AltinnTilgangerTest {
                 it.hierarki[0].underenheter[0].altinn3Tilganger
             )
             assertEquals(setOf("4936:1", "5810:1"), it.hierarki[0].underenheter[0].altinn2Tilganger)
+            assertEquals(emptySet(), it.hierarki[0].underenheter[0].roller)
+            assertEquals(setOf("DAGL"), it.hierarki[0].underenheter[1].roller)
             assertEquals(setOf("910825496", "910825554"), it.tilgangTilOrgNr["4936:1"])
             assertEquals(
                 setOf(

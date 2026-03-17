@@ -63,11 +63,13 @@ private val altinnTilganger = AltinnTilgangerResultat(
             orgnr = "1",
             altinn3Tilganger = setOf("test-fager"),
             altinn2Tilganger = setOf("4936:1"),
+            roller = setOf("DAGL"),
             underenheter = listOf(
                 AltinnTilgang(
                     orgnr = "2",
                     altinn3Tilganger = setOf("test-fager"),
                     altinn2Tilganger = setOf("4936:1"),
+                    roller = emptySet(),
                     underenheter = listOf(),
                     navn = "Donald Duck & Co Avd. Andebyen",
                     organisasjonsform = "BEDR",

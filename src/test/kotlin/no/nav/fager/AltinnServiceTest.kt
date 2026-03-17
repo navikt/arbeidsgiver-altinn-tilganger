@@ -77,6 +77,7 @@ class AltinnServiceTest {
                             orgnr = "910825496",
                             altinn3Tilganger = setOf("test-fager"),
                             altinn2Tilganger = setOf("4936:1"),
+                            roller = emptySet(),
                             underenheter = listOf(),
                             navn = "SLEMMESTAD OG STAVERN REGNSKAP",
                             organisasjonsform = "BEDR",
@@ -105,6 +106,7 @@ class AltinnServiceTest {
                             orgnr = "910825496",
                             altinn3Tilganger = setOf("test-fager"),
                             altinn2Tilganger = setOf("4936:1"),
+                            roller = emptySet(),
                             underenheter = listOf(),
                             navn = "SLEMMESTAD OG STAVERN REGNSKAP",
                             organisasjonsform = "BEDR",
@@ -430,6 +432,7 @@ class AltinnServiceTest {
                 setOf("nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"),
                 annet.altinn3Tilganger
             )
+            assertEquals(setOf("LEDE"), annet.roller)
         }
 
         tilganger.altinnTilganger.first { it.orgnr == "222222222" }.let { endaAnnet ->
