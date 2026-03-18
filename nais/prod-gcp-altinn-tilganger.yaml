@@ -116,7 +116,7 @@ spec:
           namespace: team-esyfo
         - application: presenterte-kandidater-api
           namespace: toi
-        - application: melding-api
+        - application: yrkesskade-melding-api
           namespace: yrkesskade
         - application: k9-inntektsmelding
           namespace: k9saksbehandling
