@@ -709,6 +709,11 @@ components:
       description: >-
         Forespørsel for å opprette en delegeringsforespørsel som tjenesteeier.
         Se Altinn.AccessManagement.Api.ServiceOwner | v1 - CreateServiceOwnerRequest schema.
+
+
+        Merk: `resource.referenceId` må starte med `nav_`. Dette er for å sikre
+        at API-et kun brukes til å opprette delegeringsforespørsler for
+        NAV-ressurser. Forespørsler med ugyldig prefiks vil gi HTTP 400.
       properties:
         from:
           title: String
@@ -731,6 +736,11 @@ components:
         Forespørsel for å opprette en delegeringsforespørsel for den innloggede brukeren.
         Feltet 'from' settes automatisk fra brukerens fnr i tokenet.
         Se Altinn.AccessManagement.Api.ServiceOwner | v1 for detaljer.
+
+
+        Merk: `resource.referenceId` må starte med `nav_`. Dette er for å sikre
+        at API-et kun brukes til å opprette delegeringsforespørsler for
+        NAV-ressurser. Forespørsler med ugyldig prefiks vil gi HTTP 400.
       properties:
         to:
           title: String
@@ -755,6 +765,11 @@ components:
           title: String
           type: string
           nullable: true
+          pattern: '^nav_.*'
+          description: >-
+            Referanse-ID for ressursen. Må starte med `nav_` for å sikre at
+            det kun opprettes delegeringsforespørsler for NAV-ressurser.
+          example: "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"
     no.nav.fager.PartyEntityDto:
       title: PartyEntityDto
       type: object

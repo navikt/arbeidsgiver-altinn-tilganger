@@ -206,7 +206,7 @@ class AuthorizedParty(
     val subunits: List<AuthorizedParty>
 ) {
     /**
-     * in current api authorizedRoles is a list of LEDE/DAGL etc, an upper case variant of PolicySubject.value
+     * in current api authorizedRoles is a list of LEDE/DAGL etc., an upper case variant of PolicySubject.value
      * in v2 this will be a PolicySubjectUrn. So this is a temporary method to convert to urn.
      * this method should be removed when v2 is in place.
      */
@@ -222,6 +222,8 @@ class AuthorizedParty(
         get() = authorizedAccessPackages.map { "urn:altinn:accesspackage:$it" }.toSet()
 }
 
+private const val NAV_RESOURCE_PREFIX = "nav_"
+
 /**
  * Request body for creating a delegation request via the service owner API.
  * See: Altinn.AccessManagement.Api.ServiceOwner | v1 - CreateServiceOwnerRequest schema
@@ -233,7 +235,15 @@ data class CreateServiceOwnerRequest(
     val resource: RequestReferenceDto? = null,
     @SerialName("package")
     val accessPackage: RequestReferenceDto? = null,
-)
+) {
+    init {
+        resource?.referenceId?.let {
+            require(it.startsWith(NAV_RESOURCE_PREFIX)) {
+                "resource.referenceId must start with '$NAV_RESOURCE_PREFIX', got '$it'"
+            }
+        }
+    }
+}
 
 /**
  * User-facing request body for creating a delegation request.
@@ -246,6 +256,14 @@ data class CreateDelegationRequest(
     @SerialName("package")
     val accessPackage: RequestReferenceDto? = null,
 ) {
+    init {
+        resource?.referenceId?.let {
+            require(it.startsWith(NAV_RESOURCE_PREFIX)) {
+                "resource.referenceId must start with '$NAV_RESOURCE_PREFIX', got '$it'"
+            }
+        }
+    }
+
     fun toServiceOwnerRequest(fnr: String) = CreateServiceOwnerRequest(
         from = "urn:altinn:person:identifier-no:$fnr",
         to = to,
@@ -290,6 +308,7 @@ data class DelegationRequestResponse(
     val to: PartyEntityDto? = null,
 )
 
+@Suppress("unused")
 @Serializable
 enum class DelegationRequestStatus {
     None,
