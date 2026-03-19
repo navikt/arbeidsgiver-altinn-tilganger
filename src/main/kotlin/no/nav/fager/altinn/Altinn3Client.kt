@@ -139,7 +139,7 @@ class Altinn3ClientImpl(
                     listOf(
                         "altinn:serviceowner/delegationrequests.read",
                         "altinn:serviceowner/delegationrequests.write"
-                    ).joinToString(",")
+                    ).joinToString(" ")
                 )
             }
         }
