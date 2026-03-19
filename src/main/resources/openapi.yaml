@@ -337,6 +337,170 @@ paths:
       deprecated: false
       security:
         - BearerAuth: [ ]
+  /m2m/delegation-request:
+    post:
+      tags: [ ]
+      description: >-
+        Opprett en delegeringsforespørsel som tjenesteeier (service owner) via Altinn 3.
+        Krever M2M-token (Azure AD).
+        Se Altinn.AccessManagement.Api.ServiceOwner | v1 for detaljer.
+      parameters: [ ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/no.nav.fager.CreateServiceOwnerRequest'
+            examples:
+              create_delegation_request:
+                summary: Opprett delegeringsforespørsel
+                value:
+                  from: "urn:altinn:organization:identifier-no:123456789"
+                  to: "urn:altinn:organization:identifier-no:987654321"
+                  resource:
+                    referenceId: "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"
+        required: true
+      responses:
+        '202':
+          description: Accepted - delegeringsforespørselen er opprettet
+          headers: { }
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/no.nav.fager.DelegationRequestResponse'
+        '400':
+          description: Bad Request - ugyldig forespørsel
+        '401':
+          description: >-
+            Når vi ikke aksepterer tokenet du sendte i Authorization-headeren.
+          headers: { }
+        '502':
+          description: Bad Gateway - feil ved kommunikasjon med Altinn
+      deprecated: false
+      security:
+        - BearerAuth: [ ]
+  /m2m/delegation-request/{id}/status:
+    get:
+      tags: [ ]
+      description: >-
+        Hent status for en delegeringsforespørsel via Altinn 3.
+        Krever M2M-token (Azure AD).
+        Se Altinn.AccessManagement.Api.ServiceOwner | v1 for detaljer.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID for delegeringsforespørselen
+      responses:
+        '200':
+          description: OK
+          headers: { }
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/no.nav.fager.DelegationRequestStatus'
+        '400':
+          description: Bad Request - manglende eller ugyldig id
+        '401':
+          description: >-
+            Når vi ikke aksepterer tokenet du sendte i Authorization-headeren.
+          headers: { }
+        '502':
+          description: Bad Gateway - feil ved kommunikasjon med Altinn
+      deprecated: false
+      security:
+        - BearerAuth: [ ]
+  /delegation-request:
+    post:
+      tags: [ ]
+      description: >-
+        Opprett en delegeringsforespørsel som tjenesteeier (service owner) via Altinn 3
+        for den innloggede brukeren. Feltet 'from' settes automatisk fra innlogget brukers fnr.
+        Krever TokenX OBO-token.
+        Se Altinn.AccessManagement.Api.ServiceOwner | v1 for detaljer.
+      parameters: [ ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/no.nav.fager.CreateDelegationRequest'
+            examples:
+              create_delegation_request:
+                summary: Opprett delegeringsforespørsel
+                value:
+                  to: "urn:altinn:organization:identifier-no:987654321"
+                  resource:
+                    referenceId: "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"
+        required: true
+      responses:
+        '202':
+          description: Accepted - delegeringsforespørselen er opprettet
+          headers: { }
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/no.nav.fager.DelegationRequestResponse'
+        '400':
+          description: Bad Request - ugyldig forespørsel
+        '401':
+          description: >-
+            Når vi ikke aksepterer tokenet du sendte i Authorization-headeren.
+            Vi sjekker blant annet at tokenet:
+
+            - ikke er utgått
+
+            - har `acr`-claim med `Level4` eller `idporten-loa-high`
+
+            - har riktig audience og issuer (`aud` og `iss`)
+          headers: { }
+        '502':
+          description: Bad Gateway - feil ved kommunikasjon med Altinn
+      deprecated: false
+      security:
+        - BearerAuth: [ ]
+  /delegation-request/{id}/status:
+    get:
+      tags: [ ]
+      description: >-
+        Hent status for en delegeringsforespørsel via Altinn 3.
+        Krever TokenX OBO-token.
+        Se Altinn.AccessManagement.Api.ServiceOwner | v1 for detaljer.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID for delegeringsforespørselen
+      responses:
+        '200':
+          description: OK
+          headers: { }
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/no.nav.fager.DelegationRequestStatus'
+        '400':
+          description: Bad Request - manglende eller ugyldig id
+        '401':
+          description: >-
+            Når vi ikke aksepterer tokenet du sendte i Authorization-headeren.
+            Vi sjekker blant annet at tokenet:
+
+            - ikke er utgått
+
+            - har `acr`-claim med `Level4` eller `idporten-loa-high`
+
+            - har riktig audience og issuer (`aud` og `iss`)
+          headers: { }
+        '502':
+          description: Bad Gateway - feil ved kommunikasjon med Altinn
+      deprecated: false
+      security:
+        - BearerAuth: [ ]
 components:
   schemas:
     no.nav.fager.Filter:
@@ -539,6 +703,155 @@ components:
       properties:
         filter:
           $ref: '#/components/schemas/no.nav.fager.Filter'
+    no.nav.fager.CreateServiceOwnerRequest:
+      title: CreateServiceOwnerRequest
+      type: object
+      description: >-
+        Forespørsel for å opprette en delegeringsforespørsel som tjenesteeier.
+        Se Altinn.AccessManagement.Api.ServiceOwner | v1 - CreateServiceOwnerRequest schema.
+
+
+        Merk: `resource.referenceId` må starte med `nav_`. Dette er for å sikre
+        at API-et kun brukes til å opprette delegeringsforespørsler for
+        NAV-ressurser. Forespørsler med ugyldig prefiks vil gi HTTP 400.
+      properties:
+        from:
+          title: String
+          type: string
+          nullable: true
+          description: URN for avsender (f.eks. urn:altinn:organization:identifier-no:123456789)
+        to:
+          title: String
+          type: string
+          nullable: true
+          description: URN for mottaker (f.eks. urn:altinn:organization:identifier-no:987654321)
+        resource:
+          $ref: '#/components/schemas/no.nav.fager.RequestReferenceDto'
+        package:
+          $ref: '#/components/schemas/no.nav.fager.RequestReferenceDto'
+    no.nav.fager.CreateDelegationRequest:
+      title: CreateDelegationRequest
+      type: object
+      description: >-
+        Forespørsel for å opprette en delegeringsforespørsel for den innloggede brukeren.
+        Feltet 'from' settes automatisk fra brukerens fnr i tokenet.
+        Se Altinn.AccessManagement.Api.ServiceOwner | v1 for detaljer.
+
+
+        Merk: `resource.referenceId` må starte med `nav_`. Dette er for å sikre
+        at API-et kun brukes til å opprette delegeringsforespørsler for
+        NAV-ressurser. Forespørsler med ugyldig prefiks vil gi HTTP 400.
+      properties:
+        to:
+          title: String
+          type: string
+          nullable: true
+          description: URN for mottaker (f.eks. urn:altinn:organization:identifier-no:987654321)
+        resource:
+          $ref: '#/components/schemas/no.nav.fager.RequestReferenceDto'
+        package:
+          $ref: '#/components/schemas/no.nav.fager.RequestReferenceDto'
+    no.nav.fager.RequestReferenceDto:
+      title: RequestReferenceDto
+      type: object
+      nullable: true
+      properties:
+        id:
+          title: String
+          type: string
+          format: uuid
+          nullable: true
+        referenceId:
+          title: String
+          type: string
+          nullable: true
+          pattern: '^nav_.*'
+          description: >-
+            Referanse-ID for ressursen. Må starte med `nav_` for å sikre at
+            det kun opprettes delegeringsforespørsler for NAV-ressurser.
+          example: "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"
+    no.nav.fager.PartyEntityDto:
+      title: PartyEntityDto
+      type: object
+      nullable: true
+      properties:
+        id:
+          title: String
+          type: string
+          format: uuid
+        name:
+          title: String
+          type: string
+          nullable: true
+        type:
+          title: String
+          type: string
+          nullable: true
+        variant:
+          title: String
+          type: string
+          nullable: true
+        organizationIdentifier:
+          title: String
+          type: string
+          nullable: true
+        personIdentifier:
+          title: String
+          type: string
+          nullable: true
+    no.nav.fager.RequestLinksDto:
+      title: RequestLinksDto
+      type: object
+      nullable: true
+      properties:
+        detailsLink:
+          title: String
+          type: string
+          nullable: true
+        statusLink:
+          title: String
+          type: string
+          nullable: true
+    no.nav.fager.DelegationRequestResponse:
+      title: DelegationRequestResponse
+      type: object
+      description: Respons fra opprettelse av delegeringsforespørsel.
+      properties:
+        id:
+          title: String
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/no.nav.fager.DelegationRequestStatus'
+        type:
+          title: String
+          type: string
+          nullable: true
+        lastUpdated:
+          title: String
+          type: string
+          format: date-time
+        resource:
+          $ref: '#/components/schemas/no.nav.fager.RequestReferenceDto'
+        package:
+          $ref: '#/components/schemas/no.nav.fager.RequestReferenceDto'
+        links:
+          $ref: '#/components/schemas/no.nav.fager.RequestLinksDto'
+        from:
+          $ref: '#/components/schemas/no.nav.fager.PartyEntityDto'
+        to:
+          $ref: '#/components/schemas/no.nav.fager.PartyEntityDto'
+    no.nav.fager.DelegationRequestStatus:
+      title: DelegationRequestStatus
+      type: string
+      description: Status for en delegeringsforespørsel.
+      enum:
+        - None
+        - Draft
+        - Pending
+        - Approved
+        - Rejected
+        - Withdrawn
   examples:
     tilganger_success:
       value:

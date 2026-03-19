@@ -62,6 +62,8 @@ spec:
       consumes:
         - name: "altinn:accessmanagement/authorizedparties.resourceowner"
         - name: "altinn:serviceowner/reportees"
+        - name: "altinn:serviceowner/delegationrequests.read"
+        - name: "altinn:serviceowner/delegationrequests.write"
 
   accessPolicy:
     inbound:

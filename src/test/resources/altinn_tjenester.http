@@ -12,7 +12,7 @@ Accept: application/json
 ### https://docs.altinn.studio/api/resourceregistry/spec/#/Resource/get_resource_Search
 
 
-https://platform.tt02.altinn.no/resourceregistry/api/v1/resource/search?Id=nav_
+https://platform.tt02.altinn.no/resourceregistry/api/v1/resource/search?Id=nav_tiltak
 Accept: application/json
 
 ### resource registry policy

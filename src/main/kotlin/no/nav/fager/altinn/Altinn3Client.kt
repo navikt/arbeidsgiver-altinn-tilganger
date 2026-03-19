@@ -12,6 +12,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.appendPathSegments
 import io.ktor.http.contentType
 import io.ktor.http.takeFrom
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import no.nav.fager.infrastruktur.defaultHttpClient
 import no.nav.fager.texas.AuthClient
@@ -38,6 +39,8 @@ class Altinn3Config(
 interface Altinn3Client {
     suspend fun resourceOwner_AuthorizedParties(fnr: String): Result<List<AuthorizedParty>>
     suspend fun resourceRegistry_PolicySubjects(resourceId: String): Result<List<PolicySubject>>
+    suspend fun serviceOwner_CreateDelegationRequest(request: CreateServiceOwnerRequest): Result<DelegationRequestResponse>
+    suspend fun serviceOwner_GetDelegationRequestStatus(id: String): Result<DelegationRequestStatus>
 }
 
 
@@ -127,6 +130,67 @@ class Altinn3ClientImpl(
 
         httpResponse.body<PolicySubjectResponseWrapper>().data
     }
+
+    private val serviceOwnerClient = defaultHttpClient {
+        install(TexasAuthClientPlugin) {
+            authClient = AuthClient(texasAuthConfig, IdentityProvider.MASKINPORTEN)
+            fetchToken = {
+                it.token(
+                    listOf(
+                        "altinn:serviceowner/delegationrequests.read",
+                        "altinn:serviceowner/delegationrequests.write"
+                    ).joinToString(" ")
+                )
+            }
+        }
+
+        install(HttpTimeout) {
+            this.requestTimeoutMillis = 60_000
+        }
+
+        configureHttp()
+    }
+
+    /**
+     * Create a delegation request as service owner.
+     * See: Altinn.AccessManagement.Api.ServiceOwner | v1
+     * POST /accessmanagement/api/v1/serviceowner/delegationrequests
+     */
+    override suspend fun serviceOwner_CreateDelegationRequest(
+        request: CreateServiceOwnerRequest
+    ): Result<DelegationRequestResponse> = runCatching {
+        val httpResponse = serviceOwnerClient.post {
+            url {
+                takeFrom(altinn3Config.baseUrl)
+                appendPathSegments("/accessmanagement/api/v1/serviceowner/delegationrequests")
+            }
+            accept(ContentType.Application.Json)
+            contentType(ContentType.Application.Json)
+            header("ocp-apim-subscription-key", altinn3Config.ocpApimSubscriptionKey)
+            setBody(request)
+        }
+
+        httpResponse.body()
+    }
+
+    /**
+     * Get delegation request status.
+     * See: Altinn.AccessManagement.Api.ServiceOwner | v1
+     * GET /accessmanagement/api/v1/serviceowner/delegationrequests/{id}/status
+     */
+    override suspend fun serviceOwner_GetDelegationRequestStatus(id: String): Result<DelegationRequestStatus> =
+        runCatching {
+            val httpResponse = serviceOwnerClient.get {
+                url {
+                    takeFrom(altinn3Config.baseUrl)
+                    appendPathSegments("/accessmanagement/api/v1/serviceowner/delegationrequests/$id/status")
+                }
+                accept(ContentType.Application.Json)
+                header("ocp-apim-subscription-key", altinn3Config.ocpApimSubscriptionKey)
+            }
+
+            httpResponse.body()
+        }
 }
 
 @Serializable
@@ -142,7 +206,7 @@ class AuthorizedParty(
     val subunits: List<AuthorizedParty>
 ) {
     /**
-     * in current api authorizedRoles is a list of LEDE/DAGL etc, an upper case variant of PolicySubject.value
+     * in current api authorizedRoles is a list of LEDE/DAGL etc., an upper case variant of PolicySubject.value
      * in v2 this will be a PolicySubjectUrn. So this is a temporary method to convert to urn.
      * this method should be removed when v2 is in place.
      */
@@ -158,4 +222,99 @@ class AuthorizedParty(
         get() = authorizedAccessPackages.map { "urn:altinn:accesspackage:$it" }.toSet()
 }
 
+private const val NAV_RESOURCE_PREFIX = "nav_"
 
+/**
+ * Request body for creating a delegation request via the service owner API.
+ * See: Altinn.AccessManagement.Api.ServiceOwner | v1 - CreateServiceOwnerRequest schema
+ */
+@Serializable
+data class CreateServiceOwnerRequest(
+    val from: String? = null,
+    val to: String? = null,
+    val resource: RequestReferenceDto? = null,
+    @SerialName("package")
+    val accessPackage: RequestReferenceDto? = null,
+) {
+    init {
+        resource?.referenceId?.let {
+            require(it.startsWith(NAV_RESOURCE_PREFIX)) {
+                "resource.referenceId must start with '$NAV_RESOURCE_PREFIX', got '$it'"
+            }
+        }
+    }
+}
+
+/**
+ * User-facing request body for creating a delegation request.
+ * The 'from' field is derived from the logged-in user's fnr.
+ */
+@Serializable
+data class CreateDelegationRequest(
+    val to: String? = null,
+    val resource: RequestReferenceDto? = null,
+    @SerialName("package")
+    val accessPackage: RequestReferenceDto? = null,
+) {
+    init {
+        resource?.referenceId?.let {
+            require(it.startsWith(NAV_RESOURCE_PREFIX)) {
+                "resource.referenceId must start with '$NAV_RESOURCE_PREFIX', got '$it'"
+            }
+        }
+    }
+
+    fun toServiceOwnerRequest(fnr: String) = CreateServiceOwnerRequest(
+        from = "urn:altinn:person:identifier-no:$fnr",
+        to = to,
+        resource = resource,
+        accessPackage = accessPackage,
+    )
+}
+
+@Serializable
+data class RequestReferenceDto(
+    val id: String? = null,
+    val referenceId: String? = null,
+)
+
+@Serializable
+data class PartyEntityDto(
+    val id: String? = null,
+    val name: String? = null,
+    val type: String? = null,
+    val variant: String? = null,
+    val organizationIdentifier: String? = null,
+    val personIdentifier: String? = null,
+)
+
+@Serializable
+data class RequestLinksDto(
+    val detailsLink: String? = null,
+    val statusLink: String? = null,
+)
+
+@Serializable
+data class DelegationRequestResponse(
+    val id: String? = null,
+    val status: DelegationRequestStatus? = null,
+    val type: String? = null,
+    val lastUpdated: String? = null,
+    val resource: RequestReferenceDto? = null,
+    @SerialName("package")
+    val accessPackage: RequestReferenceDto? = null,
+    val links: RequestLinksDto? = null,
+    val from: PartyEntityDto? = null,
+    val to: PartyEntityDto? = null,
+)
+
+@Suppress("unused")
+@Serializable
+enum class DelegationRequestStatus {
+    None,
+    Draft,
+    Pending,
+    Approved,
+    Rejected,
+    Withdrawn,
+}

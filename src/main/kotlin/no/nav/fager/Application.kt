@@ -61,6 +61,8 @@ import no.nav.fager.altinn.Altinn2Config
 import no.nav.fager.altinn.Altinn3ClientImpl
 import no.nav.fager.altinn.Altinn3Config
 import no.nav.fager.altinn.AltinnService
+import no.nav.fager.altinn.CreateDelegationRequest
+import no.nav.fager.altinn.CreateServiceOwnerRequest
 import no.nav.fager.altinn.ResourceRegistry
 import no.nav.fager.infrastruktur.AutentisertM2MPrincipal
 import no.nav.fager.infrastruktur.Health
@@ -296,6 +298,37 @@ fun Application.ktorConfig(
                     )
                 }
             }
+
+            post("/delegation-request") {
+                val request = call.receive<CreateServiceOwnerRequest>()
+                val result = altinn3Client.serviceOwner_CreateDelegationRequest(request)
+                result.fold(
+                    onSuccess = { call.respond(HttpStatusCode.Accepted, it) },
+                    onFailure = {
+                        call.respond(
+                            HttpStatusCode.BadGateway,
+                            mapOf("error" to (it.message ?: "Unknown error"))
+                        )
+                    }
+                )
+            }
+
+            get("/delegation-request/{id}/status") {
+                val id = call.parameters["id"] ?: return@get call.respond(
+                    HttpStatusCode.BadRequest,
+                    mapOf("error" to "Missing id parameter")
+                )
+                val result = altinn3Client.serviceOwner_GetDelegationRequestStatus(id)
+                result.fold(
+                    onSuccess = { call.respond(it) },
+                    onFailure = {
+                        call.respond(
+                            HttpStatusCode.BadGateway,
+                            mapOf("error" to (it.message ?: "Unknown error"))
+                        )
+                    }
+                )
+            }
         }
 
         route("/whoami") {
@@ -341,6 +374,48 @@ fun Application.ktorConfig(
                         ).toResponse()
                     )
                 }
+            }
+        }
+
+        route("delegation-request") {
+            // tokenx obo authentication
+            install(TexasAuth) {
+                client = AuthClient(texasAuthConfig, IdentityProvider.TOKEN_X)
+                validate = { InnloggetBrukerPrincipal.validate(it) }
+            }
+
+            post {
+                val fnr = call.principal<InnloggetBrukerPrincipal>()!!.fnr
+                val request = call.receive<CreateDelegationRequest>()
+                val result = altinn3Client.serviceOwner_CreateDelegationRequest(
+                    request.toServiceOwnerRequest(fnr)
+                )
+                result.fold(
+                    onSuccess = { call.respond(HttpStatusCode.Accepted, it) },
+                    onFailure = {
+                        call.respond(
+                            HttpStatusCode.BadGateway,
+                            mapOf("error" to (it.message ?: "Unknown error"))
+                        )
+                    }
+                )
+            }
+
+            get("/{id}/status") {
+                val id = call.parameters["id"] ?: return@get call.respond(
+                    HttpStatusCode.BadRequest,
+                    mapOf("error" to "Missing id parameter")
+                )
+                val result = altinn3Client.serviceOwner_GetDelegationRequestStatus(id)
+                result.fold(
+                    onSuccess = { call.respond(it) },
+                    onFailure = {
+                        call.respond(
+                            HttpStatusCode.BadGateway,
+                            mapOf("error" to (it.message ?: "Unknown error"))
+                        )
+                    }
+                )
             }
         }
     }
