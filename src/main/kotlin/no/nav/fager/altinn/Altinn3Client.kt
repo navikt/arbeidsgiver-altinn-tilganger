@@ -137,8 +137,8 @@ class Altinn3ClientImpl(
             fetchToken = {
                 it.token(
                     listOf(
-                        "altinn:accessmanagement/delegationrequests.write",
-                        "altinn:accessmanagement/delegationrequests.read"
+                        "altinn:serviceowner/delegationrequests.read",
+                        "altinn:serviceowner/delegationrequests.write"
                     ).joinToString(",")
                 )
             }
