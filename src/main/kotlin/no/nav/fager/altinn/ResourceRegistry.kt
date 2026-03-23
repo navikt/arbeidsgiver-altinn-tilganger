@@ -59,6 +59,53 @@ val KnownResources = listOfNotNull(
         altinn2Tjeneste = listOf(), // ny tjeneste som før var del av 4936:1. tilgang til ny tjeneste betyr ikke tilgang til gammel tjeneste
     ),
     Resource(
+        resourceId = "nav_tiltak_midlertidig-lonnstilskudd",
+        altinn2Tjeneste = listOf(Altinn2Tjeneste("5516", "1")),
+        availableInProduction = false,
+    ),
+    Resource(
+        resourceId = "nav_tiltak_varig-lonnstilskudd",
+        altinn2Tjeneste = listOf(Altinn2Tjeneste("5516", "2")),
+        availableInProduction = false,
+    ),
+    Resource(
+        resourceId = "nav_tiltak_sommerjobb",
+        altinn2Tjeneste = listOf(Altinn2Tjeneste("5516", "3")),
+        availableInProduction = false,
+    ),
+    Resource(
+        resourceId = "nav_tiltak_mentor",
+        altinn2Tjeneste = listOf(Altinn2Tjeneste("5516", "4")),
+        availableInProduction = false,
+    ),
+    Resource(
+        resourceId = "nav_tiltak_inkluderingstilskudd",
+        altinn2Tjeneste = listOf(Altinn2Tjeneste("5516", "5")),
+        availableInProduction = false,
+    ),
+    Resource(
+        resourceId = "nav_tiltak_varig-tilrettelagt-arbeid-ordinaer",
+        altinn2Tjeneste = listOf(Altinn2Tjeneste("5516", "6")),
+        availableInProduction = false,
+    ),
+    Resource(
+        resourceId = "nav_tiltak_adressesperre",
+        altinn2Tjeneste = listOf(Altinn2Tjeneste("5516", "7")),
+        availableInProduction = false,
+    ),
+    Resource(
+        resourceId = "nav_tiltak_arbeidstrening",
+        altinn2Tjeneste = listOf(Altinn2Tjeneste("5332", "1")), // OBS! DENNE HAR SERVICE EDITION 2 I PROD
+        availableInOther = true,
+        availableInProduction = false, // denne finnes ikke i prod, kun dev/tt02
+    ),
+    Resource(
+        resourceId = "nav_tiltak_arbeidstrening",
+        altinn2Tjeneste = listOf(Altinn2Tjeneste("5332", "2")), // OBS! DENNE HAR SERVICE EDITION 2 I PROD
+        availableInOther = false, // denne finnes ikke i dev/tt02, kun prod
+        availableInProduction = false, // ikke i prod enda, men skal settes til true når den er tilgjengelig
+    ),
+    Resource(
         resourceId = "nav_tiltak_ekspertbistand",
         altinn2Tjeneste = listOf(Altinn2Tjeneste("5384", "1")),
     ),
