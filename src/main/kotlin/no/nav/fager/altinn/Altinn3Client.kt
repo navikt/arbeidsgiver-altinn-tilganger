@@ -3,6 +3,7 @@ package no.nav.fager.altinn
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.call.body
 import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.request.accept
 import io.ktor.client.request.get
 import io.ktor.client.request.header
@@ -14,6 +15,7 @@ import io.ktor.http.contentType
 import io.ktor.http.takeFrom
 import kotlinx.serialization.Serializable
 import no.nav.fager.infrastruktur.defaultHttpClient
+import no.nav.fager.infrastruktur.teamLogger
 import no.nav.fager.texas.AuthClient
 import no.nav.fager.texas.IdentityProvider
 import no.nav.fager.texas.TexasAuthClientPlugin
@@ -46,8 +48,13 @@ class Altinn3ClientImpl(
     val texasAuthConfig: TexasAuthConfig,
     val configureHttp: HttpClientConfig<*>.() -> Unit = {}
 ) : Altinn3Client {
-
-    private val resourceOwnerClient = defaultHttpClient {
+    private val teamLogger = teamLogger()
+    private val resourceOwnerClient = defaultHttpClient(customizeLogging = {
+        logger = object : io.ktor.client.plugins.logging.Logger {
+            override fun log(message: String) = teamLogger.info(message)
+        }
+        level = LogLevel.ALL
+    }) {
         install(TexasAuthClientPlugin) {
             authClient = AuthClient(texasAuthConfig, IdentityProvider.MASKINPORTEN)
             fetchToken = { it.token("altinn:accessmanagement/authorizedparties.resourceowner") }
@@ -130,7 +137,7 @@ class Altinn3ClientImpl(
 }
 
 @Serializable
-class AuthorizedParty(
+data class AuthorizedParty(
     val organizationNumber: String?,
     val name: String,
     val type: String?,

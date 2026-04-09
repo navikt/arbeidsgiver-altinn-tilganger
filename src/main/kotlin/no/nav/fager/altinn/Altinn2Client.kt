@@ -5,6 +5,7 @@ import io.ktor.client.call.body
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.request.accept
 import io.ktor.client.request.get
 import io.ktor.client.request.header
@@ -26,6 +27,7 @@ import no.nav.fager.infrastruktur.basedOnEnv
 import no.nav.fager.infrastruktur.defaultHttpClient
 import no.nav.fager.infrastruktur.logger
 import no.nav.fager.infrastruktur.rethrowIfCancellation
+import no.nav.fager.infrastruktur.teamLogger
 import no.nav.fager.texas.AuthClient
 import no.nav.fager.texas.IdentityProvider
 import no.nav.fager.texas.TexasAuthClientPlugin
@@ -48,7 +50,7 @@ class Altinn2Config(
 }
 
 
-class Altinn2Tilganger(
+data class Altinn2Tilganger(
     val isError: Boolean,
     val orgNrTilTjenester: Map<String, List<Altinn2Tjeneste>>,
 )
@@ -72,8 +74,14 @@ class Altinn2ClientImpl(
     val configureHttp: HttpClientConfig<*>.() -> Unit = {}
 ) : Altinn2Client {
     private val log = logger()
+    private val teamLogger = teamLogger()
 
-    private val httpClient = defaultHttpClient {
+    private val httpClient = defaultHttpClient(customizeLogging = {
+        logger = object : io.ktor.client.plugins.logging.Logger {
+            override fun log(message: String) = teamLogger.info(message)
+        }
+        level = LogLevel.ALL
+    }) {
         install(TexasAuthClientPlugin) {
             authClient = AuthClient(texasAuthConfig, IdentityProvider.MASKINPORTEN)
             fetchToken = { it.token("altinn:serviceowner/reportees") }

@@ -8,6 +8,7 @@ import io.ktor.client.network.sockets.ConnectTimeoutException
 import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.Logging
+import io.ktor.client.plugins.logging.LoggingConfig
 import io.ktor.network.sockets.SocketTimeoutException
 import io.ktor.serialization.kotlinx.json.json
 import io.micrometer.core.instrument.Timer
@@ -18,6 +19,7 @@ import java.util.concurrent.ConcurrentHashMap
 import javax.net.ssl.SSLHandshakeException
 
 fun defaultHttpClient(
+    customizeLogging: LoggingConfig.() -> Unit = { },
     customizeMetrics: HttpClientMetricsFeature.Config.() -> Unit = {},
     configure: HttpClientConfig<CIOEngineConfig>.() -> Unit = {}
 ) = HttpClient(CIO) {
@@ -51,6 +53,7 @@ fun defaultHttpClient(
     }
 
     install(Logging) {
+        customizeLogging()
         sanitizeHeader {
             true
         }
