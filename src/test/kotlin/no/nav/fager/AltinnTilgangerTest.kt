@@ -91,6 +91,27 @@ class AltinnTilgangerTest {
                         "authorizedRoles": [],
                         "authorizedAccessPackages": [],
                         "subunits": []
+                      },
+                      {
+                        "partyUuid": "7756eab6-119b-4691-8a8a-6f51a203aba7",
+                        "name": "SLEMMESTAD OG STAVERN REGNSKAP INSTANSDELEGERING",
+                        "organizationNumber": "910899999",
+                        "personId": null,
+                        "partyId": 50199933,
+                        "type": "Organization",
+                        "unitType": "BEDR",
+                        "isDeleted": false,
+                        "onlyHierarchyElementWithNoAccess": false,
+                        "authorizedResources": [],
+                        "authorizedRoles": [],
+                        "authorizedAccessPackages": [],
+                        "authorizedInstances": [
+                          {
+                            "resourceId": "test-fager",
+                            "instanceId": "8c37834d-4fb6-4ea3-8a59-dc0a4cae16ce"
+                          }
+                        ],
+                        "subunits": []
                       }
                     ]
                   }
@@ -139,7 +160,7 @@ class AltinnTilgangerTest {
 
         val assertResponse: (AltinnTilgangerResponse) -> Unit = {
             assertEquals(true, it.isError)
-            assertEquals(2, it.hierarki[0].underenheter.size)
+            assertEquals(3, it.hierarki[0].underenheter.size)
             assertEquals(setOf("test-fager"), it.hierarki[0].underenheter[0].altinn3Tilganger)
             assertEquals(setOf("4936:1"), it.hierarki[0].underenheter[0].altinn2Tilganger)
             assertEquals(emptySet(), it.hierarki[0].underenheter[0].roller)
@@ -154,6 +175,10 @@ class AltinnTilgangerTest {
                     "5810:1",
                 ),
                 it.orgNrTilTilganger["910825554"]
+            )
+            assertEquals(
+                emptySet(),
+                it.orgNrTilTilganger["910899999"]
             )
             assertEquals(
                 setOf("910825554"),
