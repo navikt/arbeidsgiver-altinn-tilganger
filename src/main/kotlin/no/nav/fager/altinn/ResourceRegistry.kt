@@ -106,6 +106,11 @@ val KnownResources = listOfNotNull(
         availableInProduction = false, // ikke i prod enda, men skal settes til true når den er tilgjengelig
     ),
     Resource(
+        resourceId = "nav_tiltak_firearig-lonnstilskudd",
+        altinn2Tjeneste = listOf(),
+        availableInProduction = false,
+    ),
+    Resource(
         resourceId = "nav_tiltak_ekspertbistand",
         altinn2Tjeneste = listOf(Altinn2Tjeneste("5384", "1")),
     ),
