@@ -321,7 +321,7 @@ typealias PolicySubjectUrn = String
 typealias PolicySubjectType = String
 
 @Serializable
-class PolicySubject(
+data class PolicySubject(
     /**
      * e.g. urn:altinn:rolecode
      */

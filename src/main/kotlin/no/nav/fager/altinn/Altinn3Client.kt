@@ -130,7 +130,7 @@ class Altinn3ClientImpl(
 }
 
 @Serializable
-class AuthorizedParty(
+data class AuthorizedParty(
     val organizationNumber: String?,
     val name: String,
     val type: String?,

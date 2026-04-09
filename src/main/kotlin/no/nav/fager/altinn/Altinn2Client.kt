@@ -48,7 +48,7 @@ class Altinn2Config(
 }
 
 
-class Altinn2Tilganger(
+data class Altinn2Tilganger(
     val isError: Boolean,
     val orgNrTilTjenester: Map<String, List<Altinn2Tjeneste>>,
 )
