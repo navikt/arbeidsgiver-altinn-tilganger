@@ -48,14 +48,10 @@ class Altinn3ClientImpl(
     val texasAuthConfig: TexasAuthConfig,
     val configureHttp: HttpClientConfig<*>.() -> Unit = {}
 ) : Altinn3Client {
-
+    private val teamLogger = teamLogger()
     private val resourceOwnerClient = defaultHttpClient(customizeLogging = {
         logger = object : io.ktor.client.plugins.logging.Logger {
-            private val teamLogger = teamLogger()
-
-            override fun log(message: String) {
-                teamLogger.info(message)
-            }
+            override fun log(message: String) = teamLogger.info(message)
         }
         level = LogLevel.ALL
     }) {

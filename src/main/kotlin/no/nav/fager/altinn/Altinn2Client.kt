@@ -74,14 +74,11 @@ class Altinn2ClientImpl(
     val configureHttp: HttpClientConfig<*>.() -> Unit = {}
 ) : Altinn2Client {
     private val log = logger()
+    private val teamLogger = teamLogger()
 
     private val httpClient = defaultHttpClient(customizeLogging = {
         logger = object : io.ktor.client.plugins.logging.Logger {
-            private val teamLogger = teamLogger()
-
-            override fun log(message: String) {
-                teamLogger.info(message)
-            }
+            override fun log(message: String) = teamLogger.info(message)
         }
         level = LogLevel.ALL
     }) {
