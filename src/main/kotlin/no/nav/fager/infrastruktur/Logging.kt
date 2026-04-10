@@ -69,7 +69,7 @@ class LogConfig : ContextAwareBase(), Configurator {
                         this.isIncludeContext = false
                         addProvider(LoggingEventPatternJsonProvider().apply {
                             this.pattern =
-                                """{"message":"%replace(%message){'^(.{250000}).+$', '$1...truncated'}"}"""
+                                """{"message":"%replace(%message){'^(.{200000}).+$', '$1...truncated'}"}"""
                         })
                     }
                     addFilter(object : Filter<ILoggingEvent>() {
