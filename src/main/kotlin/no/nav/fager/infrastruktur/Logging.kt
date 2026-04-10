@@ -15,6 +15,7 @@ import ch.qos.logback.core.spi.ContextAwareBase
 import ch.qos.logback.core.spi.FilterReply
 import ch.qos.logback.core.spi.LifeCycle
 import net.logstash.logback.appender.LogstashTcpSocketAppender
+import net.logstash.logback.composite.loggingevent.LoggingEventPatternJsonProvider
 import net.logstash.logback.encoder.LogstashEncoder
 import no.nav.fager.infrastruktur.NaisEnvironment.clusterName
 import org.slf4j.Logger
@@ -65,6 +66,11 @@ class LogConfig : ContextAwareBase(), Configurator {
                         |"nais_pod_name":"${System.getenv("NAIS_POD_NAME")}",
                         |"nais_container_name":"${System.getenv("NAIS_APP_NAME")}"
                         |}""".trimMargin()
+                        this.isIncludeContext = false
+                        addProvider(LoggingEventPatternJsonProvider().apply {
+                            this.pattern =
+                                """{"message":"%replace(%message){'^(.{250000}).+$', '$1...truncated'}"}"""
+                        })
                     }
                     addFilter(object : Filter<ILoggingEvent>() {
                         override fun decide(event: ILoggingEvent) = when {
