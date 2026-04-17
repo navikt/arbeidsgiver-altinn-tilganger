@@ -61,37 +61,30 @@ val KnownResources = listOfNotNull(
     Resource(
         resourceId = "nav_tiltak_midlertidig-lonnstilskudd",
         altinn2Tjeneste = listOf(Altinn2Tjeneste("5516", "1")),
-        availableInProduction = false,
     ),
     Resource(
         resourceId = "nav_tiltak_varig-lonnstilskudd",
         altinn2Tjeneste = listOf(Altinn2Tjeneste("5516", "2")),
-        availableInProduction = false,
     ),
     Resource(
         resourceId = "nav_tiltak_sommerjobb",
         altinn2Tjeneste = listOf(Altinn2Tjeneste("5516", "3")),
-        availableInProduction = false,
     ),
     Resource(
         resourceId = "nav_tiltak_mentor",
         altinn2Tjeneste = listOf(Altinn2Tjeneste("5516", "4")),
-        availableInProduction = false,
     ),
     Resource(
         resourceId = "nav_tiltak_inkluderingstilskudd",
         altinn2Tjeneste = listOf(Altinn2Tjeneste("5516", "5")),
-        availableInProduction = false,
     ),
     Resource(
         resourceId = "nav_tiltak_varig-tilrettelagt-arbeid-ordinaer",
         altinn2Tjeneste = listOf(Altinn2Tjeneste("5516", "6")),
-        availableInProduction = false,
     ),
     Resource(
         resourceId = "nav_tiltak_adressesperre",
         altinn2Tjeneste = listOf(Altinn2Tjeneste("5516", "7")),
-        availableInProduction = false,
     ),
     Resource(
         resourceId = "nav_tiltak_arbeidstrening",
@@ -103,12 +96,10 @@ val KnownResources = listOfNotNull(
         resourceId = "nav_tiltak_arbeidstrening",
         altinn2Tjeneste = listOf(Altinn2Tjeneste("5332", "2")), // OBS! DENNE HAR SERVICE EDITION 2 I PROD
         availableInOther = false, // denne finnes ikke i dev/tt02, kun prod
-        availableInProduction = false, // ikke i prod enda, men skal settes til true når den er tilgjengelig
     ),
     Resource(
         resourceId = "nav_tiltak_firearig-lonnstilskudd",
         altinn2Tjeneste = listOf(),
-        availableInProduction = false,
     ),
     Resource(
         resourceId = "nav_tiltak_ekspertbistand",
