@@ -102,10 +102,6 @@ val KnownResources = listOfNotNull(
         altinn2Tjeneste = listOf(),
     ),
     Resource(
-        resourceId = "nav_tiltak_tilskuddsbrev",
-        altinn2Tjeneste = listOf(Altinn2Tjeneste("5278", "1")),
-    ),
-    Resource(
         resourceId = "nav_tiltak_ekspertbistand",
         altinn2Tjeneste = listOf(Altinn2Tjeneste("5384", "1")),
     ),
