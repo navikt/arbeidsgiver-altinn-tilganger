@@ -23,7 +23,6 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
 import no.nav.fager.infrastruktur.NaisEnvironment
-import no.nav.fager.infrastruktur.basedOnEnv
 import no.nav.fager.infrastruktur.defaultHttpClient
 import no.nav.fager.infrastruktur.logger
 import no.nav.fager.infrastruktur.rethrowIfCancellation
@@ -312,66 +311,6 @@ private val tjenester = listOf(
         serviceCode = "5278",
         serviceEdition = "1",
         serviceName = "Tilskuddsbrev NAV-tiltak",
-    ),
-    basedOnEnv(
-        prod = {
-            Altinn2TjenesteDefinisjon(
-                serviceCode = "5332",
-                serviceEdition = "2",
-                serviceName = "Tiltaksgjennomføring",
-                serviceEditionName = "Avtale om arbeidstrening (prod)",
-            )
-        },
-        other = {
-            Altinn2TjenesteDefinisjon(
-                serviceCode = "5332",
-                serviceEdition = "1",
-                serviceName = "Tiltaksgjennomføring",
-                serviceEditionName = "Avtale om arbeidstrening (dev)",
-            )
-        }
-    ),
-    Altinn2TjenesteDefinisjon(
-        serviceCode = "5516",
-        serviceEdition = "1",
-        serviceName = "Tiltakstjenester",
-        serviceEditionName = "Avtale om midlertidig lønnstilskudd",
-    ),
-    Altinn2TjenesteDefinisjon(
-        serviceCode = "5516",
-        serviceEdition = "2",
-        serviceName = "Tiltakstjenester",
-        serviceEditionName = "Avtale om varig lønnstilskudd",
-    ),
-    Altinn2TjenesteDefinisjon(
-        serviceCode = "5516",
-        serviceEdition = "3",
-        serviceName = "Tiltakstjenester",
-        serviceEditionName = "Avtale om sommerjobb",
-    ),
-    Altinn2TjenesteDefinisjon(
-        serviceCode = "5516",
-        serviceEdition = "4",
-        serviceName = "Tiltakstjenester",
-        serviceEditionName = "Avtale om mentor",
-    ),
-    Altinn2TjenesteDefinisjon(
-        serviceCode = "5516",
-        serviceEdition = "5",
-        serviceName = "Tiltakstjenester",
-        serviceEditionName = "Avtale om inkluderingstilskudd",
-    ),
-    Altinn2TjenesteDefinisjon(
-        serviceCode = "5516",
-        serviceEdition = "6",
-        serviceName = "Tiltakstjenester",
-        serviceEditionName = "Avtale om varig tilrettelagt arbeid i ordinær virksomhet",
-    ),
-    Altinn2TjenesteDefinisjon(
-        serviceCode = "5516",
-        serviceEdition = "7",
-        serviceName = "Tiltakstjenester",
-        serviceEditionName = "Adressesperre — avtaler om arbeidsmarkedstiltak og refusjoner",
     ),
     Altinn2TjenesteDefinisjon(
         serviceCode = "5902",
