@@ -140,9 +140,6 @@ class Altinn2ClientImpl(
         }
 
         tjenester
-            .filterNot {
-                it.serviceCode == "5078" && it.serviceEdition == "1" // TODO: rekruttering er migrert, men skal fortsatt slås opp frem til beomtilgang er tilgjengelig
-            }
             .forEach { tjeneste ->
                 try {
                     metadataClient.get {
@@ -301,11 +298,6 @@ private val tjenester = listOf(
         serviceCode = "4936",
         serviceEdition = "1",
         serviceName = "Inntektsmelding",
-    ),
-    Altinn2TjenesteDefinisjon(
-        serviceCode = "5078",
-        serviceEdition = "1",
-        serviceName = "Rekruttering",
     ),
     Altinn2TjenesteDefinisjon(
         serviceCode = "5278",

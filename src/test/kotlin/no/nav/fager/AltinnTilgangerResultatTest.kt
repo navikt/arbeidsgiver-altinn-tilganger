@@ -401,8 +401,7 @@ private val sampleJSON = """
       "altinn2Tilganger": [
         "4826:1",
         "5902:1",
-        "4936:1",
-        "5078:1"
+        "4936:1"
       ],
       "underenheter": [
         {
@@ -411,8 +410,7 @@ private val sampleJSON = """
           "altinn2Tilganger": [
             "4826:1",
             "5902:1",
-            "4936:1",
-            "5078:1"
+            "4936:1"
           ],
           "underenheter": [],
           "navn": "DAVIK OG EIDSLANDET",
@@ -425,8 +423,7 @@ private val sampleJSON = """
           "altinn2Tilganger": [
             "4826:1",
             "5902:1",
-            "4936:1",
-            "5078:1"
+            "4936:1"
           ],
           "underenheter": [],
           "navn": "DAVIK OG ULNES",
@@ -439,8 +436,7 @@ private val sampleJSON = """
           "altinn2Tilganger": [
             "4826:1",
             "5902:1",
-            "4936:1",
-            "5078:1"
+            "4936:1"
           ],
           "underenheter": [],
           "navn": "DAVIK OG SÆTERVIK",
@@ -453,8 +449,7 @@ private val sampleJSON = """
           "altinn2Tilganger": [
             "4826:1",
             "5902:1",
-            "4936:1",
-            "5078:1"
+            "4936:1"
           ],
           "underenheter": [],
           "navn": "DAVIK OG HAMARØY",
@@ -467,8 +462,7 @@ private val sampleJSON = """
           "altinn2Tilganger": [
             "4826:1",
             "5902:1",
-            "4936:1",
-            "5078:1"
+            "4936:1"
           ],
           "underenheter": [],
           "navn": "DAVIK OG ABELVÆR",
@@ -554,7 +548,6 @@ private val sampleJSON = """
         "4826:1",
         "5902:1",
         "4936:1",
-        "5078:1",
         "2896:87",
         "5516:3",
         "5516:5",
@@ -579,7 +572,6 @@ private val sampleJSON = """
             "4826:1",
             "5902:1",
             "4936:1",
-            "5078:1",
             "2896:87",
             "5516:3",
             "5516:5",
@@ -608,7 +600,6 @@ private val sampleJSON = """
             "4826:1",
             "5902:1",
             "4936:1",
-            "5078:1",
             "2896:87",
             "5516:3",
             "5516:5",
@@ -636,7 +627,6 @@ private val sampleJSON = """
             "4826:1",
             "5902:1",
             "4936:1",
-            "5078:1",
             "2896:87",
             "5516:3",
             "5516:5",
@@ -763,16 +753,12 @@ private val sampleJSON = """
     {
       "orgnr": "910753282",
       "altinn3Tilganger": [],
-      "altinn2Tilganger": [
-        "5078:1"
-      ],
+      "altinn2Tilganger": [],
       "underenheter": [
         {
           "orgnr": "910642413",
           "altinn3Tilganger": [],
-          "altinn2Tilganger": [
-            "5078:1"
-          ],
+          "altinn2Tilganger": [],
           "underenheter": [],
           "navn": "ÅFJORD OG GJERSTAD",
           "organisasjonsform": "BEDR",
@@ -790,7 +776,6 @@ private val sampleJSON = """
         "4826:1",
         "5902:1",
         "4936:1",
-        "5078:1",
         "2896:87",
         "5332:1",
         "3403:1",
@@ -804,7 +789,6 @@ private val sampleJSON = """
             "4826:1",
             "5902:1",
             "4936:1",
-            "5078:1",
             "2896:87",
             "5332:1",
             "3403:1",
@@ -822,7 +806,6 @@ private val sampleJSON = """
             "4826:1",
             "5902:1",
             "4936:1",
-            "5078:1",
             "2896:87",
             "5332:1",
             "3403:1",
@@ -840,7 +823,6 @@ private val sampleJSON = """
             "4826:1",
             "5902:1",
             "4936:1",
-            "5078:1",
             "2896:87",
             "5332:1",
             "3403:1",
@@ -863,7 +845,6 @@ private val sampleJSON = """
         "4826:1",
         "5902:1",
         "4936:1",
-        "5078:1",
         "2896:87",
         "5332:1",
         "3403:1",
@@ -877,7 +858,6 @@ private val sampleJSON = """
             "4826:1",
             "5902:1",
             "4936:1",
-            "5078:1",
             "2896:87",
             "5278:1",
             "5332:1",
@@ -896,7 +876,6 @@ private val sampleJSON = """
             "4826:1",
             "5902:1",
             "4936:1",
-            "5078:1",
             "2896:87",
             "5278:1",
             "5332:1",
@@ -915,7 +894,6 @@ private val sampleJSON = """
             "4826:1",
             "5902:1",
             "4936:1",
-            "5078:1",
             "2896:87",
             "5332:1",
             "3403:1",
