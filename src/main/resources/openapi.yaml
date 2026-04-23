@@ -455,6 +455,14 @@ components:
           items:
             title: String
             type: string
+        tilgangspakker:
+          title: Set<String>
+          uniqueItems: true
+          type: array
+          description: tilgangspakker fra AuthorizedParty.authorizedAccessPackages
+          items:
+            title: String
+            type: string
         erSlettet:
           title: Enhet er slettet
           type: boolean

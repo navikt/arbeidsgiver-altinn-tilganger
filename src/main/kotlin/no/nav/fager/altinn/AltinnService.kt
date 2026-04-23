@@ -134,6 +134,7 @@ class AltinnService(
                             """${it.serviceCode}:${it.serviceEdition}"""
                         }?.toSet() ?: emptySet(),
                         roller = party.authorizedRoles,
+                        tilgangspakker = party.authorizedAccessPackages,
                         underenheter = mapToHierarchy(party.subunits, altinn2Tilganger),
                         erSlettet = party.isDeleted
                     )

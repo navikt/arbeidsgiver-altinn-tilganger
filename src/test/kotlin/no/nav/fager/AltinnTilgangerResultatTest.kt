@@ -308,6 +308,7 @@ class AltinnTilgangerResultatTest {
         }
 
         assertTrue(sample.altinnTilganger.flatten { it.roller }.all { it.isEmpty() })
+        assertTrue(sample.altinnTilganger.flatten { it.tilgangspakker }.all { it.isEmpty() })
     }
 }
 
