@@ -173,7 +173,6 @@ val KnownResources = listOfNotNull(
     Resource(
         resourceId = "nav_hjelpemidler_behovsmelding",
         altinn2Tjeneste = listOf(), // migrert fra 5614:1, men ingen saker på dette i notifikasjonslpattformen
-        availableInProduction = false,
     ),
     Resource(
         resourceId = "nav_medlemskap-lovvalg_soknad",
