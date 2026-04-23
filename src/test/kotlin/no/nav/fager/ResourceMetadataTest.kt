@@ -13,6 +13,8 @@ import no.nav.fager.altinn.buildResourceMetadataResponse
 import no.nav.fager.altinn.PolicySubject
 import no.nav.fager.altinn.ResourceRegistryResource
 import no.nav.fager.fakes.testWithFakeApplication
+import org.skyscreamer.jsonassert.JSONAssert
+import org.skyscreamer.jsonassert.JSONCompareMode
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -107,6 +109,66 @@ class ResourceMetadataTest {
         }
         assertEquals(HttpStatusCode.Unauthorized, response.status)
     }
+
+    @Test
+    fun `resource-metadata response shape matches expected JSON`() = testWithFakeApplication {
+        val responseText = client.get("/resource-metadata").bodyAsText()
+
+        val permitteringId = "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"
+        val sosialtjenesterId = "nav_sosialtjenester_digisos-avtale"
+
+        //language=json
+        val expected = """
+        {
+          "resources": {
+            "$permitteringId": {
+              "metadata": {
+                "identifier": "$permitteringId",
+                "title": {
+                  "nb": "Tittel for $permitteringId",
+                  "nn": "Tittel nn for $permitteringId",
+                  "en": "Title for $permitteringId"
+                },
+                "rightDescription": {
+                  "nb": "Rettighet for $permitteringId",
+                  "nn": "Rettighet nn for $permitteringId",
+                  "en": "Right for $permitteringId"
+                },
+                "resourceType": "GenericAccessResource",
+                "status": "Completed",
+                "delegable": true
+              },
+              "grantedByRoles": ["dagl", "lede"],
+              "grantedByAccessPackages": ["regnskapsforer-lonn"]
+            },
+            "$sosialtjenesterId": {
+              "metadata": {
+                "identifier": "$sosialtjenesterId",
+                "title": {
+                  "nb": "Tittel for $sosialtjenesterId",
+                  "nn": "Tittel nn for $sosialtjenesterId",
+                  "en": "Title for $sosialtjenesterId"
+                },
+                "rightDescription": {
+                  "nb": "Rettighet for $sosialtjenesterId",
+                  "nn": "Rettighet nn for $sosialtjenesterId",
+                  "en": "Right for $sosialtjenesterId"
+                },
+                "resourceType": "GenericAccessResource",
+                "status": "Completed",
+                "delegable": true
+              },
+              "grantedByRoles": [],
+              "grantedByAccessPackages": []
+            }
+          }
+        }
+        """.trimIndent()
+
+        JSONAssert.assertEquals(expected, responseText, JSONCompareMode.LENIENT)
+    }
 }
+
+
 
 
