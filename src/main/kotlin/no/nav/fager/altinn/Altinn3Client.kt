@@ -40,6 +40,7 @@ class Altinn3Config(
 interface Altinn3Client {
     suspend fun resourceOwner_AuthorizedParties(fnr: String): Result<List<AuthorizedParty>>
     suspend fun resourceRegistry_PolicySubjects(resourceId: String): Result<List<PolicySubject>>
+    suspend fun resourceRegistry_Resource(resourceId: String): Result<ResourceRegistryResource>
 }
 
 
@@ -134,6 +135,19 @@ class Altinn3ClientImpl(
 
         httpResponse.body<PolicySubjectResponseWrapper>().data
     }
+
+    override suspend fun resourceRegistry_Resource(resourceId: String) = runCatching {
+        val httpResponse = resourceRegistryClient.get {
+            url {
+                takeFrom(altinn3Config.baseUrl)
+                appendPathSegments("/resourceregistry/api/v1/resource/$resourceId")
+            }
+            accept(ContentType.Application.Json)
+            contentType(ContentType.Application.Json)
+        }
+
+        httpResponse.body<ResourceRegistryResource>()
+    }
 }
 
 @Serializable
@@ -164,5 +178,22 @@ data class AuthorizedParty(
     val authorizedAccessPackagesAsUrn: Set<String>
         get() = authorizedAccessPackages.map { "urn:altinn:accesspackage:$it" }.toSet()
 }
+
+@Serializable
+data class LocalizedText(
+    val nb: String? = null,
+    val nn: String? = null,
+    val en: String? = null,
+)
+
+@Serializable
+data class ResourceRegistryResource(
+    val identifier: String,
+    val title: LocalizedText = LocalizedText(),
+    val rightDescription: LocalizedText = LocalizedText(),
+    val resourceType: String? = null,
+    val status: String? = null,
+    val delegable: Boolean? = null,
+)
 
 
