@@ -126,14 +126,17 @@ class AltinnTilgangerRedisClientImpl(redisConfig: RedisConfig) : AltinnTilganger
 
 inline fun <reified T> createCodec(prefix: String): RedisCodec<String, T> {
     return object : RedisCodec<String, T> {
+        private val json = Json {
+            ignoreUnknownKeys = true
+        }
         private val namespace = "$prefix:"
 
 
         override fun decodeKey(key: String): String = key.removePrefix(namespace)
         override fun encodeKey(key: String): String = "$namespace$key"
 
-        override fun encodeValue(value: T): String = Json.encodeToString(value)
-        override fun decodeValue(value: String): T = Json.decodeFromString(value)
+        override fun encodeValue(value: T): String = json.encodeToString(value)
+        override fun decodeValue(value: String): T = json.decodeFromString(value)
     }
 }
 
