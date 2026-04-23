@@ -8,19 +8,19 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import no.nav.fager.altinn.KnownResourceIds
-import no.nav.fager.altinn.ResourceMetadataResponse
-import no.nav.fager.altinn.buildResourceMetadataResponse
 import no.nav.fager.altinn.PolicySubject
+import no.nav.fager.altinn.ResourceMetadataResponse
 import no.nav.fager.altinn.ResourceRegistryResource
+import no.nav.fager.altinn.buildResourceMetadataResponse
 import no.nav.fager.fakes.testWithFakeApplication
 import org.skyscreamer.jsonassert.JSONAssert
 import org.skyscreamer.jsonassert.JSONCompareMode
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
-import kotlin.test.assertFailsWith
 
 class ResourceMetadataTest {
 
@@ -114,25 +114,22 @@ class ResourceMetadataTest {
     fun `resource-metadata response shape matches expected JSON`() = testWithFakeApplication {
         val responseText = client.get("/resource-metadata").bodyAsText()
 
-        val permitteringId = "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"
-        val sosialtjenesterId = "nav_sosialtjenester_digisos-avtale"
-
         //language=json
         val expected = """
         {
           "resources": {
-            "$permitteringId": {
+            "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger": {
               "metadata": {
-                "identifier": "$permitteringId",
+                "identifier": "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger",
                 "title": {
-                  "nb": "Tittel for $permitteringId",
-                  "nn": "Tittel nn for $permitteringId",
-                  "en": "Title for $permitteringId"
+                  "nb": "Tittel for nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger",
+                  "nn": "Tittel nn for nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger",
+                  "en": "Title for nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"
                 },
                 "rightDescription": {
-                  "nb": "Rettighet for $permitteringId",
-                  "nn": "Rettighet nn for $permitteringId",
-                  "en": "Right for $permitteringId"
+                  "nb": "Rettighet for nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger",
+                  "nn": "Rettighet nn for nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger",
+                  "en": "Right for nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"
                 },
                 "resourceType": "GenericAccessResource",
                 "status": "Completed",
@@ -141,18 +138,18 @@ class ResourceMetadataTest {
               "grantedByRoles": ["dagl", "lede"],
               "grantedByAccessPackages": ["regnskapsforer-lonn"]
             },
-            "$sosialtjenesterId": {
+            "nav_sosialtjenester_digisos-avtale": {
               "metadata": {
-                "identifier": "$sosialtjenesterId",
+                "identifier": "nav_sosialtjenester_digisos-avtale",
                 "title": {
-                  "nb": "Tittel for $sosialtjenesterId",
-                  "nn": "Tittel nn for $sosialtjenesterId",
-                  "en": "Title for $sosialtjenesterId"
+                  "nb": "Tittel for nav_sosialtjenester_digisos-avtale",
+                  "nn": "Tittel nn for nav_sosialtjenester_digisos-avtale",
+                  "en": "Title for nav_sosialtjenester_digisos-avtale"
                 },
                 "rightDescription": {
-                  "nb": "Rettighet for $sosialtjenesterId",
-                  "nn": "Rettighet nn for $sosialtjenesterId",
-                  "en": "Right for $sosialtjenesterId"
+                  "nb": "Rettighet for nav_sosialtjenester_digisos-avtale",
+                  "nn": "Rettighet nn for nav_sosialtjenester_digisos-avtale",
+                  "en": "Right for nav_sosialtjenester_digisos-avtale"
                 },
                 "resourceType": "GenericAccessResource",
                 "status": "Completed",
