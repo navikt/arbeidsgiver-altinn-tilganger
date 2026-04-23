@@ -11,6 +11,7 @@ data class AltinnTilgang(
     val altinn3Tilganger: Set<String>,
     val altinn2Tilganger: Set<String>,
     val roller: Set<String> = emptySet(),
+    val tilgangspakker: Set<String> = emptySet(),
     val underenheter: List<AltinnTilgang>,
     val navn: String,
     val organisasjonsform: String,
