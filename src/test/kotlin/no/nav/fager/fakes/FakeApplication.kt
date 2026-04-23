@@ -47,7 +47,7 @@ class FakeApplication(
 
     private val fakeAltinn3Api = FakeApi().also {
         KnownResourceIds.forEach { resourceId ->
-            val response = when (resourceId) {
+            val policySubjectsResponse = when (resourceId) {
                 "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger" ->
                     //language=json
                     """
@@ -63,6 +63,11 @@ class FakeApplication(
                           "type": "urn:altinn:rolecode",
                           "value": "lede",
                           "urn": "urn:altinn:rolecode:lede"
+                        },
+                        {
+                          "type": "urn:altinn:accesspackage",
+                          "value": "regnskapsforer-lonn",
+                          "urn": "urn:altinn:accesspackage:regnskapsforer-lonn"
                         }
                       ]
                     }
@@ -73,7 +78,32 @@ class FakeApplication(
                     """{ "links": {}, "data": [] }"""
             }
             it.stubs[Get to "/resourceregistry/api/v1/resource/${resourceId}/policy/subjects"] = {
-                call.respondText(response, ContentType.Application.Json)
+                call.respondText(policySubjectsResponse, ContentType.Application.Json)
+            }
+
+            val resourceDocResponse =
+                //language=json
+                """
+                {
+                  "identifier": "$resourceId",
+                  "title": {
+                    "nb": "Tittel for $resourceId",
+                    "nn": "Tittel nn for $resourceId",
+                    "en": "Title for $resourceId"
+                  },
+                  "rightDescription": {
+                    "nb": "Rettighet for $resourceId",
+                    "nn": "Rettighet nn for $resourceId",
+                    "en": "Right for $resourceId"
+                  },
+                  "resourceType": "GenericAccessResource",
+                  "status": "Completed",
+                  "delegable": true,
+                  "someUnknownField": "should be ignored"
+                }
+                """.trimIndent()
+            it.stubs[Get to "/resourceregistry/api/v1/resource/$resourceId"] = {
+                call.respondText(resourceDocResponse, ContentType.Application.Json)
             }
         }
     }

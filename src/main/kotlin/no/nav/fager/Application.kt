@@ -61,6 +61,7 @@ import no.nav.fager.altinn.Altinn2Config
 import no.nav.fager.altinn.Altinn3ClientImpl
 import no.nav.fager.altinn.Altinn3Config
 import no.nav.fager.altinn.AltinnService
+import no.nav.fager.altinn.buildResourceMetadataResponse
 import no.nav.fager.altinn.ResourceRegistry
 import no.nav.fager.infrastruktur.AutentisertM2MPrincipal
 import no.nav.fager.infrastruktur.Health
@@ -272,6 +273,17 @@ fun Application.ktorConfig(
             call.respondRedirect("/swagger-ui")
         }
         swaggerUI(path = "swagger-ui", swaggerFile = "openapi.yaml")
+
+        route("resource-metadata") {
+            get {
+                call.respond(
+                    buildResourceMetadataResponse(
+                        metadata = resourceRegistry.getResourceMetadata(),
+                        policySubjects = resourceRegistry.getPolicySubjects(),
+                    )
+                )
+            }
+        }
 
         route("/m2m") {
             install(TexasAuth) {

@@ -200,9 +200,12 @@ class ResourceRegistry(
     private val log = logger()
 
     @Volatile
-    private var isReady = false
+    private var policySubjectsReady = false
 
-    override fun isReady() = isReady
+    @Volatile
+    private var resourceMetadataReady = false
+
+    override fun isReady() = policySubjectsReady && resourceMetadataReady
 
     val cacheTTL = 30.minutes
     val cacheRefreshInterval = cacheTTL / 3
@@ -214,8 +217,19 @@ class ResourceRegistry(
         cacheTTL = cacheTTL.toJavaDuration()
     )
 
+    private val resourceMetadataCache = RedisLoadingCache(
+        metricsName = "resource-registry-resource",
+        redisClient = redisConfig.createClient<ResourceRegistryResource>("resource-registry-resource-v1"),
+        loader = { s -> altinn3Client.resourceRegistry_Resource(s).getOrThrow() },
+        cacheTTL = cacheTTL.toJavaDuration()
+    )
+
     private val policySubjectsPerResourceId = AtomicReference(
         KnownResources.associate { it.resourceId to emptyList<PolicySubject>() }
+    )
+
+    private val resourceMetadataPerResourceId = AtomicReference(
+        KnownResources.associate { it.resourceId to null as ResourceRegistryResource? }
     )
 
     val resourceIdToAltinn2Tjeneste: Map<ResourceId, List<Altinn2Tjeneste>> = KnownResources.associate { resource ->
@@ -224,13 +238,23 @@ class ResourceRegistry(
 
     init {
         backgroundCoroutineScope?.launch {
-            while (!isReady && !Health.terminating) {
-                isReady = updatePolicySubjectsForKnownResources { resourceId ->
+            while (!policySubjectsReady && !Health.terminating) {
+                policySubjectsReady = updatePolicySubjectsForKnownResources { resourceId ->
                     this@ResourceRegistry.cache.get(resourceId)
                 }
                 delay(100)
             }
-            log.info("ResourceRegistry isReady policySubjectsPerResourceId=${policySubjectsPerResourceId.get()}")
+            log.info("ResourceRegistry policySubjectsReady policySubjectsPerResourceId=${policySubjectsPerResourceId.get()}")
+        }
+
+        backgroundCoroutineScope?.launch {
+            while (!resourceMetadataReady && !Health.terminating) {
+                resourceMetadataReady = updateResourceMetadataForKnownResources { resourceId ->
+                    this@ResourceRegistry.resourceMetadataCache.get(resourceId)
+                }
+                delay(100)
+            }
+            log.info("ResourceRegistry resourceMetadataReady")
         }
 
         backgroundCoroutineScope?.launch {
@@ -245,12 +269,31 @@ class ResourceRegistry(
                 }
             }
         }
+
+        backgroundCoroutineScope?.launch {
+            while (!Health.terminating) {
+                val success = updateResourceMetadataForKnownResources { resourceId -> resourceMetadataCache.update(resourceId) }
+                if (success) {
+                    log.info("Resource metadata for kjente ressurser oppdatert")
+                    delay(cacheRefreshInterval)
+                } else {
+                    log.error("Kunne ikke oppdatere resource metadata for kjente ressurser. Prøver igjen fortløpende")
+                    delay(5.seconds)
+                }
+            }
+        }
     }
 
     fun getResourceIdForPolicySubject(urn: PolicySubjectUrn): List<ResourceId> =
         policySubjectsPerResourceId.get().filter { (_, policySubjects) ->
             policySubjects.any { it.urn == urn }
         }.map { it.key }
+
+    fun getPolicySubjects(): Map<ResourceId, List<PolicySubject>> =
+        policySubjectsPerResourceId.get()
+
+    fun getResourceMetadata(): Map<ResourceId, ResourceRegistryResource?> =
+        resourceMetadataPerResourceId.get()
 
     suspend fun updatePolicySubjectsForKnownResources(
         fetcher: suspend ResourceRegistry.(resourceId: ResourceId) -> List<PolicySubject>
@@ -272,6 +315,31 @@ class ResourceRegistry(
         } else {
             policySubjectsPerResourceId.set(
                 results.mapValues { (_, res) -> res.getOrThrow().toList() } // immutable copy
+            )
+            true
+        }
+    }
+
+    suspend fun updateResourceMetadataForKnownResources(
+        fetcher: suspend ResourceRegistry.(resourceId: ResourceId) -> ResourceRegistryResource
+    ): Boolean {
+        val results: Map<ResourceId, Result<ResourceRegistryResource>> =
+            KnownResources.associate { res ->
+                val rid = res.resourceId
+                rid to retryWithBackoff { fetcher(rid) }
+            }
+
+        val failures = results.filterValues { it.isFailure }
+        return if (failures.isNotEmpty()) {
+            failures.forEach { (rid, res) ->
+                res.exceptionOrNull()?.let { e ->
+                    log.error("Feil ved henting av resource metadata for $rid", e)
+                }
+            }
+            false
+        } else {
+            resourceMetadataPerResourceId.set(
+                results.mapValues { (_, res) -> res.getOrThrow() }
             )
             true
         }
