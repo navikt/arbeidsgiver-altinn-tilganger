@@ -300,12 +300,6 @@ private val tjenester = listOf(
         serviceName = "Inntektsmelding",
     ),
     Altinn2TjenesteDefinisjon(
-        serviceCode = "5902",
-        serviceEdition = "1",
-        serviceName = "Skademelding",
-        serviceEditionName = "Skademelding ved arbeidsulykke eller yrkessykdom",
-    ),
-    Altinn2TjenesteDefinisjon(
         serviceCode = "4596",
         serviceEdition = "1",
         serviceName = "Sykmelding - Oppgi nærmeste leder med personalansvar",
