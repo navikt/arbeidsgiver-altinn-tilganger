@@ -300,11 +300,6 @@ private val tjenester = listOf(
         serviceName = "Inntektsmelding",
     ),
     Altinn2TjenesteDefinisjon(
-        serviceCode = "5278",
-        serviceEdition = "1",
-        serviceName = "Tilskuddsbrev NAV-tiltak",
-    ),
-    Altinn2TjenesteDefinisjon(
         serviceCode = "5902",
         serviceEdition = "1",
         serviceName = "Skademelding",
