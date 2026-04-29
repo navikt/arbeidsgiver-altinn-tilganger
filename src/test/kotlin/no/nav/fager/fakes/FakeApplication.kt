@@ -106,6 +106,80 @@ class FakeApplication(
                 call.respondText(resourceDocResponse, ContentType.Application.Json)
             }
         }
+
+        // Stub for access packages export
+        val accessPackagesExportResponse =
+            //language=json
+            """
+            [
+              {
+                "id": "group-1",
+                "name": "Allment",
+                "urn": null,
+                "description": "Generelle tilgangspakker",
+                "type": "Organisasjon",
+                "areas": [
+                  {
+                    "id": "area-1",
+                    "name": "Skatt, avgift, regnskap og toll",
+                    "urn": "accesspackage:area:skatt_avgift_regnskap_og_toll",
+                    "description": "Tilgangspakker knyttet til skatt, avgift, regnskap og toll.",
+                    "iconUrl": "https://example.com/icon.svg",
+                    "packages": [
+                      {
+                        "id": "pkg-1",
+                        "name": "Regnskapsfører lønn",
+                        "urn": "urn:altinn:accesspackage:regnskapsforer-lonn",
+                        "description": "Denne fullmakten gir tilgang til lønnstjenester for regnskapsførere.",
+                        "isDelegable": true,
+                        "isAssignable": true,
+                        "isResourcePolicyAvailable": true
+                      },
+                      {
+                        "id": "pkg-2",
+                        "name": "Unreferenced Package 1",
+                        "urn": "urn:altinn:accesspackage:unreferenced-pkg-1",
+                        "description": "This package is not referenced by any resource."
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "group-2",
+                "name": "Bransje",
+                "urn": null,
+                "description": "Bransjespesifikke tilgangspakker",
+                "type": "Organisasjon",
+                "areas": [
+                  {
+                    "id": "area-2",
+                    "name": "Helse og omsorg",
+                    "urn": "accesspackage:area:helse_og_omsorg",
+                    "description": "Tilgangspakker for helse og omsorg.",
+                    "iconUrl": "https://example.com/health-icon.svg",
+                    "packages": [
+                      {
+                        "id": "pkg-3",
+                        "name": "Unreferenced Package 2",
+                        "urn": "urn:altinn:accesspackage:unreferenced-pkg-2",
+                        "description": "This package is also not referenced by any resource."
+                      },
+                      {
+                        "id": "pkg-4",
+                        "name": "Unreferenced Package 3",
+                        "urn": "urn:altinn:accesspackage:unreferenced-pkg-3",
+                        "description": "Yet another unreferenced package."
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+            """.trimIndent()
+        it.stubs[Get to "/accessmanagement/api/v1/meta/info/accesspackages/export"] = {
+            call.respondText(accessPackagesExportResponse, ContentType.Application.Json)
+        }
     }
     private val fakeAltinn2Api = FakeApi()
     private val fakeTexas = FakeApi().also {
