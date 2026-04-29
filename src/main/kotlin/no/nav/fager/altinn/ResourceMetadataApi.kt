@@ -38,7 +38,7 @@ fun buildResourceMetadataResponse(
     accessPackageIndex: Map<String, IndexedAccessPackage> = emptyMap(),
 ): ResourceMetadataResponse {
     val resources = linkedMapOf<String, ResourceMetadataEntry>()
-    val allReferencedUrns = mutableSetOf<String>()
+    val allReferencedIds = mutableSetOf<String>()
 
     for (resource in KnownResources) {
         val resourceId = resource.resourceId
@@ -64,12 +64,7 @@ fun buildResourceMetadataResponse(
             .distinct()
             .sorted()
 
-        val accessPackageUrns = subjects
-            .filter { it.type == "urn:altinn:accesspackage" }
-            .map { it.urn }
-            .distinct()
-
-        allReferencedUrns.addAll(accessPackageUrns)
+        allReferencedIds.addAll(accessPackages)
 
         resources[resourceId] = ResourceMetadataEntry(
             metadata = resourceMetadata,
@@ -78,17 +73,17 @@ fun buildResourceMetadataResponse(
         )
     }
 
-    // Build accessPackages map from referenced urns
-    val warnedUrns = mutableSetOf<String>()
-    val accessPackagesMap = allReferencedUrns.sorted().mapNotNull { urn ->
-        val indexed = accessPackageIndex[urn]
+    // Build accessPackages map from referenced ids
+    val warnedIds = mutableSetOf<String>()
+    val accessPackagesMap = allReferencedIds.sorted().mapNotNull { id ->
+        val indexed = accessPackageIndex[id]
         if (indexed == null) {
-            if (warnedUrns.add(urn)) {
-                log.warn("Access package urn {} referenced by resource but not found in /export", urn)
+            if (warnedIds.add(id)) {
+                log.warn("Access package id {} referenced by resource but not found in /export", id)
             }
             null
         } else {
-            urn to AccessPackageDetails(
+            id to AccessPackageDetails(
                 name = indexed.pkg.name,
                 description = indexed.pkg.description,
                 area = indexed.area?.let {

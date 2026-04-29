@@ -94,12 +94,13 @@ class ResourceMetadataTest {
     }
 
     @Test
-    fun `distinct urn namespaces - package keys vs area urns`() = testWithSharedFakeApplication {
+    fun `distinct id namespaces - package keys are stripped ids, area urns have own prefix`() = testWithSharedFakeApplication {
         val body = client.get("/resource-metadata").body<ResourceMetadataResponse>()
 
-        // Package keys use urn:altinn:accesspackage: prefix
+        // Package keys are stripped ids — no urn:altinn:accesspackage: prefix
         body.accessPackages.keys.forEach { key ->
-            assertTrue(key.startsWith("urn:altinn:accesspackage:"), "Package key should start with urn:altinn:accesspackage:, got: $key")
+            assertFalse(key.startsWith("urn:altinn:"), "Package key should be stripped id, got: $key")
+            assertFalse(key.contains(":"), "Package key should be a plain id without colons, got: $key")
         }
 
         // Area urns use accesspackage:area: prefix (no urn:altinn:)
@@ -107,6 +108,21 @@ class ResourceMetadataTest {
             pkg.area?.urn?.let { areaUrn ->
                 assertTrue(areaUrn.startsWith("accesspackage:area:"), "Area urn should start with accesspackage:area:, got: $areaUrn")
                 assertFalse(areaUrn.startsWith("urn:altinn:"), "Area urn should NOT start with urn:altinn:, got: $areaUrn")
+            }
+        }
+    }
+
+    @Test
+    fun `direct lookup contract - accessPackages keyed by same id as grantedByAccessPackages`() = testWithSharedFakeApplication {
+        val body = client.get("/resource-metadata").body<ResourceMetadataResponse>()
+
+        // For every resource, every id in grantedByAccessPackages resolves directly to accessPackages[id]
+        body.resources.values.forEach { entry ->
+            entry.grantedByAccessPackages.forEach { id ->
+                assertNotNull(
+                    body.accessPackages[id],
+                    "accessPackages[$id] should be non-null (direct lookup from grantedByAccessPackages)"
+                )
             }
         }
     }
@@ -157,23 +173,22 @@ class ResourceMetadataTest {
     }
 
     @Test
-    fun `resource-metadata contains accessPackages map keyed by full urn`() = testWithSharedFakeApplication {
+    fun `resource-metadata contains accessPackages map keyed by stripped id`() = testWithSharedFakeApplication {
         val body = client.get("/resource-metadata").body<ResourceMetadataResponse>()
 
-        // accessPackages keys are full urns derived from grantedByAccessPackages stripped ids
-        val allReferencedUrns = body.resources.values
+        // accessPackages keys match grantedByAccessPackages entries directly
+        val allReferencedIds = body.resources.values
             .flatMap { it.grantedByAccessPackages }
-            .map { "urn:altinn:accesspackage:$it" }
             .toSet()
 
-        assertEquals(allReferencedUrns, body.accessPackages.keys)
+        assertEquals(allReferencedIds, body.accessPackages.keys)
     }
 
     @Test
     fun `accessPackages contains expected details`() = testWithSharedFakeApplication {
         val body = client.get("/resource-metadata").body<ResourceMetadataResponse>()
 
-        val pkg = body.accessPackages["urn:altinn:accesspackage:regnskapsforer-lonn"]
+        val pkg = body.accessPackages["regnskapsforer-lonn"]
         assertNotNull(pkg, "Expected access package details for regnskapsforer-lonn")
         assertEquals("Regnskapsfører lønn", pkg.name)
         assertEquals("Denne fullmakten gir tilgang til lønnstjenester for regnskapsførere.", pkg.description)
@@ -197,9 +212,9 @@ class ResourceMetadataTest {
         val body = client.get("/resource-metadata").body<ResourceMetadataResponse>()
 
         // These packages exist in the export fixture but are not referenced by any resource
-        assertNull(body.accessPackages["urn:altinn:accesspackage:unreferenced-pkg-1"])
-        assertNull(body.accessPackages["urn:altinn:accesspackage:unreferenced-pkg-2"])
-        assertNull(body.accessPackages["urn:altinn:accesspackage:unreferenced-pkg-3"])
+        assertNull(body.accessPackages["unreferenced-pkg-1"])
+        assertNull(body.accessPackages["unreferenced-pkg-2"])
+        assertNull(body.accessPackages["unreferenced-pkg-3"])
     }
 
     @Test
@@ -214,7 +229,7 @@ class ResourceMetadataTest {
         )
 
         val index = mapOf(
-            "urn:altinn:accesspackage:multi-area-pkg" to IndexedAccessPackage(
+            "multi-area-pkg" to IndexedAccessPackage(
                 pkg = pkg,
                 area = area1, // first occurrence wins
             )
@@ -235,7 +250,7 @@ class ResourceMetadataTest {
         }
 
         val response = buildResourceMetadataResponse(metadata, policySubjects, index)
-        val details = response.accessPackages["urn:altinn:accesspackage:multi-area-pkg"]
+        val details = response.accessPackages["multi-area-pkg"]
         assertNotNull(details)
         // area should be the first occurrence
         assertEquals("accesspackage:area:one", details.area?.urn)
@@ -262,8 +277,8 @@ class ResourceMetadataTest {
 
         // The stripped id still appears in grantedByAccessPackages
         assertTrue(response.resources["test-fager"]!!.grantedByAccessPackages.contains("missing-pkg"))
-        // But the full urn is absent from the top-level accessPackages map
-        assertFalse(response.accessPackages.containsKey("urn:altinn:accesspackage:missing-pkg"))
+        // But the id is absent from the top-level accessPackages map
+        assertFalse(response.accessPackages.containsKey("missing-pkg"))
     }
 
     @Test
@@ -316,7 +331,7 @@ class ResourceMetadataTest {
             }
           },
           "accessPackages": {
-            "urn:altinn:accesspackage:regnskapsforer-lonn": {
+            "regnskapsforer-lonn": {
               "name": "Regnskapsfører lønn",
               "description": "Denne fullmakten gir tilgang til lønnstjenester for regnskapsførere.",
               "area": {

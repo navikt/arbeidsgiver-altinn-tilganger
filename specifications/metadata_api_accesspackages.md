@@ -7,9 +7,13 @@ describes the delta.
 ## Summary
 
 Add a new top-level `accessPackages` field to the `/resource-metadata`
-response. It is a map of access-package **urn → details** (`name`,
-`description`, `areas`, …). The set of keys is exactly the union of all
-access packages referenced from any resource's `grantedByAccessPackages`.
+response. It is a map of access-package **id → details** (`name`,
+`description`, `area`, …). The id is the stripped value from
+`policySubject.value` (e.g. `"revisorattesterer"`), the same form already
+used in each resource's `grantedByAccessPackages` list. Looking up the
+details for a granted package is therefore a direct map access:
+`accessPackages[grantedId]`. The set of keys is the union of all access
+packages referenced across all resources.
 
 **Data source is the `/export` endpoint** (one HTTP call returning the full
 catalog, ~700 KB). Per-urn endpoints (`/package/urn/{urn}`) are explicitly
@@ -46,7 +50,7 @@ The shape is intentionally extensible so we can add more fields (e.g.
     }
   },
   "accessPackages": {
-    "urn:altinn:accesspackage:revisorattesterer": {
+    "revisorattesterer": {
       "name": "Revisorattesterer",
       "description": "Denne fullmakten gir tilgang til alle tjenester som krever revisorattestering. …",
       "area": {
@@ -60,31 +64,34 @@ The shape is intentionally extensible so we can add more fields (e.g.
 ```
 
 The `resources` half is **unchanged** from
-[metadata_api.md](metadata_api.md). In particular, `grantedByAccessPackages`
-keeps its current form: stripped ids from `policySubject.value`
-(`"revisorattesterer"`), not full urns. Consumers who want details look
-them up by reconstructing the urn:
+[metadata_api.md](metadata_api.md). `grantedByAccessPackages` keeps its
+current form: stripped ids from `policySubject.value`
+(`"revisorattesterer"`). The new `accessPackages` map uses the same id
+form as keys, so consumers do a direct lookup:
 
 ```
-"urn:altinn:accesspackage:" + id   →   accessPackages[urn]
+accessPackages[grantedId]   //  e.g. accessPackages["revisorattesterer"]
 ```
 
-The prefix is constant and well-known (`urn:altinn:accesspackage:` for every
-access package), so embedding it in every list entry would be redundant.
+No urn reconstruction. The full urn (`urn:altinn:accesspackage:<id>`) is
+known to be a constant prefix and is not embedded anywhere in the
+response.
 
-### Two distinct urn namespaces
+### Two distinct id namespaces
 
-The response carries two completely unrelated urn forms — do not conflate
-them:
+The response carries identifiers from two unrelated Altinn taxonomies — do
+not conflate them:
 
-| Urn                                                         | What it identifies      | Where it appears                           |
-| ----------------------------------------------------------- | ----------------------- | ------------------------------------------ |
-| `urn:altinn:accesspackage:<id>`                             | An access **package**   | Keys of the `accessPackages` map           |
-| `accesspackage:area:<id>`                                   | An access-package **area** | `accessPackages.<key>.area.urn`         |
+| Identifier form                  | What it identifies         | Where it appears                                          |
+| -------------------------------- | -------------------------- | --------------------------------------------------------- |
+| `<id>` (stripped)                | An access **package**      | Keys of the `accessPackages` map; entries in `grantedByAccessPackages`. Equivalent full urn is `urn:altinn:accesspackage:<id>` (not exposed in response). |
+| `accesspackage:area:<id>` (urn)  | An access-package **area** | `accessPackages.<key>.area.urn`                           |
 
-Note the area urn does not start with `urn:altinn:` — it is a different
-namespace owned by Altinn's access-package taxonomy. Pass both through
-verbatim, do not normalize, and do not try to derive one from the other.
+Two things to keep in mind:
+- The package identifier and the area identifier are completely
+  unrelated — you cannot derive one from the other.
+- The area identifier is itself a urn, but it does **not** start with
+  `urn:altinn:`. Pass it through verbatim, do not normalize.
 
 ### Field semantics — `accessPackages` entry
 
@@ -327,11 +334,14 @@ class AccessPackageRegistry(
         cacheTTL = cacheTTL.toJavaDuration(),
     )
 
-    // urn → indexed view: package + the area it appears under.
-    // Already filtered to referenced urns only.
-    private val byUrn = AtomicReference<Map<String, IndexedAccessPackage>>(emptyMap())
+    // id → indexed view: package + the area it appears under.
+    // Already filtered to referenced ids only.
+    // Map key is the stripped id (e.g. "revisorattesterer"), derived from
+    // the package urn by stripping the constant "urn:altinn:accesspackage:"
+    // prefix at index time.
+    private val byId = AtomicReference<Map<String, IndexedAccessPackage>>(emptyMap())
 
-    fun getAccessPackages(): Map<String, IndexedAccessPackage> = byUrn.get()
+    fun getAccessPackages(): Map<String, IndexedAccessPackage> = byId.get()
     // … background warm-up + refresh loop, see below …
 }
 
@@ -341,15 +351,17 @@ data class IndexedAccessPackage(
 )
 ```
 
-#### Determining which urns to keep
+#### Determining which ids to keep
 
 ```kotlin
-private fun referencedUrns(): Set<String> =
+private const val ACCESS_PACKAGE_URN_PREFIX = "urn:altinn:accesspackage:"
+
+private fun referencedIds(): Set<String> =
     resourceRegistry.getPolicySubjects()
         .values
         .flatten()
         .filter { it.type == "urn:altinn:accesspackage" }
-        .map { it.urn }
+        .map { it.value }   // stripped id, matches grantedByAccessPackages
         .toSet()
 ```
 
@@ -359,50 +371,57 @@ After every successful `/export` fetch, rebuild the in-memory snapshot:
 
 ```kotlin
 private fun rebuildIndex(groups: List<AccessPackageExportGroup>) {
-    val keep = referencedUrns()
+    val keep = referencedIds()
 
-    val pkgByUrn = mutableMapOf<String, AccessPackageExportPackage>()
-    val areaByUrn = mutableMapOf<String, AccessPackageExportArea>()
+    val pkgById = mutableMapOf<String, AccessPackageExportPackage>()
+    val areaById = mutableMapOf<String, AccessPackageExportArea>()
     val multiAreaSeen = mutableMapOf<String, MutableList<String?>>()
 
     for (group in groups) {
         for (area in group.areas) {
             for (pkg in area.packages) {
-                if (pkg.urn !in keep) continue   // <-- the filter
-                if (pkgByUrn.putIfAbsent(pkg.urn, pkg) == null) {
-                    areaByUrn[pkg.urn] = area    // first occurrence wins
+                val id = pkg.urn.removePrefix(ACCESS_PACKAGE_URN_PREFIX)
+                if (id == pkg.urn) {
+                    // urn didn't have the expected prefix — log and skip
+                    log.warn("Unexpected access-package urn shape from /export: {}", pkg.urn)
+                    continue
+                }
+                if (id !in keep) continue   // <-- the filter
+
+                if (pkgById.putIfAbsent(id, pkg) == null) {
+                    areaById[id] = area   // first occurrence wins
                 } else {
                     multiAreaSeen
-                        .getOrPut(pkg.urn) { mutableListOf(areaByUrn[pkg.urn]?.urn) }
+                        .getOrPut(id) { mutableListOf(areaById[id]?.urn) }
                         .add(area.urn)
                 }
             }
         }
     }
 
-    multiAreaSeen.forEach { (urn, areas) ->
+    multiAreaSeen.forEach { (id, areas) ->
         log.warn(
             "Access-package {} appears under multiple areas in /export: {}. Keeping first.",
-            urn, areas,
+            id, areas,
         )
     }
 
-    byUrn.set(
-        pkgByUrn.mapValues { (urn, pkg) ->
-            IndexedAccessPackage(pkg = pkg, area = areaByUrn[urn])
+    byId.set(
+        pkgById.mapValues { (id, pkg) ->
+            IndexedAccessPackage(pkg = pkg, area = areaById[id])
         }
     )
 
-    // For observability: any referenced urn that wasn't found in /export
-    val missing = keep - pkgByUrn.keys
+    // For observability: any referenced id that wasn't found in /export
+    val missing = keep - pkgById.keys
     if (missing.isNotEmpty()) {
-        log.warn("Referenced access-package urns not found in Altinn /export: {}", missing)
+        log.warn("Referenced access-package ids not found in Altinn /export: {}", missing)
     }
 }
 ```
 
 The unfiltered `groups` list is what's cached in Redis. We do not persist
-the filtered view — `referencedUrns()` can change at runtime as the
+the filtered view — `referencedIds()` can change at runtime as the
 policy-subjects snapshot updates, and the filter is cheap to reapply.
 
 #### Background loops
@@ -425,9 +444,9 @@ Two loops, mirroring `ResourceRegistry`:
      ResourceRegistry pattern at
      [ResourceRegistry.kt:237](src/main/kotlin/no/nav/fager/altinn/ResourceRegistry.kt:237).
 
-   Also rebuild the index opportunistically when `referencedUrns()`
+   Also rebuild the index opportunistically when `referencedIds()`
    changes (i.e. ResourceRegistry's policy subjects refreshed and
-   surfaced new urns). Cheapest version: always rebuild on every
+   surfaced new ids). Cheapest version: always rebuild on every
    refresh tick, even if we didn't refetch — `rebuildIndex` is in-memory
    only when fed the previously-cached payload.
 
@@ -436,7 +455,7 @@ Two loops, mirroring `ResourceRegistry`:
 `AccessPackageRegistry` registers with `Health` separately from
 `ResourceRegistry`. The app is ready when both are ready. Internally,
 `AccessPackageRegistry`'s readiness depends on `ResourceRegistry`'s
-readiness (it can't decide which urns to keep otherwise) — that ordering
+readiness (it can't decide which ids to keep otherwise) — that ordering
 is enforced by the warm-up loop's `resourceRegistry.isReady()` poll, not
 by constructor wiring.
 
@@ -471,7 +490,7 @@ In [ResourceMetadataApi.kt](src/main/kotlin/no/nav/fager/altinn/ResourceMetadata
 fun buildResourceMetadataResponse(
     metadata: Map<ResourceId, ResourceRegistryResource?>,
     policySubjects: Map<ResourceId, List<PolicySubject>>,
-    accessPackages: Map<String, IndexedAccessPackage>,  // NEW, urn-keyed
+    accessPackages: Map<String, IndexedAccessPackage>,  // NEW, id-keyed
 ): ResourceMetadataResponse
 ```
 
@@ -481,11 +500,16 @@ Steps inside:
    `grantedByAccessPackages` keeps using `policySubject.value` (stripped
    id), unchanged from
    [ResourceMetadataApi.kt:45](src/main/kotlin/no/nav/fager/altinn/ResourceMetadataApi.kt:45).
-2. Compute the set of access-package **urns** referenced across all
-   resources by walking `policySubjects` and reading `policySubject.urn`
-   directly (this is the full urn we use as a map key — separate from the
-   stripped value emitted in `grantedByAccessPackages`).
-3. For each referenced urn, look up `accessPackages[urn]`:
+2. Compute the set of access-package **ids** referenced across all
+   resources — same derivation as `grantedByAccessPackages`:
+   ```kotlin
+   val referencedIds: Set<String> = policySubjects.values
+       .flatten()
+       .filter { it.type == "urn:altinn:accesspackage" }
+       .map { it.value }
+       .toSet()
+   ```
+3. For each referenced id, look up `accessPackages[id]`:
    - present → emit
      ```kotlin
      AccessPackageDetails(
@@ -497,8 +521,8 @@ Steps inside:
      )
      ```
    - missing → skip + log a warning. Rate-limit the warning (e.g. via a
-     `Set<String>` of already-warned urns) to avoid log spam.
-4. Emit the `accessPackages` map sorted alphabetically by urn for
+     `Set<String>` of already-warned ids) to avoid log spam.
+4. Emit the `accessPackages` map sorted alphabetically by id for
    determinism.
 
 ### 6. OpenAPI
@@ -526,68 +550,72 @@ structure.
      subject — these must NOT appear in the response
 
 2. **Happy path** — `GET /resource-metadata` returns 200 with a non-empty
-   `accessPackages` map. Keys are full package urns
-   (`urn:altinn:accesspackage:…`). For each resource that has
-   `grantedByAccessPackages` entries, every stripped id in that list
-   resolves to `accessPackages["urn:altinn:accesspackage:" + id]`. Each
-   `accessPackages` entry has the expected `name`, `description`, and
-   `area` (singular object, matching the area the package was nested
-   under in the fixture).
+   `accessPackages` map. Keys are stripped ids (e.g. `"revisorattesterer"`).
+   For each resource that has `grantedByAccessPackages` entries, every id
+   in that list resolves directly to `accessPackages[id]` — no urn
+   reconstruction. Each `accessPackages` entry has the expected `name`,
+   `description`, and `area` (singular object, matching the area the
+   package was nested under in the fixture).
 
 3. **Filter applied** — assert that the unreferenced packages from the
    fixture do **not** appear in the response's `accessPackages` map, even
    though `/export` returned them.
 
-4. **`grantedByAccessPackages` shape unchanged** — assert that
+4. **Direct lookup contract** — assert symmetry: for every resource and
+   every id in `grantedByAccessPackages`, `accessPackages[id]` is non-null
+   (assuming Altinn returned details for it). Guards against the keys
+   silently drifting back to a urn or other transformed form.
+
+5. **`grantedByAccessPackages` shape unchanged** — assert that
    `grantedByAccessPackages` still contains stripped ids
    (e.g. `"revisorattesterer"`), NOT full urns. Guards against any
    well-meaning refactor that might try to "improve consistency" by
    pushing urns into the resource entries.
 
-5. **Single area assumption locked in** — for every entry in
+6. **Single area assumption locked in** — for every entry in
    `accessPackages`, assert `area` is a non-null object (not a list).
    Locks in the singular shape so a future refactor can't quietly
    reintroduce a list.
 
-6. **Defensive multi-area handling** — synthetic test only: stub a
-   fixture where one referenced urn appears under TWO areas. Assert:
+7. **Defensive multi-area handling** — synthetic test only: stub a
+   fixture where one referenced package appears under TWO areas. Assert:
    - the response still serializes `area` as a singular object
    - the chosen `area` is the first occurrence in document order
    - a warning was logged naming both area urns
 
-7. **Distinct urn namespaces** — assert that every key in `accessPackages`
-   starts with `urn:altinn:accesspackage:`, and every `area.urn` (where
-   present) starts with `accesspackage:area:`. Locks in the namespace
-   distinction documented in the response shape section.
+8. **Distinct id namespaces** — assert that no key in `accessPackages`
+   starts with `urn:altinn:accesspackage:` (keys are stripped ids), and
+   every `area.urn` (where present) starts with `accesspackage:area:`.
+   Locks in the namespace distinction documented in the response shape
+   section.
 
-8. **Missing details tolerated** — a urn referenced by a resource but
+9. **Missing details tolerated** — an id referenced by a resource but
    absent from the `/export` fixture should:
-   - still appear in that resource's `grantedByAccessPackages` (stripped
-     id form, unchanged)
-   - have no entry under `accessPackages` for the corresponding urn
+   - still appear in that resource's `grantedByAccessPackages`
+   - have no entry under `accessPackages[id]`
    - cause a warning to be logged
 
-9. **Unknown Altinn fields ignored** — stub the export with extra unknown
-   fields on group, area, and package levels and assert deserialization
-   succeeds.
+10. **Unknown Altinn fields ignored** — stub the export with extra unknown
+    fields on group, area, and package levels and assert deserialization
+    succeeds.
 
-10. **No change to existing role / access-package shape** —
+11. **No change to existing role / access-package shape** —
     [ResourceMetadataTest.kt](src/test/kotlin/no/nav/fager/ResourceMetadataTest.kt)
     assertions for `grantedByRoles` and `grantedByAccessPackages` should
     pass UNCHANGED after this feature lands. Run the existing test suite
     to confirm.
 
-11. **Single HTTP call** — instrument the fake to count hits on
+12. **Single HTTP call** — instrument the fake to count hits on
     `/accessmanagement/api/v1/meta/info/accesspackages/export`. Assert
     that during a normal lifecycle (warm-up + a few request calls), the
     endpoint is hit at most once per refresh interval — not per request,
-    not per urn.
+    not per id.
 
-12. **Determinism** — call twice; assert byte-equal JSON output. Both
+13. **Determinism** — call twice; assert byte-equal JSON output. Both
     `resources` and `accessPackages` keys should be in their respective
     sorted orders.
 
-13. **Swagger hidden** — same grep test as the parent spec (already
+14. **Swagger hidden** — same grep test as the parent spec (already
     covered, no new test needed unless we want to be explicit).
 
 ## Out of scope

@@ -55,6 +55,8 @@ data class IndexedAccessPackage(
 
 // --- Registry ---
 
+private const val ACCESS_PACKAGE_URN_PREFIX = "urn:altinn:accesspackage:"
+
 class AccessPackageRegistry(
     private val altinn3Client: Altinn3Client,
     private val resourceRegistry: ResourceRegistry,
@@ -78,56 +80,65 @@ class AccessPackageRegistry(
         cacheTTL = cacheTTL.toJavaDuration(),
     )
 
-    private val byUrn = AtomicReference<Map<String, IndexedAccessPackage>>(emptyMap())
+    // id → indexed view: package + the area it appears under.
+    // Map key is the stripped id (e.g. "revisorattesterer"), derived from
+    // the package urn by stripping the constant "urn:altinn:accesspackage:" prefix.
+    private val byId = AtomicReference<Map<String, IndexedAccessPackage>>(emptyMap())
 
-    fun getAccessPackages(): Map<String, IndexedAccessPackage> = byUrn.get()
+    fun getAccessPackages(): Map<String, IndexedAccessPackage> = byId.get()
 
-    private fun referencedUrns(): Set<String> =
+    private fun referencedIds(): Set<String> =
         resourceRegistry.getPolicySubjects()
             .values
             .flatten()
             .filter { it.type == "urn:altinn:accesspackage" }
-            .map { it.urn }
+            .map { it.value }   // stripped id, matches grantedByAccessPackages
             .toSet()
 
     private fun rebuildIndex(groups: List<AccessPackageExportGroup>) {
-        val keep = referencedUrns()
+        val keep = referencedIds()
 
-        val pkgByUrn = mutableMapOf<String, AccessPackageExportPackage>()
-        val areaByUrn = mutableMapOf<String, AccessPackageExportArea>()
+        val pkgById = mutableMapOf<String, AccessPackageExportPackage>()
+        val areaById = mutableMapOf<String, AccessPackageExportArea>()
         val multiAreaSeen = mutableMapOf<String, MutableList<String?>>()
 
         for (group in groups) {
             for (area in group.areas) {
                 for (pkg in area.packages) {
-                    if (pkg.urn !in keep) continue
-                    if (pkgByUrn.putIfAbsent(pkg.urn, pkg) == null) {
-                        areaByUrn[pkg.urn] = area
+                    val id = pkg.urn.removePrefix(ACCESS_PACKAGE_URN_PREFIX)
+                    if (id == pkg.urn) {
+                        // urn didn't have the expected prefix — log and skip
+                        log.warn("Unexpected access-package urn shape from /export: {}", pkg.urn)
+                        continue
+                    }
+                    if (id !in keep) continue
+                    if (pkgById.putIfAbsent(id, pkg) == null) {
+                        areaById[id] = area
                     } else {
                         multiAreaSeen
-                            .getOrPut(pkg.urn) { mutableListOf(areaByUrn[pkg.urn]?.urn) }
+                            .getOrPut(id) { mutableListOf(areaById[id]?.urn) }
                             .add(area.urn)
                     }
                 }
             }
         }
 
-        multiAreaSeen.forEach { (urn, areas) ->
-            log.error(
+        multiAreaSeen.forEach { (id, areas) ->
+            log.warn(
                 "Access-package {} appears under multiple areas in /export: {}. Keeping first.",
-                urn, areas,
+                id, areas,
             )
         }
 
-        byUrn.set(
-            pkgByUrn.mapValues { (urn, pkg) ->
-                IndexedAccessPackage(pkg = pkg, area = areaByUrn[urn])
+        byId.set(
+            pkgById.mapValues { (id, pkg) ->
+                IndexedAccessPackage(pkg = pkg, area = areaById[id])
             }
         )
 
-        val missing = keep - pkgByUrn.keys
+        val missing = keep - pkgById.keys
         if (missing.isNotEmpty()) {
-            log.error("Referenced access-package urns not found in Altinn /export: {}", missing)
+            log.warn("Referenced access-package ids not found in Altinn /export: {}", missing)
         }
     }
 
@@ -143,7 +154,7 @@ class AccessPackageRegistry(
                     val groups = retryWithBackoff { cache.get("_export") }
                     rebuildIndex(groups.getOrThrow())
                     isReady = true
-                    log.info("AccessPackageRegistry ready. Indexed {} access packages.", byUrn.get().size)
+                    log.info("AccessPackageRegistry ready. Indexed {} access packages.", byId.get().size)
                 } catch (e: Exception) {
                     e.rethrowIfCancellation()
                     log.error("Failed to warm up AccessPackageRegistry", e)
