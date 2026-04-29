@@ -22,6 +22,7 @@ import kotlinx.serialization.json.Json
 import no.nav.fager.altinn.Altinn2Config
 import no.nav.fager.altinn.Altinn3Config
 import no.nav.fager.altinn.KnownResourceIds
+import no.nav.fager.infrastruktur.Health
 import no.nav.fager.ktorConfig
 import no.nav.fager.redis.RedisConfig
 import no.nav.fager.texas.IdentityProvider
@@ -261,6 +262,7 @@ class FakeApplication(
     private var testContext: TestContext? = null
 
     fun start(wait: Boolean = false) = runBlocking {
+        Health.requiredServices.clear()
         fakeTexas.start()
         fakeAltinn3Api.start()
         fakeAltinn2Api.start()
@@ -342,3 +344,26 @@ fun testWithFakeApplication(
         block(fakeApp)
     }
 }
+
+private val sharedApp by lazy {
+    FakeApplication(
+        clientConfig = {
+            install(ContentNegotiation) {
+                json(Json { ignoreUnknownKeys = true })
+            }
+        }
+    ).also { it.setupTestContext() }
+}
+
+/**
+ * Like [testWithFakeApplication] but reuses a single [FakeApplication]
+ * across all callers in the JVM, avoiding the ~3 s startup cost per test.
+ *
+ * Use this for read-only tests that don't mutate stubs.
+ * Use [testWithFakeApplication] when a test needs to override stubs
+ * (e.g. via `app.altinn3Response(…)`).
+ */
+fun testWithSharedFakeApplication(
+    block: suspend FakeApplication.TestContext.() -> Unit
+) = sharedApp.runTest { block() }
+

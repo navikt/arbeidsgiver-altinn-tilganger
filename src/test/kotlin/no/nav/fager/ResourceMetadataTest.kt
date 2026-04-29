@@ -18,7 +18,7 @@ import no.nav.fager.altinn.PolicySubject
 import no.nav.fager.altinn.ResourceMetadataResponse
 import no.nav.fager.altinn.ResourceRegistryResource
 import no.nav.fager.altinn.buildResourceMetadataResponse
-import no.nav.fager.fakes.testWithFakeApplication
+import no.nav.fager.fakes.testWithSharedFakeApplication
 import org.skyscreamer.jsonassert.JSONAssert
 import org.skyscreamer.jsonassert.JSONCompareMode
 import java.io.File
@@ -33,7 +33,7 @@ import kotlin.test.assertTrue
 class ResourceMetadataTest {
 
     @Test
-    fun `GET resource-metadata returns 200 with all known resources`() = testWithFakeApplication {
+    fun `GET resource-metadata returns 200 with all known resources`() = testWithSharedFakeApplication {
         val response = client.get("/resource-metadata")
         assertEquals(HttpStatusCode.OK, response.status)
 
@@ -45,14 +45,14 @@ class ResourceMetadataTest {
     }
 
     @Test
-    fun `GET resource-metadata requires no authentication`() = testWithFakeApplication {
+    fun `GET resource-metadata requires no authentication`() = testWithSharedFakeApplication {
         // No Authorization header
         val response = client.get("/resource-metadata")
         assertEquals(HttpStatusCode.OK, response.status)
     }
 
     @Test
-    fun `resource-metadata passes through metadata fields`() = testWithFakeApplication {
+    fun `resource-metadata passes through metadata fields`() = testWithSharedFakeApplication {
         val body = client.get("/resource-metadata").body<ResourceMetadataResponse>()
 
         val permitteringId = "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"
@@ -67,7 +67,7 @@ class ResourceMetadataTest {
     }
 
     @Test
-    fun `resource-metadata extracts roles and access packages correctly`() = testWithFakeApplication {
+    fun `resource-metadata extracts roles and access packages correctly`() = testWithSharedFakeApplication {
         val body = client.get("/resource-metadata").body<ResourceMetadataResponse>()
 
         val permitteringId = "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"
@@ -81,7 +81,7 @@ class ResourceMetadataTest {
     }
 
     @Test
-    fun `grantedByAccessPackages uses stripped ids not full urns`() = testWithFakeApplication {
+    fun `grantedByAccessPackages uses stripped ids not full urns`() = testWithSharedFakeApplication {
         val body = client.get("/resource-metadata").body<ResourceMetadataResponse>()
 
         val permitteringId = "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"
@@ -94,7 +94,7 @@ class ResourceMetadataTest {
     }
 
     @Test
-    fun `distinct urn namespaces - package keys vs area urns`() = testWithFakeApplication {
+    fun `distinct urn namespaces - package keys vs area urns`() = testWithSharedFakeApplication {
         val body = client.get("/resource-metadata").body<ResourceMetadataResponse>()
 
         // Package keys use urn:altinn:accesspackage: prefix
@@ -112,7 +112,7 @@ class ResourceMetadataTest {
     }
 
     @Test
-    fun `grantedByRoles still contains stripped values not urns`() = testWithFakeApplication {
+    fun `grantedByRoles still contains stripped values not urns`() = testWithSharedFakeApplication {
         val body = client.get("/resource-metadata").body<ResourceMetadataResponse>()
 
         val permitteringId = "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"
@@ -125,7 +125,7 @@ class ResourceMetadataTest {
     }
 
     @Test
-    fun `resource-metadata is deterministic`() = testWithFakeApplication {
+    fun `resource-metadata is deterministic`() = testWithSharedFakeApplication {
         val response1 = client.get("/resource-metadata").bodyAsText()
         val response2 = client.get("/resource-metadata").bodyAsText()
         assertEquals(response1, response2, "Response should be deterministic across calls")
@@ -148,7 +148,7 @@ class ResourceMetadataTest {
     }
 
     @Test
-    fun `altinn-tilganger still requires auth`() = testWithFakeApplication {
+    fun `altinn-tilganger still requires auth`() = testWithSharedFakeApplication {
         // No Authorization header for altinn-tilganger should fail
         val response = client.post("/altinn-tilganger") {
             contentType(ContentType.Application.Json)
@@ -157,7 +157,7 @@ class ResourceMetadataTest {
     }
 
     @Test
-    fun `resource-metadata contains accessPackages map keyed by full urn`() = testWithFakeApplication {
+    fun `resource-metadata contains accessPackages map keyed by full urn`() = testWithSharedFakeApplication {
         val body = client.get("/resource-metadata").body<ResourceMetadataResponse>()
 
         // accessPackages keys are full urns derived from grantedByAccessPackages stripped ids
@@ -170,7 +170,7 @@ class ResourceMetadataTest {
     }
 
     @Test
-    fun `accessPackages contains expected details`() = testWithFakeApplication {
+    fun `accessPackages contains expected details`() = testWithSharedFakeApplication {
         val body = client.get("/resource-metadata").body<ResourceMetadataResponse>()
 
         val pkg = body.accessPackages["urn:altinn:accesspackage:regnskapsforer-lonn"]
@@ -183,7 +183,7 @@ class ResourceMetadataTest {
     }
 
     @Test
-    fun `accessPackages area is a singular object not a list`() = testWithFakeApplication {
+    fun `accessPackages area is a singular object not a list`() = testWithSharedFakeApplication {
         val body = client.get("/resource-metadata").body<ResourceMetadataResponse>()
 
         body.accessPackages.values.forEach { pkg ->
@@ -193,7 +193,7 @@ class ResourceMetadataTest {
     }
 
     @Test
-    fun `unreferenced access packages are filtered from response`() = testWithFakeApplication {
+    fun `unreferenced access packages are filtered from response`() = testWithSharedFakeApplication {
         val body = client.get("/resource-metadata").body<ResourceMetadataResponse>()
 
         // These packages exist in the export fixture but are not referenced by any resource
@@ -267,7 +267,7 @@ class ResourceMetadataTest {
     }
 
     @Test
-    fun `resource-metadata response shape matches expected JSON`() = testWithFakeApplication {
+    fun `resource-metadata response shape matches expected JSON`() = testWithSharedFakeApplication {
         val responseText = client.get("/resource-metadata").bodyAsText()
 
         //language=json
@@ -332,7 +332,3 @@ class ResourceMetadataTest {
         JSONAssert.assertEquals(expected, responseText, JSONCompareMode.LENIENT)
     }
 }
-
-
-
-
