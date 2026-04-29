@@ -168,7 +168,6 @@ val KnownResources = listOfNotNull(
     Resource(
         resourceId = "nav_yrkesskade_skademelding",
         altinn2Tjeneste = listOf(Altinn2Tjeneste("5902", "1")),
-        availableInProduction = false,
     ),
     Resource(
         resourceId = "nav_hjelpemidler_behovsmelding",
