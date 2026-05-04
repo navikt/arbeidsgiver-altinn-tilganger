@@ -34,11 +34,16 @@ spec:
         - id: loki
         - id: elastic
 
+  replicas:
+    min: 2
+    max: 6
+    cpuThresholdPercentage: 50
+
   resources:
     requests:
-      memory: 512Mi
-    limits:
       memory: 1024Mi
+    limits:
+      memory: 2048Mi
 
   env:
     - name: ALTINN_3_API_BASE_URL
