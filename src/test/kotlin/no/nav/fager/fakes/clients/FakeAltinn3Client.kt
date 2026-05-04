@@ -6,6 +6,7 @@ import no.nav.fager.altinn.AuthorizedParty
 import no.nav.fager.altinn.PolicySubject
 import no.nav.fager.altinn.ResourceRegistryResource
 import no.nav.fager.altinn.LocalizedText
+import no.nav.fager.altinn.RoleExport
 import no.nav.fager.fakes.FakeClientBase
 
 class FakeAltinn3Client(
@@ -15,6 +16,7 @@ class FakeAltinn3Client(
         ResourceRegistryResource(identifier = resourceId)
     },
     private val accessManagement_AccessPackagesExportHandler: () -> List<AccessPackageExportGroup> = { listOf() },
+    private val accessManagement_RolesHandler: () -> List<RoleExport> = { listOf() },
 ) : Altinn3Client, FakeClientBase() {
 
     override suspend fun resourceOwner_AuthorizedParties(fnr: String): Result<List<AuthorizedParty>> {
@@ -35,5 +37,10 @@ class FakeAltinn3Client(
     override suspend fun accessManagement_AccessPackagesExport(): Result<List<AccessPackageExportGroup>> {
         addFunctionCall(this::accessManagement_AccessPackagesExport.name, "")
         return Result.success(accessManagement_AccessPackagesExportHandler())
+    }
+
+    override suspend fun accessManagement_Roles(): Result<List<RoleExport>> {
+        addFunctionCall(this::accessManagement_Roles.name, "")
+        return Result.success(accessManagement_RolesHandler())
     }
 }

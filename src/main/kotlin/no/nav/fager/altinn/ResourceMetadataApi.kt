@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory
 data class ResourceMetadataResponse(
     val resources: Map<String, ResourceMetadataEntry>,
     val accessPackages: Map<String, AccessPackageDetails> = emptyMap(),
+    val roles: Map<String, RoleDetails> = emptyMap(),
 )
 
 @Serializable
@@ -30,15 +31,23 @@ data class AccessPackageArea(
     val description: String? = null,
 )
 
+@Serializable
+data class RoleDetails(
+    val name: String? = null,
+    val description: String? = null,
+)
+
 private val log = LoggerFactory.getLogger("no.nav.fager.altinn.ResourceMetadataApi")
 
 fun buildResourceMetadataResponse(
     metadata: Map<ResourceId, ResourceRegistryResource?>,
     policySubjects: Map<ResourceId, List<PolicySubject>>,
     accessPackageIndex: Map<String, IndexedAccessPackage> = emptyMap(),
+    roleIndex: Map<String, RoleExport> = emptyMap(),
 ): ResourceMetadataResponse {
     val resources = linkedMapOf<String, ResourceMetadataEntry>()
     val allReferencedIds = mutableSetOf<String>()
+    val allReferencedRoleCodes = mutableSetOf<String>()
 
     for (resource in KnownResources) {
         val resourceId = resource.resourceId
@@ -65,6 +74,7 @@ fun buildResourceMetadataResponse(
             .sorted()
 
         allReferencedIds.addAll(accessPackages)
+        allReferencedRoleCodes.addAll(roles)
 
         resources[resourceId] = ResourceMetadataEntry(
             metadata = resourceMetadata,
@@ -93,8 +103,15 @@ fun buildResourceMetadataResponse(
         }
     }.toMap(linkedMapOf())
 
+    // Build roles map from referenced role codes
+    val rolesMap = allReferencedRoleCodes.sorted().mapNotNull { code ->
+        val role = roleIndex[code] ?: return@mapNotNull null
+        code to RoleDetails(name = role.name, description = role.description)
+    }.toMap(linkedMapOf())
+
     return ResourceMetadataResponse(
         resources = resources,
         accessPackages = accessPackagesMap,
+        roles = rolesMap,
     )
 }

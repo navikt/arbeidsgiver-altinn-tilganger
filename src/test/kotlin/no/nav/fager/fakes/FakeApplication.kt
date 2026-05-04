@@ -181,6 +181,41 @@ class FakeApplication(
         it.stubs[Get to "/accessmanagement/api/v1/meta/info/accesspackages/export"] = {
             call.respondText(accessPackagesExportResponse, ContentType.Application.Json)
         }
+
+        // Stub for roles metadata
+        val rolesResponse =
+            //language=json
+            """
+            [
+              {
+                "id": "role-dagl",
+                "name": "Daglig leder",
+                "code": "daglig-leder",
+                "description": "Daglig leder for virksomheten",
+                "urn": "urn:altinn:external-role:ccr:daglig-leder",
+                "legacyRoleCode": "dagl"
+              },
+              {
+                "id": "role-lede",
+                "name": "Styrets leder",
+                "code": "styreleder",
+                "description": "Leder i styret for virksomheten",
+                "urn": "urn:altinn:external-role:ccr:styreleder",
+                "legacyRoleCode": "lede"
+              },
+              {
+                "id": "role-other",
+                "name": "Unreferenced Role",
+                "code": "unreferenced",
+                "description": "This role is not referenced by any resource.",
+                "urn": "urn:altinn:external-role:ccr:unreferenced",
+                "legacyRoleCode": "unreferenced"
+              }
+            ]
+            """.trimIndent()
+        it.stubs[Get to "/accessmanagement/api/v1/meta/info/roles"] = {
+            call.respondText(rolesResponse, ContentType.Application.Json)
+        }
     }
     private val fakeAltinn2Api = FakeApi()
     private val fakeTexas = FakeApi().also {

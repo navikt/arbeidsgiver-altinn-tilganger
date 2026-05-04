@@ -17,6 +17,8 @@ import no.nav.fager.altinn.KnownResourceIds
 import no.nav.fager.altinn.PolicySubject
 import no.nav.fager.altinn.ResourceMetadataResponse
 import no.nav.fager.altinn.ResourceRegistryResource
+import no.nav.fager.altinn.RoleDetails
+import no.nav.fager.altinn.RoleExport
 import no.nav.fager.altinn.buildResourceMetadataResponse
 import no.nav.fager.fakes.testWithSharedFakeApplication
 import org.skyscreamer.jsonassert.JSONAssert
@@ -340,10 +342,99 @@ class ResourceMetadataTest {
                 "description": "Tilgangspakker knyttet til skatt, avgift, regnskap og toll."
               }
             }
+          },
+          "roles": {
+            "dagl": {
+              "name": "Daglig leder",
+              "description": "Daglig leder for virksomheten"
+            },
+            "lede": {
+              "name": "Styrets leder",
+              "description": "Leder i styret for virksomheten"
+            }
           }
         }
         """.trimIndent()
 
         JSONAssert.assertEquals(expected, responseText, JSONCompareMode.LENIENT)
+    }
+
+    @Test
+    fun `resource-metadata contains roles map`() = testWithSharedFakeApplication {
+        val body = client.get("/resource-metadata").body<ResourceMetadataResponse>()
+        assertTrue(body.roles.isNotEmpty(), "Expected roles map to be non-empty")
+    }
+
+    @Test
+    fun `roles map contains expected display names`() = testWithSharedFakeApplication {
+        val body = client.get("/resource-metadata").body<ResourceMetadataResponse>()
+
+        val dagl = body.roles["dagl"]
+        assertNotNull(dagl, "Expected role details for 'dagl'")
+        assertEquals("Daglig leder", dagl.name)
+        assertEquals("Daglig leder for virksomheten", dagl.description)
+
+        val lede = body.roles["lede"]
+        assertNotNull(lede, "Expected role details for 'lede'")
+        assertEquals("Styrets leder", lede.name)
+    }
+
+    @Test
+    fun `roles map keys match grantedByRoles values`() = testWithSharedFakeApplication {
+        val body = client.get("/resource-metadata").body<ResourceMetadataResponse>()
+
+        val allReferencedRoles = body.resources.values
+            .flatMap { it.grantedByRoles }
+            .toSet()
+
+        allReferencedRoles.forEach { roleCode ->
+            assertNotNull(
+                body.roles[roleCode],
+                "roles[$roleCode] should be non-null (direct lookup from grantedByRoles)"
+            )
+        }
+    }
+
+    @Test
+    fun `unreferenced roles are filtered from roles map`() = testWithSharedFakeApplication {
+        val body = client.get("/resource-metadata").body<ResourceMetadataResponse>()
+        assertNull(body.roles["unreferenced"], "Unreferenced role should not appear in roles map")
+    }
+
+    @Test
+    fun `buildResourceMetadataResponse includes roles from roleIndex`() {
+        val metadata = KnownResourceIds.distinct().associateWith { ResourceRegistryResource(identifier = it) }
+        val policySubjects = KnownResourceIds.distinct().associateWith { resourceId ->
+            if (resourceId == "test-fager") listOf(
+                PolicySubject(type = "urn:altinn:rolecode", value = "dagl", urn = "urn:altinn:rolecode:dagl")
+            ) else emptyList()
+        }
+        val roleIndex = mapOf(
+            "dagl" to RoleExport(name = "Daglig leder", description = "Daglig leder for virksomheten", legacyRoleCode = "dagl")
+        )
+
+        val response = buildResourceMetadataResponse(metadata, policySubjects, roleIndex = roleIndex)
+
+        val dagl = response.roles["dagl"]
+        assertNotNull(dagl)
+        assertEquals("Daglig leder", dagl.name)
+        assertEquals("Daglig leder for virksomheten", dagl.description)
+    }
+
+    @Test
+    fun `missing role details are tolerated`() {
+        val metadata = KnownResourceIds.distinct().associateWith { ResourceRegistryResource(identifier = it) }
+        val policySubjects = KnownResourceIds.distinct().associateWith { resourceId ->
+            if (resourceId == "test-fager") listOf(
+                PolicySubject(type = "urn:altinn:rolecode", value = "dagl", urn = "urn:altinn:rolecode:dagl")
+            ) else emptyList()
+        }
+
+        val response = buildResourceMetadataResponse(metadata, policySubjects, roleIndex = emptyMap())
+
+        // The code still appears in grantedByRoles
+        assertTrue(response.resources["test-fager"]!!.grantedByRoles.contains("dagl"))
+        // But is absent from the top-level roles map
+        assertFalse(response.roles.containsKey("dagl"))
     }
 }
