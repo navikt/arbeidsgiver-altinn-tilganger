@@ -56,7 +56,7 @@ class RoleRegistry(
 
         val index = mutableMapOf<String, RoleExport>()
         for (role in roles) {
-            val code = role.legacyRoleCode ?: continue
+            val code = role.legacyRoleCode ?: role.code ?: continue
             if (code !in keep) continue
             index[code] = role
         }
