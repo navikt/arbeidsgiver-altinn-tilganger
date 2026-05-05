@@ -9,7 +9,6 @@ import no.nav.fager.AltinnTilgang
 import no.nav.fager.Filter
 import no.nav.fager.infrastruktur.Metrics
 import no.nav.fager.infrastruktur.coRecord
-import no.nav.fager.infrastruktur.teamLogger
 import no.nav.fager.redis.AltinnTilgangerRedisClient
 
 
@@ -27,7 +26,6 @@ class AltinnService(
     private val timer = Metrics.meterRegistry.timer("altinnservice.hentTilgangerFraAltinn")
     private val cacheCount = Metrics.counter("altinnservice.cache")
     private val altinnCount = Metrics.counter("altinnservice.altinn")
-    private val teamLogger = teamLogger()
 
     suspend fun hentTilganger(
         fnr: String,
@@ -99,19 +97,7 @@ class AltinnService(
                             orgnrTilAltinn2Mapped
                         )
                     )
-                ).also {
-                    teamLogger.info(
-                        "Hentet Altinn-tilganger for fnr={}, altinn2Tilganger={}, altinn3TilgangerResult={}, altinn3Tilganger={}, resultat={}",
-                        fnr,
-                        altinn2Tilganger,
-                        altinn3TilgangerResult.fold(
-                            onSuccess = { r -> r },
-                            onFailure = { "failure" }
-                        ),
-                        altinn3Tilganger,
-                        it
-                    )
-                }
+                )
             }
         }
 
