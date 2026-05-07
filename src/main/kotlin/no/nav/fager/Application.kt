@@ -63,13 +63,12 @@ import no.nav.fager.altinn.Altinn3Config
 import no.nav.fager.altinn.AltinnService
 import no.nav.fager.altinn.AccessPackageRegistry
 import no.nav.fager.altinn.RoleRegistry
-import no.nav.fager.altinn.buildResourceMetadataResponse
 import no.nav.fager.altinn.ResourceRegistry
+import no.nav.fager.altinn.buildResourceMetadataResponse
 import no.nav.fager.infrastruktur.AutentisertM2MPrincipal
 import no.nav.fager.infrastruktur.Health
 import no.nav.fager.infrastruktur.InnloggetBrukerPrincipal
 import no.nav.fager.infrastruktur.Metrics
-import no.nav.fager.infrastruktur.TEAM_LOG_MARKER
 import no.nav.fager.infrastruktur.coRecord
 import no.nav.fager.infrastruktur.logger
 import no.nav.fager.redis.AltinnTilgangerRedisClientImpl
@@ -118,8 +117,6 @@ fun Application.ktorConfig(
     redisConfig: RedisConfig,
 ) {
     val log = logger()
-
-    log.info(TEAM_LOG_MARKER, "Team logging enabled")
 
     install(Compression) {
         gzip {

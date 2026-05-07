@@ -176,7 +176,6 @@ val KnownResources = listOfNotNull(
     Resource(
         resourceId = "nav_medlemskap-lovvalg_soknad",
         altinn2Tjeneste = listOf(),
-        availableInProduction = false,
     ),
 ).filter {
     basedOnEnv(
@@ -271,7 +270,8 @@ class ResourceRegistry(
 
         backgroundCoroutineScope?.launch {
             while (!Health.terminating) {
-                val success = updateResourceMetadataForKnownResources { resourceId -> resourceMetadataCache.update(resourceId) }
+                val success =
+                    updateResourceMetadataForKnownResources { resourceId -> resourceMetadataCache.update(resourceId) }
                 if (success) {
                     log.info("Resource metadata for kjente ressurser oppdatert")
                     delay(cacheRefreshInterval)
