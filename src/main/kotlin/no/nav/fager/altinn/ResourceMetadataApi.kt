@@ -1,12 +1,13 @@
 package no.nav.fager.altinn
 
 import kotlinx.serialization.Serializable
-import no.nav.fager.infrastruktur.logger
 import org.slf4j.LoggerFactory
 
 @Serializable
 data class ResourceMetadataResponse(
     val resources: Map<String, ResourceMetadataEntry>,
+    val accessPackages: Map<String, AccessPackageDetails> = emptyMap(),
+    val roles: Map<String, RoleDetails> = emptyMap(),
 )
 
 @Serializable
@@ -16,13 +17,37 @@ data class ResourceMetadataEntry(
     val grantedByAccessPackages: List<String>,
 )
 
+@Serializable
+data class AccessPackageDetails(
+    val name: String? = null,
+    val description: String? = null,
+    val area: AccessPackageArea? = null,
+)
+
+@Serializable
+data class AccessPackageArea(
+    val urn: String? = null,
+    val name: String? = null,
+    val description: String? = null,
+)
+
+@Serializable
+data class RoleDetails(
+    val name: String? = null,
+    val description: String? = null,
+)
+
 private val log = LoggerFactory.getLogger("no.nav.fager.altinn.ResourceMetadataApi")
 
 fun buildResourceMetadataResponse(
     metadata: Map<ResourceId, ResourceRegistryResource?>,
     policySubjects: Map<ResourceId, List<PolicySubject>>,
+    accessPackageIndex: Map<String, IndexedAccessPackage> = emptyMap(),
+    roleIndex: Map<String, RoleExport> = emptyMap(),
 ): ResourceMetadataResponse {
     val resources = linkedMapOf<String, ResourceMetadataEntry>()
+    val allReferencedIds = mutableSetOf<String>()
+    val allReferencedRoleCodes = mutableSetOf<String>()
 
     for (resource in KnownResources) {
         val resourceId = resource.resourceId
@@ -48,6 +73,9 @@ fun buildResourceMetadataResponse(
             .distinct()
             .sorted()
 
+        allReferencedIds.addAll(accessPackages)
+        allReferencedRoleCodes.addAll(roles)
+
         resources[resourceId] = ResourceMetadataEntry(
             metadata = resourceMetadata,
             grantedByRoles = roles,
@@ -55,7 +83,35 @@ fun buildResourceMetadataResponse(
         )
     }
 
-    return ResourceMetadataResponse(resources = resources)
+    // Build accessPackages map from referenced ids
+    val warnedIds = mutableSetOf<String>()
+    val accessPackagesMap = allReferencedIds.sorted().mapNotNull { id ->
+        val indexed = accessPackageIndex[id]
+        if (indexed == null) {
+            if (warnedIds.add(id)) {
+                log.warn("Access package id {} referenced by resource but not found in /export", id)
+            }
+            null
+        } else {
+            id to AccessPackageDetails(
+                name = indexed.pkg.name,
+                description = indexed.pkg.description,
+                area = indexed.area?.let {
+                    AccessPackageArea(it.urn, it.name, it.description)
+                },
+            )
+        }
+    }.toMap(linkedMapOf())
+
+    // Build roles map from referenced role codes
+    val rolesMap = allReferencedRoleCodes.sorted().mapNotNull { code ->
+        val role = roleIndex[code] ?: return@mapNotNull null
+        code to RoleDetails(name = role.name, description = role.description)
+    }.toMap(linkedMapOf())
+
+    return ResourceMetadataResponse(
+        resources = resources,
+        accessPackages = accessPackagesMap,
+        roles = rolesMap,
+    )
 }
-
-

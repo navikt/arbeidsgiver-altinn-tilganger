@@ -61,6 +61,8 @@ import no.nav.fager.altinn.Altinn2Config
 import no.nav.fager.altinn.Altinn3ClientImpl
 import no.nav.fager.altinn.Altinn3Config
 import no.nav.fager.altinn.AltinnService
+import no.nav.fager.altinn.AccessPackageRegistry
+import no.nav.fager.altinn.RoleRegistry
 import no.nav.fager.altinn.ResourceRegistry
 import no.nav.fager.altinn.buildResourceMetadataResponse
 import no.nav.fager.infrastruktur.AutentisertM2MPrincipal
@@ -236,6 +238,20 @@ fun Application.ktorConfig(
         backgroundCoroutineScope = backgroundScope
     ).also { Health.register(it) }
 
+    val accessPackageRegistry = AccessPackageRegistry(
+        altinn3Client = altinn3Client,
+        resourceRegistry = resourceRegistry,
+        redisConfig = redisConfig,
+        backgroundCoroutineScope = backgroundScope,
+    ).also { Health.register(it) }
+
+    val roleRegistry = RoleRegistry(
+        altinn3Client = altinn3Client,
+        resourceRegistry = resourceRegistry,
+        redisConfig = redisConfig,
+        backgroundCoroutineScope = backgroundScope,
+    ).also { Health.register(it) }
+
     val altinnService = AltinnService(
         altinn2Client = altinn2Client,
         altinn3Client = altinn3Client,
@@ -277,6 +293,8 @@ fun Application.ktorConfig(
                     buildResourceMetadataResponse(
                         metadata = resourceRegistry.getResourceMetadata(),
                         policySubjects = resourceRegistry.getPolicySubjects(),
+                        accessPackageIndex = accessPackageRegistry.getAccessPackages(),
+                        roleIndex = roleRegistry.getRoles(),
                     )
                 )
             }
