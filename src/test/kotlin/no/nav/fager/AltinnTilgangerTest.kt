@@ -1282,4 +1282,66 @@ class AltinnTilgangerTest {
             assertEquals(HttpStatusCode.OK, status)
         }.body<AltinnTilgangerResponse>().also(assertResponse)
     }
+
+    @Test
+    fun `hovedenhet uten underenheter returneres i response`() = testWithFakeApplication { app ->
+        app.altinn3Response(Post, "/accessmanagement/api/v1/resourceowner/authorizedparties") {
+            call.respondText(
+                //language=json
+                """
+                [
+                  {
+                    "partyUuid": "a1c831cf-c7b7-4e5e-9910-2ad9a05b4ec1",
+                    "name": "ENKELTMANNSFORETAK",
+                    "organizationNumber": "810000099",
+                    "personId": null,
+                    "partyId": 50000099,
+                    "type": "Organization",
+                    "unitType": "ENK",
+                    "isDeleted": false,
+                    "onlyHierarchyElementWithNoAccess": false,
+                    "authorizedResources": [],
+                    "authorizedRoles": [],
+                    "authorizedAccessPackages": [],
+                    "subunits": []
+                  }
+                ]
+                """.trimIndent(), ContentType.Application.Json
+            )
+        }
+        app.altinn2Response(Get, "/api/serviceowner/reportees") {
+            call.respondText("[]", ContentType.Application.Json)
+        }
+
+        val assertResponse: (AltinnTilgangerResponse) -> Unit = {
+            assertFalse(it.isError)
+            assertEquals(1, it.hierarki.size)
+            assertEquals("810000099", it.hierarki[0].orgnr)
+            assertEquals("ENKELTMANNSFORETAK", it.hierarki[0].navn)
+            assertEquals(emptyList(), it.hierarki[0].underenheter)
+        }
+
+        client.post("/altinn-tilganger") {
+            header("Authorization", "Bearer idporten-loa-high:${fnr.next()}")
+            contentType(ContentType.Application.Json)
+            setBody("")
+        }.apply {
+            assertEquals(HttpStatusCode.OK, status)
+        }.body<AltinnTilgangerResponse>().also(assertResponse)
+
+        client.post("/m2m/altinn-tilganger") {
+            header("Authorization", "Bearer fakem2mtoken")
+            contentType(ContentType.Application.Json)
+            setBody(
+                //language=json
+                """
+                {
+                    "fnr": "${fnr.next()}"
+                }
+                """.trimIndent()
+            )
+        }.apply {
+            assertEquals(HttpStatusCode.OK, status)
+        }.body<AltinnTilgangerResponse>().also(assertResponse)
+    }
 }
