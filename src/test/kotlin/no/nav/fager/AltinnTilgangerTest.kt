@@ -1137,4 +1137,211 @@ class AltinnTilgangerTest {
         }
 
     }
+
+    @Test
+    fun `filter med orgledd returnerer kun laveste nivå med tilgang`() = testWithFakeApplication { app ->
+        app.altinn3Response(Post, "/accessmanagement/api/v1/resourceowner/authorizedparties") {
+            call.respondText(
+                //language=json
+                """
+                [
+                  {
+                    "partyUuid": "a1c831cf-c7b7-4e5e-9910-2ad9a05b4ec1",
+                    "name": "TOPPVIRKSOMHET AS",
+                    "organizationNumber": "810000001",
+                    "personId": null,
+                    "partyId": 50000001,
+                    "type": "Organization",
+                    "unitType": "AS",
+                    "isDeleted": false,
+                    "onlyHierarchyElementWithNoAccess": true,
+                    "authorizedResources": [],
+                    "authorizedRoles": [],
+                    "authorizedAccessPackages": [],
+                    "subunits": [
+                      {
+                        "partyUuid": "b2d942df-d8c8-5f6f-aa21-3be0b06c5fc2",
+                        "name": "ORGLEDD ENHET",
+                        "organizationNumber": "910000002",
+                        "personId": null,
+                        "partyId": 50000002,
+                        "type": "Organization",
+                        "unitType": "ORGL",
+                        "isDeleted": false,
+                        "onlyHierarchyElementWithNoAccess": true,
+                        "authorizedResources": [],
+                        "authorizedRoles": [],
+                        "authorizedAccessPackages": [],
+                        "subunits": [
+                          {
+                            "partyUuid": "c3ea53e0-e9d9-6070-bb32-4cf1c17d6ed3",
+                            "name": "UNDERENHET MED TILGANG",
+                            "organizationNumber": "910000003",
+                            "personId": null,
+                            "partyId": 50000003,
+                            "type": "Organization",
+                            "unitType": "BEDR",
+                            "isDeleted": false,
+                            "onlyHierarchyElementWithNoAccess": false,
+                            "authorizedResources": [
+                              "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"
+                            ],
+                            "authorizedRoles": [],
+                            "authorizedAccessPackages": [],
+                            "subunits": []
+                          },
+                          {
+                            "partyUuid": "d4fb64f1-faea-7181-cc43-5d02d28e7fe4",
+                            "name": "UNDERENHET UTEN TILGANG",
+                            "organizationNumber": "910000004",
+                            "personId": null,
+                            "partyId": 50000004,
+                            "type": "Organization",
+                            "unitType": "BEDR",
+                            "isDeleted": false,
+                            "onlyHierarchyElementWithNoAccess": false,
+                            "authorizedResources": [
+                              "test-fager"
+                            ],
+                            "authorizedRoles": [],
+                            "authorizedAccessPackages": [],
+                            "subunits": []
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+                """.trimIndent(), ContentType.Application.Json
+            )
+        }
+        app.altinn2Response(Get, "/api/serviceowner/reportees") {
+            call.respondText("[]", ContentType.Application.Json)
+        }
+
+        val assertResponse: (AltinnTilgangerResponse) -> Unit = {
+            assertEquals(false, it.isError)
+            assertEquals(1, it.hierarki.size)
+            val hovedenhet = it.hierarki[0]
+            assertEquals("810000001", hovedenhet.orgnr)
+            assertEquals(1, hovedenhet.underenheter.size)
+
+            val orgledd = hovedenhet.underenheter[0]
+            assertEquals("910000002", orgledd.orgnr)
+            assertEquals(1, orgledd.underenheter.size)
+
+            val underenhet = orgledd.underenheter[0]
+            assertEquals("910000003", underenhet.orgnr)
+            assertEquals(
+                setOf("nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"),
+                underenhet.altinn3Tilganger
+            )
+
+            assertEquals(
+                setOf("910000003"),
+                it.tilgangTilOrgNr["nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"]
+            )
+            assertEquals(
+                setOf("nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger", "5810:1"),
+                it.orgNrTilTilganger["910000003"]
+            )
+        }
+
+        client.post("/altinn-tilganger") {
+            header("Authorization", "Bearer idporten-loa-high:${fnr.next()}")
+            contentType(ContentType.Application.Json)
+            setBody(
+                //language=json
+                """
+                {
+                    "filter": {
+                        "altinn3Tilganger": ["nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"]
+                    }
+                }
+                """.trimIndent()
+            )
+        }.apply {
+            assertEquals(HttpStatusCode.OK, status)
+        }.body<AltinnTilgangerResponse>().also(assertResponse)
+
+        client.post("/m2m/altinn-tilganger") {
+            header("Authorization", "Bearer fakem2mtoken")
+            contentType(ContentType.Application.Json)
+            setBody(
+                //language=json
+                """
+                {
+                    "fnr": "${fnr.next()}",
+                    "filter": {
+                        "altinn3Tilganger": ["nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"]
+                    }
+                }
+                """.trimIndent()
+            )
+        }.apply {
+            assertEquals(HttpStatusCode.OK, status)
+        }.body<AltinnTilgangerResponse>().also(assertResponse)
+    }
+
+    @Test
+    fun `hovedenhet uten underenheter returneres i response`() = testWithFakeApplication { app ->
+        app.altinn3Response(Post, "/accessmanagement/api/v1/resourceowner/authorizedparties") {
+            call.respondText(
+                //language=json
+                """
+                [
+                  {
+                    "partyUuid": "a1c831cf-c7b7-4e5e-9910-2ad9a05b4ec1",
+                    "name": "ENKELTMANNSFORETAK",
+                    "organizationNumber": "810000099",
+                    "personId": null,
+                    "partyId": 50000099,
+                    "type": "Organization",
+                    "unitType": "ENK",
+                    "isDeleted": false,
+                    "onlyHierarchyElementWithNoAccess": false,
+                    "authorizedResources": [],
+                    "authorizedRoles": [],
+                    "authorizedAccessPackages": [],
+                    "subunits": []
+                  }
+                ]
+                """.trimIndent(), ContentType.Application.Json
+            )
+        }
+        app.altinn2Response(Get, "/api/serviceowner/reportees") {
+            call.respondText("[]", ContentType.Application.Json)
+        }
+
+        val assertResponse: (AltinnTilgangerResponse) -> Unit = {
+            assertFalse(it.isError)
+            assertEquals(1, it.hierarki.size)
+            assertEquals("810000099", it.hierarki[0].orgnr)
+            assertEquals("ENKELTMANNSFORETAK", it.hierarki[0].navn)
+            assertEquals(emptyList(), it.hierarki[0].underenheter)
+        }
+
+        client.post("/altinn-tilganger") {
+            header("Authorization", "Bearer idporten-loa-high:${fnr.next()}")
+            contentType(ContentType.Application.Json)
+            setBody("")
+        }.apply {
+            assertEquals(HttpStatusCode.OK, status)
+        }.body<AltinnTilgangerResponse>().also(assertResponse)
+
+        client.post("/m2m/altinn-tilganger") {
+            header("Authorization", "Bearer fakem2mtoken")
+            contentType(ContentType.Application.Json)
+            setBody(
+                //language=json
+                """
+                {
+                    "fnr": "${fnr.next()}"
+                }
+                """.trimIndent()
+            )
+        }.apply {
+            assertEquals(HttpStatusCode.OK, status)
+        }.body<AltinnTilgangerResponse>().also(assertResponse)
+    }
 }
