@@ -134,50 +134,6 @@ class AltinnTilgangerResultatTest {
     }
 
     @Test
-    fun `filter fjerner tom parent dersom alle underenheter filtreres bort, tross for filter match på parent`() {
-        AltinnTilgangerResultat(
-            isError = false,
-            altinnTilganger = listOf(
-                AltinnTilgang(
-                    orgnr = "1",
-                    altinn3Tilganger = setOf("nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"),
-                    altinn2Tilganger = setOf("4936:1"),
-                    underenheter = listOf(
-                        AltinnTilgang(
-                            orgnr = "2",
-                            altinn3Tilganger = setOf("foo"),
-                            altinn2Tilganger = setOf("bar:none"),
-                            underenheter = listOf(),
-                            navn = "2",
-                            organisasjonsform = "BEDR",
-                            erSlettet = false
-                        ),
-                        AltinnTilgang(
-                            orgnr = "3",
-                            altinn3Tilganger = setOf("foo"),
-                            altinn2Tilganger = setOf("bar:none"),
-                            underenheter = listOf(),
-                            navn = "3",
-                            organisasjonsform = "BEDR",
-                            erSlettet = false
-                        )
-                    ),
-                    navn = "1",
-                    organisasjonsform = "AS",
-                    erSlettet = false
-                )
-            )
-        ).filter(
-            Filter(
-                altinn2Tilganger = setOf("4936:1"),
-                altinn3Tilganger = setOf()
-            )
-        ).let {
-            assertEquals(0, it.altinnTilganger.size)
-        }
-    }
-
-    @Test
     fun `Filter on sample from dev works as expected`() {
         val sample = Json.decodeFromString<AltinnTilgangerResultat>(sampleJSON)
 

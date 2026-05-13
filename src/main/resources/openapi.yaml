@@ -397,16 +397,6 @@ components:
         Her antas det at overordnede enhet ikke har tilganger som ikke er
         delegert til en av sine underenheter.
 
-        Logikken er nå slik at dersom en parent har tjenesten, men ingen av
-        underenhetene har den så vil parenten også fjernes.
-
-        Dette er for å hindre at en overordnet enhet blir til laveste nivå.
-
-        Dette er en antakelse vi har gjort basert på observasjoner i dev. 
-
-        Dersom det viser seg at tjenester delegeres ekspisitt på overordnet nivå
-        og det er noe dere trenger at vi støtter ta kontakt med oss. 
-
     no.nav.fager.AltinnTilgangerM2MRequest:
       title: AltinnTilgangerM2MRequest
       required:
