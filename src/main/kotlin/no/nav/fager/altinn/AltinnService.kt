@@ -157,25 +157,12 @@ class AltinnService(
 
 /**
  * Filtrerer rekursivt basert på angitt filter.
- * Her antas det at vi kun skal filtrere på løvnoder (virksomheter) og ikke på overenheter.
- * Dvs. at vi ikke forventer at en tjeneste kun er delegert på et overordnet nivå.
- * Oss bekjent gjør Nav tilgangsstyring på virksomheter og ikke på overordnet nivå.
- * Vi har ikke observert tilfeller i dev hvor en parent har tilgang som ikke finnes blant underenhetene,
- * men det betyr ikke at det ikke forekommer.
- *
- * Mao. vi filtrerer fra bunnen. Dersom en overordnet enhet har barn og alle disse fjernes pga filteret
- * så fjernes også overordnet enhet. Dette uavhengig om overordnet enhet har tilgangen definert eller ikke.
  */
 private fun List<AltinnTilgang>.filterRecursive(filter: Filter): List<AltinnTilgang> =
     mapNotNull { tilgang ->
         if (!filter.inkluderSlettede && tilgang.erSlettet) return@mapNotNull null
 
         val filtrerteUnderenheter = tilgang.underenheter.filterRecursive(filter)
-
-        val haddeUnderenheter = tilgang.underenheter.isNotEmpty()
-        val alleUnderenheterFjernet = haddeUnderenheter && filtrerteUnderenheter.isEmpty()
-        if (alleUnderenheterFjernet) return@mapNotNull null
-
         tilgang.copy(underenheter = filtrerteUnderenheter)
     }.filter { tilgang ->
         if (filter.isEmpty) return@filter true

@@ -1344,4 +1344,98 @@ class AltinnTilgangerTest {
             assertEquals(HttpStatusCode.OK, status)
         }.body<AltinnTilgangerResponse>().also(assertResponse)
     }
+
+    @Test
+    fun `KOMM med kun slettede underenheter returneres uten underenheter`() = testWithFakeApplication { app ->
+        app.altinn3Response(Post, "/accessmanagement/api/v1/resourceowner/authorizedparties") {
+            call.respondText(
+                //language=json
+                """
+                [
+                  {
+                    "partyUuid": "b2c942df-d8c8-5f6f-aa21-3be0b06c5fc2",
+                    "name": "KOMMUNEANSEN",
+                    "organizationNumber": "820000001",
+                    "personId": null,
+                    "partyId": 50100001,
+                    "type": "Organization",
+                    "unitType": "KOMM",
+                    "isDeleted": false,
+                    "onlyHierarchyElementWithNoAccess": false,
+                    "authorizedResources": ["test-fager"],
+                    "authorizedRoles": [],
+                    "authorizedAccessPackages": [],
+                    "subunits": [
+                      {
+                        "partyUuid": "c3ea53e0-e9d9-6070-bb32-4cf1c17d6ed3",
+                        "name": "SLETTET ENHET 1",
+                        "organizationNumber": "920000002",
+                        "personId": null,
+                        "partyId": 50100002,
+                        "type": "Organization",
+                        "unitType": "BEDR",
+                        "isDeleted": true,
+                        "onlyHierarchyElementWithNoAccess": false,
+                        "authorizedResources": ["test-fager"],
+                        "authorizedRoles": [],
+                        "authorizedAccessPackages": [],
+                        "subunits": []
+                      },
+                      {
+                        "partyUuid": "d4fb64f1-faea-7181-cc43-5d02d28e7fe4",
+                        "name": "SLETTET ENHET 2",
+                        "organizationNumber": "920000003",
+                        "personId": null,
+                        "partyId": 50100003,
+                        "type": "Organization",
+                        "unitType": "BEDR",
+                        "isDeleted": true,
+                        "onlyHierarchyElementWithNoAccess": false,
+                        "authorizedResources": ["test-fager"],
+                        "authorizedRoles": [],
+                        "authorizedAccessPackages": [],
+                        "subunits": []
+                      }
+                    ]
+                  }
+                ]
+                """.trimIndent(), ContentType.Application.Json
+            )
+        }
+        app.altinn2Response(Get, "/api/serviceowner/reportees") {
+            call.respondText("[]", ContentType.Application.Json)
+        }
+
+        val assertResponse: (AltinnTilgangerResponse) -> Unit = {
+            assertFalse(it.isError)
+            assertEquals(1, it.hierarki.size)
+            assertEquals("820000001", it.hierarki[0].orgnr)
+            assertEquals("KOMMUNEANSEN", it.hierarki[0].navn)
+            assertEquals("KOMM", it.hierarki[0].organisasjonsform)
+            assertEquals(emptyList(), it.hierarki[0].underenheter)
+        }
+
+        client.post("/altinn-tilganger") {
+            header("Authorization", "Bearer idporten-loa-high:${fnr.next()}")
+            contentType(ContentType.Application.Json)
+            setBody("")
+        }.apply {
+            assertEquals(HttpStatusCode.OK, status)
+        }.body<AltinnTilgangerResponse>().also(assertResponse)
+
+        client.post("/m2m/altinn-tilganger") {
+            header("Authorization", "Bearer fakem2mtoken")
+            contentType(ContentType.Application.Json)
+            setBody(
+                //language=json
+                """
+                {
+                    "fnr": "${fnr.next()}"
+                }
+                """.trimIndent()
+            )
+        }.apply {
+            assertEquals(HttpStatusCode.OK, status)
+        }.body<AltinnTilgangerResponse>().also(assertResponse)
+    }
 }
