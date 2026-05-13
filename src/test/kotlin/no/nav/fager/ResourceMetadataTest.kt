@@ -7,12 +7,20 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
+import no.nav.fager.altinn.AccessPackageArea
+import no.nav.fager.altinn.AccessPackageDetails
+import no.nav.fager.altinn.AccessPackageExportArea
+import no.nav.fager.altinn.AccessPackageExportGroup
+import no.nav.fager.altinn.AccessPackageExportPackage
+import no.nav.fager.altinn.IndexedAccessPackage
 import no.nav.fager.altinn.KnownResourceIds
 import no.nav.fager.altinn.PolicySubject
 import no.nav.fager.altinn.ResourceMetadataResponse
 import no.nav.fager.altinn.ResourceRegistryResource
+import no.nav.fager.altinn.RoleDetails
+import no.nav.fager.altinn.RoleExport
 import no.nav.fager.altinn.buildResourceMetadataResponse
-import no.nav.fager.fakes.testWithFakeApplication
+import no.nav.fager.fakes.testWithSharedFakeApplication
 import org.skyscreamer.jsonassert.JSONAssert
 import org.skyscreamer.jsonassert.JSONCompareMode
 import java.io.File
@@ -21,11 +29,13 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class ResourceMetadataTest {
 
     @Test
-    fun `GET resource-metadata returns 200 with all known resources`() = testWithFakeApplication {
+    fun `GET resource-metadata returns 200 with all known resources`() = testWithSharedFakeApplication {
         val response = client.get("/resource-metadata")
         assertEquals(HttpStatusCode.OK, response.status)
 
@@ -37,14 +47,14 @@ class ResourceMetadataTest {
     }
 
     @Test
-    fun `GET resource-metadata requires no authentication`() = testWithFakeApplication {
+    fun `GET resource-metadata requires no authentication`() = testWithSharedFakeApplication {
         // No Authorization header
         val response = client.get("/resource-metadata")
         assertEquals(HttpStatusCode.OK, response.status)
     }
 
     @Test
-    fun `resource-metadata passes through metadata fields`() = testWithFakeApplication {
+    fun `resource-metadata passes through metadata fields`() = testWithSharedFakeApplication {
         val body = client.get("/resource-metadata").body<ResourceMetadataResponse>()
 
         val permitteringId = "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"
@@ -59,7 +69,7 @@ class ResourceMetadataTest {
     }
 
     @Test
-    fun `resource-metadata extracts roles and access packages correctly`() = testWithFakeApplication {
+    fun `resource-metadata extracts roles and access packages correctly`() = testWithSharedFakeApplication {
         val body = client.get("/resource-metadata").body<ResourceMetadataResponse>()
 
         val permitteringId = "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"
@@ -68,18 +78,72 @@ class ResourceMetadataTest {
         // roles extracted and sorted
         assertEquals(listOf("dagl", "lede"), entry.grantedByRoles)
 
-        // access packages extracted
+        // access packages contain stripped ids (unchanged shape)
         assertEquals(listOf("regnskapsforer-lonn"), entry.grantedByAccessPackages)
     }
 
     @Test
-    fun `resource-metadata never contains urn prefix in response`() = testWithFakeApplication {
-        val responseText = client.get("/resource-metadata").bodyAsText()
-        assertFalse(responseText.contains("urn:altinn:"), "Response should not contain 'urn:altinn:' prefix")
+    fun `grantedByAccessPackages uses stripped ids not full urns`() = testWithSharedFakeApplication {
+        val body = client.get("/resource-metadata").body<ResourceMetadataResponse>()
+
+        val permitteringId = "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"
+        val entry = body.resources[permitteringId]!!
+
+        // shape unchanged: stripped ids, no urn prefix
+        entry.grantedByAccessPackages.forEach { id ->
+            assertFalse(id.startsWith("urn:"), "grantedByAccessPackages should use stripped ids, got: $id")
+        }
     }
 
     @Test
-    fun `resource-metadata is deterministic`() = testWithFakeApplication {
+    fun `distinct id namespaces - package keys are stripped ids, area urns have own prefix`() = testWithSharedFakeApplication {
+        val body = client.get("/resource-metadata").body<ResourceMetadataResponse>()
+
+        // Package keys are stripped ids — no urn:altinn:accesspackage: prefix
+        body.accessPackages.keys.forEach { key ->
+            assertFalse(key.startsWith("urn:altinn:"), "Package key should be stripped id, got: $key")
+            assertFalse(key.contains(":"), "Package key should be a plain id without colons, got: $key")
+        }
+
+        // Area urns use accesspackage:area: prefix (no urn:altinn:)
+        body.accessPackages.values.forEach { pkg ->
+            pkg.area?.urn?.let { areaUrn ->
+                assertTrue(areaUrn.startsWith("accesspackage:area:"), "Area urn should start with accesspackage:area:, got: $areaUrn")
+                assertFalse(areaUrn.startsWith("urn:altinn:"), "Area urn should NOT start with urn:altinn:, got: $areaUrn")
+            }
+        }
+    }
+
+    @Test
+    fun `direct lookup contract - accessPackages keyed by same id as grantedByAccessPackages`() = testWithSharedFakeApplication {
+        val body = client.get("/resource-metadata").body<ResourceMetadataResponse>()
+
+        // For every resource, every id in grantedByAccessPackages resolves directly to accessPackages[id]
+        body.resources.values.forEach { entry ->
+            entry.grantedByAccessPackages.forEach { id ->
+                assertNotNull(
+                    body.accessPackages[id],
+                    "accessPackages[$id] should be non-null (direct lookup from grantedByAccessPackages)"
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `grantedByRoles still contains stripped values not urns`() = testWithSharedFakeApplication {
+        val body = client.get("/resource-metadata").body<ResourceMetadataResponse>()
+
+        val permitteringId = "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"
+        val entry = body.resources[permitteringId]!!
+
+        // roles should NOT contain urn prefix
+        entry.grantedByRoles.forEach { role ->
+            assertFalse(role.startsWith("urn:"), "Role should be stripped value, got: $role")
+        }
+    }
+
+    @Test
+    fun `resource-metadata is deterministic`() = testWithSharedFakeApplication {
         val response1 = client.get("/resource-metadata").bodyAsText()
         val response2 = client.get("/resource-metadata").bodyAsText()
         assertEquals(response1, response2, "Response should be deterministic across calls")
@@ -102,7 +166,7 @@ class ResourceMetadataTest {
     }
 
     @Test
-    fun `altinn-tilganger still requires auth`() = testWithFakeApplication {
+    fun `altinn-tilganger still requires auth`() = testWithSharedFakeApplication {
         // No Authorization header for altinn-tilganger should fail
         val response = client.post("/altinn-tilganger") {
             contentType(ContentType.Application.Json)
@@ -111,7 +175,116 @@ class ResourceMetadataTest {
     }
 
     @Test
-    fun `resource-metadata response shape matches expected JSON`() = testWithFakeApplication {
+    fun `resource-metadata contains accessPackages map keyed by stripped id`() = testWithSharedFakeApplication {
+        val body = client.get("/resource-metadata").body<ResourceMetadataResponse>()
+
+        // accessPackages keys match grantedByAccessPackages entries directly
+        val allReferencedIds = body.resources.values
+            .flatMap { it.grantedByAccessPackages }
+            .toSet()
+
+        assertEquals(allReferencedIds, body.accessPackages.keys)
+    }
+
+    @Test
+    fun `accessPackages contains expected details`() = testWithSharedFakeApplication {
+        val body = client.get("/resource-metadata").body<ResourceMetadataResponse>()
+
+        val pkg = body.accessPackages["regnskapsforer-lonn"]
+        assertNotNull(pkg, "Expected access package details for regnskapsforer-lonn")
+        assertEquals("Regnskapsfører lønn", pkg.name)
+        assertEquals("Denne fullmakten gir tilgang til lønnstjenester for regnskapsførere.", pkg.description)
+        assertNotNull(pkg.area)
+        assertEquals("accesspackage:area:skatt_avgift_regnskap_og_toll", pkg.area!!.urn)
+        assertEquals("Skatt, avgift, regnskap og toll", pkg.area!!.name)
+    }
+
+    @Test
+    fun `accessPackages area is a singular object not a list`() = testWithSharedFakeApplication {
+        val body = client.get("/resource-metadata").body<ResourceMetadataResponse>()
+
+        body.accessPackages.values.forEach { pkg ->
+            // area is nullable object - not a list (enforced by type system, but also check the JSON)
+            assertNotNull(pkg.area, "Expected area to be non-null for referenced packages in test fixture")
+        }
+    }
+
+    @Test
+    fun `unreferenced access packages are filtered from response`() = testWithSharedFakeApplication {
+        val body = client.get("/resource-metadata").body<ResourceMetadataResponse>()
+
+        // These packages exist in the export fixture but are not referenced by any resource
+        assertNull(body.accessPackages["unreferenced-pkg-1"])
+        assertNull(body.accessPackages["unreferenced-pkg-2"])
+        assertNull(body.accessPackages["unreferenced-pkg-3"])
+    }
+
+    @Test
+    fun `buildResourceMetadataResponse handles multi-area by keeping first occurrence`() {
+        // Synthetic test: same urn under two different areas
+        val area1 = AccessPackageExportArea(
+            id = "area-1", name = "Area One", urn = "accesspackage:area:one", description = "First area"
+        )
+        val pkg = AccessPackageExportPackage(
+            id = "pkg-1", urn = "urn:altinn:accesspackage:multi-area-pkg",
+            name = "Multi Area Pkg", description = "Appears under two areas"
+        )
+
+        val index = mapOf(
+            "multi-area-pkg" to IndexedAccessPackage(
+                pkg = pkg,
+                area = area1, // first occurrence wins
+            )
+        )
+
+        // Provide metadata for all known resources
+        val metadata = KnownResourceIds.distinct().associateWith { resourceId ->
+            ResourceRegistryResource(identifier = resourceId)
+        }
+        val policySubjects = KnownResourceIds.distinct().associateWith { resourceId ->
+            if (resourceId == "test-fager") listOf(
+                PolicySubject(
+                    type = "urn:altinn:accesspackage",
+                    value = "multi-area-pkg",
+                    urn = "urn:altinn:accesspackage:multi-area-pkg"
+                )
+            ) else emptyList()
+        }
+
+        val response = buildResourceMetadataResponse(metadata, policySubjects, index)
+        val details = response.accessPackages["multi-area-pkg"]
+        assertNotNull(details)
+        // area should be the first occurrence
+        assertEquals("accesspackage:area:one", details.area?.urn)
+        assertEquals("Area One", details.area?.name)
+    }
+
+    @Test
+    fun `missing access package details are tolerated`() {
+        // urn referenced by resource but not in export
+        val metadata = KnownResourceIds.distinct().associateWith { resourceId ->
+            ResourceRegistryResource(identifier = resourceId)
+        }
+        val policySubjects = KnownResourceIds.distinct().associateWith { resourceId ->
+            if (resourceId == "test-fager") listOf(
+                PolicySubject(
+                    type = "urn:altinn:accesspackage",
+                    value = "missing-pkg",
+                    urn = "urn:altinn:accesspackage:missing-pkg"
+                )
+            ) else emptyList()
+        }
+
+        val response = buildResourceMetadataResponse(metadata, policySubjects, emptyMap())
+
+        // The stripped id still appears in grantedByAccessPackages
+        assertTrue(response.resources["test-fager"]!!.grantedByAccessPackages.contains("missing-pkg"))
+        // But the id is absent from the top-level accessPackages map
+        assertFalse(response.accessPackages.containsKey("missing-pkg"))
+    }
+
+    @Test
+    fun `resource-metadata response shape matches expected JSON`() = testWithSharedFakeApplication {
         val responseText = client.get("/resource-metadata").bodyAsText()
 
         //language=json
@@ -158,14 +331,110 @@ class ResourceMetadataTest {
               "grantedByRoles": [],
               "grantedByAccessPackages": []
             }
+          },
+          "accessPackages": {
+            "regnskapsforer-lonn": {
+              "name": "Regnskapsfører lønn",
+              "description": "Denne fullmakten gir tilgang til lønnstjenester for regnskapsførere.",
+              "area": {
+                "urn": "accesspackage:area:skatt_avgift_regnskap_og_toll",
+                "name": "Skatt, avgift, regnskap og toll",
+                "description": "Tilgangspakker knyttet til skatt, avgift, regnskap og toll."
+              }
+            }
+          },
+          "roles": {
+            "dagl": {
+              "name": "Daglig leder",
+              "description": "Daglig leder for virksomheten"
+            },
+            "lede": {
+              "name": "Styrets leder",
+              "description": "Leder i styret for virksomheten"
+            }
           }
         }
         """.trimIndent()
 
         JSONAssert.assertEquals(expected, responseText, JSONCompareMode.LENIENT)
     }
+
+    @Test
+    fun `resource-metadata contains roles map`() = testWithSharedFakeApplication {
+        val body = client.get("/resource-metadata").body<ResourceMetadataResponse>()
+        assertTrue(body.roles.isNotEmpty(), "Expected roles map to be non-empty")
+    }
+
+    @Test
+    fun `roles map contains expected display names`() = testWithSharedFakeApplication {
+        val body = client.get("/resource-metadata").body<ResourceMetadataResponse>()
+
+        val dagl = body.roles["dagl"]
+        assertNotNull(dagl, "Expected role details for 'dagl'")
+        assertEquals("Daglig leder", dagl.name)
+        assertEquals("Daglig leder for virksomheten", dagl.description)
+
+        val lede = body.roles["lede"]
+        assertNotNull(lede, "Expected role details for 'lede'")
+        assertEquals("Styrets leder", lede.name)
+    }
+
+    @Test
+    fun `roles map keys match grantedByRoles values`() = testWithSharedFakeApplication {
+        val body = client.get("/resource-metadata").body<ResourceMetadataResponse>()
+
+        val allReferencedRoles = body.resources.values
+            .flatMap { it.grantedByRoles }
+            .toSet()
+
+        allReferencedRoles.forEach { roleCode ->
+            assertNotNull(
+                body.roles[roleCode],
+                "roles[$roleCode] should be non-null (direct lookup from grantedByRoles)"
+            )
+        }
+    }
+
+    @Test
+    fun `unreferenced roles are filtered from roles map`() = testWithSharedFakeApplication {
+        val body = client.get("/resource-metadata").body<ResourceMetadataResponse>()
+        assertNull(body.roles["unreferenced"], "Unreferenced role should not appear in roles map")
+    }
+
+    @Test
+    fun `buildResourceMetadataResponse includes roles from roleIndex`() {
+        val metadata = KnownResourceIds.distinct().associateWith { ResourceRegistryResource(identifier = it) }
+        val policySubjects = KnownResourceIds.distinct().associateWith { resourceId ->
+            if (resourceId == "test-fager") listOf(
+                PolicySubject(type = "urn:altinn:rolecode", value = "dagl", urn = "urn:altinn:rolecode:dagl")
+            ) else emptyList()
+        }
+        val roleIndex = mapOf(
+            "dagl" to RoleExport(name = "Daglig leder", description = "Daglig leder for virksomheten", legacyRoleCode = "dagl")
+        )
+
+        val response = buildResourceMetadataResponse(metadata, policySubjects, roleIndex = roleIndex)
+
+        val dagl = response.roles["dagl"]
+        assertNotNull(dagl)
+        assertEquals("Daglig leder", dagl.name)
+        assertEquals("Daglig leder for virksomheten", dagl.description)
+    }
+
+    @Test
+    fun `missing role details are tolerated`() {
+        val metadata = KnownResourceIds.distinct().associateWith { ResourceRegistryResource(identifier = it) }
+        val policySubjects = KnownResourceIds.distinct().associateWith { resourceId ->
+            if (resourceId == "test-fager") listOf(
+                PolicySubject(type = "urn:altinn:rolecode", value = "dagl", urn = "urn:altinn:rolecode:dagl")
+            ) else emptyList()
+        }
+
+        val response = buildResourceMetadataResponse(metadata, policySubjects, roleIndex = emptyMap())
+
+        // The code still appears in grantedByRoles
+        assertTrue(response.resources["test-fager"]!!.grantedByRoles.contains("dagl"))
+        // But is absent from the top-level roles map
+        assertFalse(response.roles.containsKey("dagl"))
+    }
 }
-
-
-
-

@@ -41,6 +41,8 @@ interface Altinn3Client {
     suspend fun resourceOwner_AuthorizedParties(fnr: String): Result<List<AuthorizedParty>>
     suspend fun resourceRegistry_PolicySubjects(resourceId: String): Result<List<PolicySubject>>
     suspend fun resourceRegistry_Resource(resourceId: String): Result<ResourceRegistryResource>
+    suspend fun accessManagement_AccessPackagesExport(): Result<List<AccessPackageExportGroup>>
+    suspend fun accessManagement_Roles(): Result<List<RoleExport>>
 }
 
 
@@ -148,6 +150,30 @@ class Altinn3ClientImpl(
 
         httpResponse.body<ResourceRegistryResource>()
     }
+
+    override suspend fun accessManagement_AccessPackagesExport() = runCatching {
+        val httpResponse = resourceRegistryClient.get {
+            url {
+                takeFrom(altinn3Config.baseUrl)
+                appendPathSegments("/accessmanagement/api/v1/meta/info/accesspackages/export")
+            }
+            accept(ContentType.Application.Json)
+        }
+
+        httpResponse.body<List<AccessPackageExportGroup>>()
+    }
+
+    override suspend fun accessManagement_Roles() = runCatching {
+        val httpResponse = resourceRegistryClient.get {
+            url {
+                takeFrom(altinn3Config.baseUrl)
+                appendPathSegments("/accessmanagement/api/v1/meta/info/roles")
+            }
+            accept(ContentType.Application.Json)
+        }
+
+        httpResponse.body<List<RoleExport>>()
+    }
 }
 
 @Serializable
@@ -196,4 +222,12 @@ data class ResourceRegistryResource(
     val delegable: Boolean? = null,
 )
 
-
+@Serializable
+data class RoleExport(
+    val id: String? = null,
+    val name: String? = null,
+    val code: String? = null,
+    val description: String? = null,
+    val urn: String? = null,
+    val legacyRoleCode: String? = null,
+)

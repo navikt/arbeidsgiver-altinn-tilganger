@@ -22,6 +22,7 @@ import kotlinx.serialization.json.Json
 import no.nav.fager.altinn.Altinn2Config
 import no.nav.fager.altinn.Altinn3Config
 import no.nav.fager.altinn.KnownResourceIds
+import no.nav.fager.infrastruktur.Health
 import no.nav.fager.ktorConfig
 import no.nav.fager.redis.RedisConfig
 import no.nav.fager.texas.IdentityProvider
@@ -106,6 +107,115 @@ class FakeApplication(
                 call.respondText(resourceDocResponse, ContentType.Application.Json)
             }
         }
+
+        // Stub for access packages export
+        val accessPackagesExportResponse =
+            //language=json
+            """
+            [
+              {
+                "id": "group-1",
+                "name": "Allment",
+                "urn": null,
+                "description": "Generelle tilgangspakker",
+                "type": "Organisasjon",
+                "areas": [
+                  {
+                    "id": "area-1",
+                    "name": "Skatt, avgift, regnskap og toll",
+                    "urn": "accesspackage:area:skatt_avgift_regnskap_og_toll",
+                    "description": "Tilgangspakker knyttet til skatt, avgift, regnskap og toll.",
+                    "iconUrl": "https://example.com/icon.svg",
+                    "packages": [
+                      {
+                        "id": "pkg-1",
+                        "name": "Regnskapsfører lønn",
+                        "urn": "urn:altinn:accesspackage:regnskapsforer-lonn",
+                        "description": "Denne fullmakten gir tilgang til lønnstjenester for regnskapsførere.",
+                        "isDelegable": true,
+                        "isAssignable": true,
+                        "isResourcePolicyAvailable": true
+                      },
+                      {
+                        "id": "pkg-2",
+                        "name": "Unreferenced Package 1",
+                        "urn": "urn:altinn:accesspackage:unreferenced-pkg-1",
+                        "description": "This package is not referenced by any resource."
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "group-2",
+                "name": "Bransje",
+                "urn": null,
+                "description": "Bransjespesifikke tilgangspakker",
+                "type": "Organisasjon",
+                "areas": [
+                  {
+                    "id": "area-2",
+                    "name": "Helse og omsorg",
+                    "urn": "accesspackage:area:helse_og_omsorg",
+                    "description": "Tilgangspakker for helse og omsorg.",
+                    "iconUrl": "https://example.com/health-icon.svg",
+                    "packages": [
+                      {
+                        "id": "pkg-3",
+                        "name": "Unreferenced Package 2",
+                        "urn": "urn:altinn:accesspackage:unreferenced-pkg-2",
+                        "description": "This package is also not referenced by any resource."
+                      },
+                      {
+                        "id": "pkg-4",
+                        "name": "Unreferenced Package 3",
+                        "urn": "urn:altinn:accesspackage:unreferenced-pkg-3",
+                        "description": "Yet another unreferenced package."
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+            """.trimIndent()
+        it.stubs[Get to "/accessmanagement/api/v1/meta/info/accesspackages/export"] = {
+            call.respondText(accessPackagesExportResponse, ContentType.Application.Json)
+        }
+
+        // Stub for roles metadata
+        val rolesResponse =
+            //language=json
+            """
+            [
+              {
+                "id": "role-dagl",
+                "name": "Daglig leder",
+                "code": "daglig-leder",
+                "description": "Daglig leder for virksomheten",
+                "urn": "urn:altinn:external-role:ccr:daglig-leder",
+                "legacyRoleCode": "dagl"
+              },
+              {
+                "id": "role-lede",
+                "name": "Styrets leder",
+                "code": "styreleder",
+                "description": "Leder i styret for virksomheten",
+                "urn": "urn:altinn:external-role:ccr:styreleder",
+                "legacyRoleCode": "lede"
+              },
+              {
+                "id": "role-other",
+                "name": "Unreferenced Role",
+                "code": "unreferenced",
+                "description": "This role is not referenced by any resource.",
+                "urn": "urn:altinn:external-role:ccr:unreferenced",
+                "legacyRoleCode": "unreferenced"
+              }
+            ]
+            """.trimIndent()
+        it.stubs[Get to "/accessmanagement/api/v1/meta/info/roles"] = {
+            call.respondText(rolesResponse, ContentType.Application.Json)
+        }
     }
     private val fakeAltinn2Api = FakeApi()
     private val fakeTexas = FakeApi().also {
@@ -187,6 +297,7 @@ class FakeApplication(
     private var testContext: TestContext? = null
 
     fun start(wait: Boolean = false) = runBlocking {
+        Health.requiredServices.clear()
         fakeTexas.start()
         fakeAltinn3Api.start()
         fakeAltinn2Api.start()
@@ -268,3 +379,26 @@ fun testWithFakeApplication(
         block(fakeApp)
     }
 }
+
+private val sharedApp by lazy {
+    FakeApplication(
+        clientConfig = {
+            install(ContentNegotiation) {
+                json(Json { ignoreUnknownKeys = true })
+            }
+        }
+    ).also { it.setupTestContext() }
+}
+
+/**
+ * Like [testWithFakeApplication] but reuses a single [FakeApplication]
+ * across all callers in the JVM, avoiding the ~3 s startup cost per test.
+ *
+ * Use this for read-only tests that don't mutate stubs.
+ * Use [testWithFakeApplication] when a test needs to override stubs
+ * (e.g. via `app.altinn3Response(…)`).
+ */
+fun testWithSharedFakeApplication(
+    block: suspend FakeApplication.TestContext.() -> Unit
+) = sharedApp.runTest { block() }
+

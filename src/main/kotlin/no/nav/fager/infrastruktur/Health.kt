@@ -7,17 +7,17 @@ interface RequiresReady {
 }
 
 object Health {
-    private val reaquiredServices = mutableListOf<RequiresReady>()
+    internal val requiredServices = mutableListOf<RequiresReady>()
 
     fun register(requiresReady: RequiresReady) {
-        reaquiredServices.add(requiresReady)
+        requiredServices.add(requiresReady)
     }
 
     val alive
         get() = true
 
     val ready
-        get() = reaquiredServices.all { it.isReady() }
+        get() = requiredServices.all { it.isReady() }
 
     private val terminatingAtomic = AtomicBoolean(false)
 
