@@ -119,60 +119,26 @@ class AltinnTilgangerTest {
                 """.trimIndent(), ContentType.Application.Json
             )
         }
-        val altinn2Responses = listOf(
-            //language=json
-            """
-            [
-                {
-                    "Name": "SLEMMESTAD OG STAVERN REGNSKAP",
-                    "Type": "Business",
-                    "OrganizationNumber": "910825496",
-                    "ParentOrganizationNumber": "810825472",
-                    "OrganizationForm": "BEDR",
-                    "Status": "Active"
-                }
-            ]
-            """,
-            //language=json
-            """
-            [
-                {
-                    "Name": "SLEMMESTAD OG STAVERN REGNSKAP 2",
-                    "Type": "Business",
-                    "OrganizationNumber": "910825554",
-                    "ParentOrganizationNumber": "810825472",
-                    "OrganizationForm": "BEDR",
-                    "Status": "Active"
-                }
-            ]
-            """,
-        )
 
         app.altinn2Response(Get, "/api/serviceowner/reportees") {
-            if (call.request.queryParameters["serviceCode"] == "4936") {
-                call.request.queryParameters["${'$'}skip"]?.toIntOrNull()?.let {
-                    call.respondText(
-                        altinn2Responses.getOrNull(it) ?: "[]", ContentType.Application.Json
-                    )
-                }
-            }
+            call.respondText("[]", ContentType.Application.Json)
         }
 
         val assertResponse: (AltinnTilgangerResponse) -> Unit = {
-            assertEquals(true, it.isError)
+            assertEquals(false, it.isError)
             assertEquals(3, it.hierarki[0].underenheter.size)
             assertEquals(setOf("test-fager"), it.hierarki[0].underenheter[0].altinn3Tilganger)
-            assertEquals(setOf("4936:1"), it.hierarki[0].underenheter[0].altinn2Tilganger)
             assertEquals(emptySet(), it.hierarki[0].underenheter[0].roller)
             assertEquals(setOf("DAGL"), it.hierarki[0].underenheter[1].roller)
-            assertEquals(setOf("910825496", "910825554"), it.tilgangTilOrgNr["4936:1"])
+            assertEquals(setOf("910825554"), it.tilgangTilOrgNr["nav_sykepenger_inntektsmelding"])
             assertEquals(null, it.tilgangTilOrgNr["DAGL"])
-            assertEquals(setOf("test-fager", "4936:1"), it.orgNrTilTilganger["910825496"])
+            assertEquals(setOf("test-fager"), it.orgNrTilTilganger["910825496"])
             assertEquals(
                 setOf(
-                    "4936:1",
+                    "nav_sykepenger_inntektsmelding",
                     "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger",
                     "5810:1",
+                    "4936:1",
                 ),
                 it.orgNrTilTilganger["910825554"]
             )
@@ -187,6 +153,10 @@ class AltinnTilgangerTest {
             assertEquals(
                 setOf("910825554"),
                 it.tilgangTilOrgNr["5810:1"]
+            )
+            assertEquals(
+                setOf("910825554"),
+                it.tilgangTilOrgNr["4936:1"]
             )
             assertEquals(
                 setOf("810825472", "910825496"),
@@ -267,7 +237,8 @@ class AltinnTilgangerTest {
                         "isDeleted": false,
                         "onlyHierarchyElementWithNoAccess": false,
                         "authorizedResources": [
-                          "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"
+                          "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger",
+                          "nav_sykepenger_inntektsmelding"
                         ],
                         "authorizedRoles": [],
                         "authorizedAccessPackages": [],
@@ -301,7 +272,8 @@ class AltinnTilgangerTest {
                         "isDeleted": true,
                         "onlyHierarchyElementWithNoAccess": false,
                         "authorizedResources": [
-                          "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"
+                          "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger",
+                          "nav_sykepenger_inntektsmelding"
                         ],
                         "authorizedRoles": [],
                         "authorizedAccessPackages": [],
@@ -313,71 +285,42 @@ class AltinnTilgangerTest {
                 """.trimIndent(), ContentType.Application.Json
             )
         }
-        val altinn2Responses = listOf(
-            //language=json
-            """
-            [
-                {
-                    "Name": "SLEMMESTAD OG STAVERN REGNSKAP",
-                    "Type": "Business",
-                    "OrganizationNumber": "910825496",
-                    "ParentOrganizationNumber": "810825472",
-                    "OrganizationForm": "BEDR",
-                    "Status": "Active"
-                }
-            ]
-            """,
-            //language=json
-            """
-            [
-                {
-                    "Name": "SLEMMESTAD OG STAVERN REGNSKAP 2",
-                    "Type": "Business",
-                    "OrganizationNumber": "910825554",
-                    "ParentOrganizationNumber": "810825472",
-                    "OrganizationForm": "BEDR",
-                    "Status": "Active"
-                }
-            ]
-            """,
-        )
-
         app.altinn2Response(Get, "/api/serviceowner/reportees") {
-            if (call.request.queryParameters["serviceCode"] == "4936") {
-                call.request.queryParameters["${'$'}skip"]?.toIntOrNull()?.let {
-                    call.respondText(
-                        altinn2Responses.getOrNull(it) ?: "[]", ContentType.Application.Json
-                    )
-                }
-            } else {
-                call.respondText("[]", ContentType.Application.Json)
-            }
+            call.respondText("[]", ContentType.Application.Json)
         }
 
         val assertResponse: (AltinnTilgangerResponse) -> Unit = {
             assertEquals(false, it.isError)
             assertEquals(2, it.hierarki[0].underenheter.size)
             assertEquals(
-                setOf("nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"),
+                setOf(
+                    "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger",
+                    "nav_sykepenger_inntektsmelding"
+                ),
                 it.hierarki[0].underenheter[0].altinn3Tilganger
             )
-            assertEquals(setOf("4936:1", "5810:1"), it.hierarki[0].underenheter[0].altinn2Tilganger)
+            assertEquals(
+                setOf("4936:1", "5810:1"),
+                it.hierarki[0].underenheter[0].altinn2Tilganger
+            )
             assertEquals(emptySet(), it.hierarki[0].underenheter[0].roller)
             assertEquals(setOf("DAGL"), it.hierarki[0].underenheter[1].roller)
-            assertEquals(setOf("910825496", "910825554"), it.tilgangTilOrgNr["4936:1"])
+            assertEquals(setOf("910825496", "910825554"), it.tilgangTilOrgNr["nav_sykepenger_inntektsmelding"])
             assertEquals(
                 setOf(
                     "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger",
-                    "4936:1",
+                    "nav_sykepenger_inntektsmelding",
                     "5810:1",
+                    "4936:1",
                 ),
                 it.orgNrTilTilganger["910825496"]
             )
             assertEquals(
                 setOf(
                     "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger",
-                    "4936:1",
+                    "nav_sykepenger_inntektsmelding",
                     "5810:1",
+                    "4936:1",
                 ), it.orgNrTilTilganger["910825554"]
             )
         }
@@ -533,7 +476,7 @@ class AltinnTilgangerTest {
                 """
                 {
                     "filter": {
-                        "altinn2Tilganger": ["4936:1", "foo:bar"],
+                        "altinn2Tilganger": ["nav_sykepenger_inntektsmelding", "foo:bar"],
                         "altinn3Tilganger": ["nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"]
                     }
                 }
@@ -550,7 +493,7 @@ class AltinnTilgangerTest {
                 """
                 {
                     "filter": {
-                        "altinn2Tilganger": ["4936:1"],
+                        "altinn2Tilganger": ["nav_sykepenger_inntektsmelding"],
                         "altinn3Tilganger": ["nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger", "foobar"]
                     }
                 }
@@ -569,7 +512,7 @@ class AltinnTilgangerTest {
                 {
                     "fnr": "some-fnr",
                     "filter": {
-                        "altinn2Tilganger": ["4936:1", "foo:bar"],
+                        "altinn2Tilganger": ["nav_sykepenger_inntektsmelding", "foo:bar"],
                         "altinn3Tilganger": ["test-fager"]
                     }
                 }
@@ -588,7 +531,7 @@ class AltinnTilgangerTest {
                 {
                     "fnr": "some-fnr",
                     "filter": {
-                        "altinn2Tilganger": ["4936:1"],
+                        "altinn2Tilganger": ["nav_sykepenger_inntektsmelding"],
                         "altinn3Tilganger": ["nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger", "foobar"]
                     }
                 }
