@@ -295,11 +295,6 @@ private val tjenester = listOf(
         serviceName = "Søknad om A1 for utsendte arbeidstakere innen EØS/Sveits",
     ),
     Altinn2TjenesteDefinisjon(
-        serviceCode = "4936",
-        serviceEdition = "1",
-        serviceName = "Inntektsmelding",
-    ),
-    Altinn2TjenesteDefinisjon(
         serviceCode = "4596",
         serviceEdition = "1",
         serviceName = "Sykmelding - Oppgi nærmeste leder med personalansvar",

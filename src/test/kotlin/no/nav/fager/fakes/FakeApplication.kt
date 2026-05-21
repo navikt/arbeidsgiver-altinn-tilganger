@@ -49,7 +49,9 @@ class FakeApplication(
     private val fakeAltinn3Api = FakeApi().also {
         KnownResourceIds.forEach { resourceId ->
             val policySubjectsResponse = when (resourceId) {
-                "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger" ->
+                "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger",
+                "nav_sykepenger_inntektsmelding",
+                    ->
                     //language=json
                     """
                     {
