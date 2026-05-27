@@ -106,7 +106,7 @@ class AltinnService(
 
     private fun mapToHierarchy(
         authorizedParties: List<AuthorizedParty>,
-        orgnrTilAltinn2Tjenester: Map<String, List<Altinn2Tjeneste>>
+        orgnrTilAltinn2Tjenester: Map<String, List<String>>
     ): List<AltinnTilgang> {
 
         return authorizedParties
@@ -119,9 +119,8 @@ class AltinnService(
                         navn = party.name,
                         organisasjonsform = party.unitType,
                         altinn3Tilganger = party.authorizedResources,
-                        altinn2Tilganger = orgnrTilAltinn2Tjenester[party.organizationNumber]?.map {
-                            """${it.serviceCode}:${it.serviceEdition}"""
-                        }?.toSet() ?: emptySet(),
+                        altinn2Tilganger = orgnrTilAltinn2Tjenester[party.organizationNumber]
+                            ?.toSet() ?: emptySet(),
                         roller = party.authorizedRoles,
                         tilgangspakker = party.authorizedAccessPackages,
                         underenheter = mapToHierarchy(party.subunits, orgnrTilAltinn2Tjenester),

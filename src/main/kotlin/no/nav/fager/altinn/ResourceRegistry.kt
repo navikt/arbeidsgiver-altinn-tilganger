@@ -28,21 +28,21 @@ val KnownResources = listOfNotNull(
     ),
     Resource(
         resourceId = "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger",
-        altinn2Tjeneste = listOf(Altinn2Tjeneste("5810", "1")),
+        altinn2Tjeneste = listOf("5810:1"),
     ),
     Resource(
         resourceId = "nav_sosialtjenester_digisos-avtale",
-        altinn2Tjeneste = listOf(Altinn2Tjeneste("5867", "1")),
+        altinn2Tjeneste = listOf("5867:1"),
     ),
     Resource(
         resourceId = "nav_forebygge-og-redusere-sykefravar_sykefravarsstatistikk", //OBS! DENNE HAR SERVICE EDITION 2 I PROD
-        altinn2Tjeneste = listOf(Altinn2Tjeneste("3403", "2")),
+        altinn2Tjeneste = listOf("3403:2"),
         availableInOther = false,
         availableInProduction = true,
     ),
     Resource(
         resourceId = "nav_forebygge-og-redusere-sykefravar_sykefravarsstatistikk", //OBS! DENNE HAR SERVICE EDITION 2 I PROD
-        altinn2Tjeneste = listOf(Altinn2Tjeneste("3403", "1")),
+        altinn2Tjeneste = listOf("3403:1"),
         availableInProduction = false,
         availableInOther = true,
     ),
@@ -52,7 +52,7 @@ val KnownResources = listOfNotNull(
     ),
     Resource(
         resourceId = "nav_utbetaling_endre-kontonummer-refusjon-arbeidsgiver",
-        altinn2Tjeneste = listOf(Altinn2Tjeneste("2896", "87")),
+        altinn2Tjeneste = listOf("2896:87"),
     ),
     Resource(
         resourceId = "nav_tiltak_tiltaksrefusjon",
@@ -60,41 +60,41 @@ val KnownResources = listOfNotNull(
     ),
     Resource(
         resourceId = "nav_tiltak_midlertidig-lonnstilskudd",
-        altinn2Tjeneste = listOf(Altinn2Tjeneste("5516", "1")),
+        altinn2Tjeneste = listOf("5516:1"),
     ),
     Resource(
         resourceId = "nav_tiltak_varig-lonnstilskudd",
-        altinn2Tjeneste = listOf(Altinn2Tjeneste("5516", "2")),
+        altinn2Tjeneste = listOf("5516:2"),
     ),
     Resource(
         resourceId = "nav_tiltak_sommerjobb",
-        altinn2Tjeneste = listOf(Altinn2Tjeneste("5516", "3")),
+        altinn2Tjeneste = listOf("5516:3"),
     ),
     Resource(
         resourceId = "nav_tiltak_mentor",
-        altinn2Tjeneste = listOf(Altinn2Tjeneste("5516", "4")),
+        altinn2Tjeneste = listOf("5516:4"),
     ),
     Resource(
         resourceId = "nav_tiltak_inkluderingstilskudd",
-        altinn2Tjeneste = listOf(Altinn2Tjeneste("5516", "5")),
+        altinn2Tjeneste = listOf("5516:5"),
     ),
     Resource(
         resourceId = "nav_tiltak_varig-tilrettelagt-arbeid-ordinaer",
-        altinn2Tjeneste = listOf(Altinn2Tjeneste("5516", "6")),
+        altinn2Tjeneste = listOf("5516:6"),
     ),
     Resource(
         resourceId = "nav_tiltak_adressesperre",
-        altinn2Tjeneste = listOf(Altinn2Tjeneste("5516", "7")),
+        altinn2Tjeneste = listOf("5516:7"),
     ),
     Resource(
         resourceId = "nav_tiltak_arbeidstrening",
-        altinn2Tjeneste = listOf(Altinn2Tjeneste("5332", "1")), // OBS! DENNE HAR SERVICE EDITION 2 I PROD
+        altinn2Tjeneste = listOf("5332:1"), // OBS! DENNE HAR SERVICE EDITION 2 I PROD
         availableInOther = true,
         availableInProduction = false, // denne finnes ikke i prod, kun dev/tt02
     ),
     Resource(
         resourceId = "nav_tiltak_arbeidstrening",
-        altinn2Tjeneste = listOf(Altinn2Tjeneste("5332", "2")), // OBS! DENNE HAR SERVICE EDITION 2 I PROD
+        altinn2Tjeneste = listOf("5332:2"), // OBS! DENNE HAR SERVICE EDITION 2 I PROD
         availableInOther = false, // denne finnes ikke i dev/tt02, kun prod
     ),
     Resource(
@@ -103,43 +103,43 @@ val KnownResources = listOfNotNull(
     ),
     Resource(
         resourceId = "nav_tiltak_tilskuddsbrev",
-        altinn2Tjeneste = listOf(Altinn2Tjeneste("5278", "1")),
+        altinn2Tjeneste = listOf("5278:1"),
     ),
     Resource(
         resourceId = "nav_tiltak_ekspertbistand",
-        altinn2Tjeneste = listOf(Altinn2Tjeneste("5384", "1")),
+        altinn2Tjeneste = listOf("5384:1"),
     ),
     Resource(
         resourceId = "nav_foreldrepenger_inntektsmelding",
-        altinn2Tjeneste = listOf(Altinn2Tjeneste("4936", "1")),
+        altinn2Tjeneste = listOf("4936:1"),
     ),
     Resource(
         resourceId = "nav_sykepenger_inntektsmelding",
-        altinn2Tjeneste = listOf(Altinn2Tjeneste("4936", "1")),
+        altinn2Tjeneste = listOf("4936:1"),
     ),
     Resource(
         resourceId = "nav_sykepenger_fritak-arbeidsgiverperiode",
-        altinn2Tjeneste = listOf(Altinn2Tjeneste("4936", "1")),
+        altinn2Tjeneste = listOf("4936:1"),
     ),
     Resource(
         resourceId = "nav_sykdom-i-familien_inntektsmelding",
-        altinn2Tjeneste = listOf(Altinn2Tjeneste("4936", "1")),
+        altinn2Tjeneste = listOf("4936:1"),
     ),
     Resource(
         resourceId = "nav_arbeidsforhold_aa-registeret-innsyn-arbeidsgiver",
-        altinn2Tjeneste = listOf(Altinn2Tjeneste("5441", "1")),
+        altinn2Tjeneste = listOf("5441:1"),
     ),
     Resource(
         resourceId = "nav_arbeidsforhold_aa-registeret-brukerstotte",
-        altinn2Tjeneste = listOf(Altinn2Tjeneste("5441", "2")),
+        altinn2Tjeneste = listOf("5441:2"),
     ),
     Resource(
         resourceId = "nav_arbeidsforhold_aa-registeret-sok-tilgang",
-        altinn2Tjeneste = listOf(Altinn2Tjeneste("5719", "1")),
+        altinn2Tjeneste = listOf("5719:1"),
     ),
     Resource(
         resourceId = "nav_arbeidsforhold_aa-registeret-oppslag-samarbeidspartnere",
-        altinn2Tjeneste = listOf(Altinn2Tjeneste("5723", "1")),
+        altinn2Tjeneste = listOf("5723:1"),
     ),
     Resource(
         resourceId = "nav_rekruttering_stillingsannonser",
@@ -163,11 +163,11 @@ val KnownResources = listOfNotNull(
     ),
     Resource(
         resourceId = "nav_rekruttering_kandidater",
-        altinn2Tjeneste = listOf(Altinn2Tjeneste("5078", "1")),
+        altinn2Tjeneste = listOf("5078:1"),
     ),
     Resource(
         resourceId = "nav_yrkesskade_skademelding",
-        altinn2Tjeneste = listOf(Altinn2Tjeneste("5902", "1")),
+        altinn2Tjeneste = listOf("5902:1"),
     ),
     Resource(
         resourceId = "nav_hjelpemidler_behovsmelding",
@@ -185,14 +185,7 @@ val KnownResources = listOfNotNull(
 }
 
 val KnownResourceIds = KnownResources.map { it.resourceId }
-val KnownAltinn2Tjenester = KnownResources.flatMap {
-    it.altinn2Tjeneste.map { t -> "${t.serviceCode}:${t.serviceEdition}" }
-}.toSet()
-
-data class Altinn2Tjeneste(
-    val serviceCode: String,
-    val serviceEdition: String,
-)
+val KnownAltinn2Tjenester = KnownResources.flatMap { it.altinn2Tjeneste }.toSet()
 
 class ResourceRegistry(
     private val altinn3Client: Altinn3Client,
@@ -235,7 +228,7 @@ class ResourceRegistry(
         KnownResources.associate { it.resourceId to null as ResourceRegistryResource? }
     )
 
-    val resourceIdToAltinn2Tjeneste: Map<ResourceId, List<Altinn2Tjeneste>> = KnownResources.associate { resource ->
+    val resourceIdToAltinn2Tjeneste: Map<ResourceId, List<String>> = KnownResources.associate { resource ->
         resource.resourceId to resource.altinn2Tjeneste
     }
 
@@ -380,7 +373,7 @@ class ResourceRegistry(
 
 data class Resource(
     val resourceId: ResourceId,
-    val altinn2Tjeneste: List<Altinn2Tjeneste>,
+    val altinn2Tjeneste: List<String>,
     val availableInProduction: Boolean = true,
     val availableInOther: Boolean = true,
 )
