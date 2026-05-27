@@ -289,11 +289,7 @@ private class Altinn2TjenesteDefinisjon(
  * GET https://altinn.no/api/metadata?language=1033&$top=2000&$filter=ServiceOwnerCode eq 'NAV'
  */
 private val tjenester = listOf(
-    Altinn2TjenesteDefinisjon(
-        serviceCode = "4826",
-        serviceEdition = "1",
-        serviceName = "Søknad om A1 for utsendte arbeidstakere innen EØS/Sveits",
-    ),
+    // nærmeste leder migreres 15 juni
     Altinn2TjenesteDefinisjon(
         serviceCode = "4596",
         serviceEdition = "1",

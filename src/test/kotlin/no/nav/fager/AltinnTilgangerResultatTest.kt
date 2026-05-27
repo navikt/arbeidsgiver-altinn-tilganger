@@ -356,7 +356,7 @@ private val sampleJSON = """
       "orgnr": "811306312",
       "altinn3Tilganger": [],
       "altinn2Tilganger": [
-        "4826:1",
+        "4596:1",
         "5902:1",
         "4936:1"
       ],
@@ -365,7 +365,7 @@ private val sampleJSON = """
           "orgnr": "811306622",
           "altinn3Tilganger": [],
           "altinn2Tilganger": [
-            "4826:1",
+            "4596:1",
             "5902:1",
             "4936:1"
           ],
@@ -378,7 +378,7 @@ private val sampleJSON = """
           "orgnr": "811307432",
           "altinn3Tilganger": [],
           "altinn2Tilganger": [
-            "4826:1",
+            "4596:1",
             "5902:1",
             "4936:1"
           ],
@@ -391,7 +391,7 @@ private val sampleJSON = """
           "orgnr": "811307122",
           "altinn3Tilganger": [],
           "altinn2Tilganger": [
-            "4826:1",
+            "4596:1",
             "5902:1",
             "4936:1"
           ],
@@ -404,7 +404,7 @@ private val sampleJSON = """
           "orgnr": "811306932",
           "altinn3Tilganger": [],
           "altinn2Tilganger": [
-            "4826:1",
+            "4596:1",
             "5902:1",
             "4936:1"
           ],
@@ -417,7 +417,7 @@ private val sampleJSON = """
           "orgnr": "811307602",
           "altinn3Tilganger": [],
           "altinn2Tilganger": [
-            "4826:1",
+            "4596:1",
             "5902:1",
             "4936:1"
           ],
@@ -502,7 +502,7 @@ private val sampleJSON = """
       ],
       "altinn2Tilganger": [
         "5810:1",
-        "4826:1",
+        "4596:1",
         "5902:1",
         "4936:1",
         "2896:87",
@@ -526,7 +526,7 @@ private val sampleJSON = """
           ],
           "altinn2Tilganger": [
             "5810:1",
-            "4826:1",
+            "4596:1",
             "5902:1",
             "4936:1",
             "2896:87",
@@ -554,7 +554,7 @@ private val sampleJSON = """
           ],
           "altinn2Tilganger": [
             "5810:1",
-            "4826:1",
+            "4596:1",
             "5902:1",
             "4936:1",
             "2896:87",
@@ -581,7 +581,7 @@ private val sampleJSON = """
           ],
           "altinn2Tilganger": [
             "5810:1",
-            "4826:1",
+            "4596:1",
             "5902:1",
             "4936:1",
             "2896:87",
@@ -730,7 +730,7 @@ private val sampleJSON = """
       "orgnr": "910712217",
       "altinn3Tilganger": [],
       "altinn2Tilganger": [
-        "4826:1",
+        "4596:1",
         "5902:1",
         "4936:1",
         "2896:87",
@@ -743,7 +743,7 @@ private val sampleJSON = """
           "orgnr": "910712241",
           "altinn3Tilganger": [],
           "altinn2Tilganger": [
-            "4826:1",
+            "4596:1",
             "5902:1",
             "4936:1",
             "2896:87",
@@ -760,7 +760,7 @@ private val sampleJSON = """
           "orgnr": "910712268",
           "altinn3Tilganger": [],
           "altinn2Tilganger": [
-            "4826:1",
+            "4596:1",
             "5902:1",
             "4936:1",
             "2896:87",
@@ -777,7 +777,7 @@ private val sampleJSON = """
           "orgnr": "910712233",
           "altinn3Tilganger": [],
           "altinn2Tilganger": [
-            "4826:1",
+            "4596:1",
             "5902:1",
             "4936:1",
             "2896:87",
@@ -799,7 +799,7 @@ private val sampleJSON = """
       "orgnr": "910825550",
       "altinn3Tilganger": [],
       "altinn2Tilganger": [
-        "4826:1",
+        "4596:1",
         "5902:1",
         "4936:1",
         "2896:87",
@@ -812,7 +812,7 @@ private val sampleJSON = """
           "orgnr": "910825585",
           "altinn3Tilganger": [],
           "altinn2Tilganger": [
-            "4826:1",
+            "4596:1",
             "5902:1",
             "4936:1",
             "2896:87",
@@ -830,7 +830,7 @@ private val sampleJSON = """
           "orgnr": "910825607",
           "altinn3Tilganger": [],
           "altinn2Tilganger": [
-            "4826:1",
+            "4596:1",
             "5902:1",
             "4936:1",
             "2896:87",
@@ -848,7 +848,7 @@ private val sampleJSON = """
           "orgnr": "910825569",
           "altinn3Tilganger": [],
           "altinn2Tilganger": [
-            "4826:1",
+            "4596:1",
             "5902:1",
             "4936:1",
             "2896:87",
