@@ -185,9 +185,14 @@ val KnownResources = listOfNotNull(
 }
 
 val KnownResourceIds = KnownResources.map { it.resourceId }
-val KnownAltinn2Tjenester = (Altinn2Tjenester + KnownResources.flatMap {
+val KnownAltinn2Tjenester = KnownResources.flatMap {
     it.altinn2Tjeneste.map { t -> "${t.serviceCode}:${t.serviceEdition}" }
-}).toSet()
+}.toSet()
+
+data class Altinn2Tjeneste(
+    val serviceCode: String,
+    val serviceEdition: String,
+)
 
 class ResourceRegistry(
     private val altinn3Client: Altinn3Client,

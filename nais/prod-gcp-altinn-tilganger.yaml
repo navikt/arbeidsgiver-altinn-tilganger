@@ -48,8 +48,6 @@ spec:
   env:
     - name: ALTINN_3_API_BASE_URL
       value: https://platform.altinn.no
-    - name: ALTINN_2_BASE_URL
-      value: https://www.altinn.no
 
   envFrom:
     - secret: altinn-tilganger
@@ -66,7 +64,6 @@ spec:
     scopes:
       consumes:
         - name: "altinn:accessmanagement/authorizedparties.resourceowner"
-        - name: "altinn:serviceowner/reportees"
 
   accessPolicy:
     inbound:
@@ -130,7 +127,6 @@ spec:
     outbound:
       external:
         - host: platform.altinn.no
-        - host: www.altinn.no
       rules:
         - application: logging
           namespace: nais-system

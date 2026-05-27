@@ -16,7 +16,6 @@ import io.ktor.server.routing.routing
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
 import kotlinx.coroutines.runBlocking
-import no.nav.fager.altinn.Altinn2Config
 import no.nav.fager.texas.TexasAuthConfig
 import org.slf4j.event.Level
 import kotlin.test.fail
@@ -27,10 +26,6 @@ fun TexasAuthConfig.Companion.fake(fake: FakeApi) = TexasAuthConfig(
     tokenIntrospectionEndpoint = "http://localhost:${fake.port}/introspect",
 )
 
-fun Altinn2Config.Companion.fake(fake: FakeApi) = Altinn2Config(
-    baseUrl = "http://localhost:${fake.port}",
-    apiKey = "someApiKey",
-)
 
 class FakeApi : AutoCloseable {
 

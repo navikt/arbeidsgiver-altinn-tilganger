@@ -1,14 +1,11 @@
 package no.nav.fager
 
 import kotlinx.coroutines.test.runTest
-import no.nav.fager.altinn.Altinn2Tilganger
-import no.nav.fager.altinn.Altinn2Tjeneste
 import no.nav.fager.altinn.AltinnService
 import no.nav.fager.altinn.AltinnService.AltinnTilgangerResultat
 import no.nav.fager.altinn.AuthorizedParty
 import no.nav.fager.altinn.PolicySubject
 import no.nav.fager.altinn.ResourceRegistry
-import no.nav.fager.fakes.clients.FakeAltinn2Client
 import no.nav.fager.fakes.clients.FakeAltinn3Client
 import no.nav.fager.fakes.clients.FakeRedisClient
 import no.nav.fager.redis.RedisConfig
@@ -19,19 +16,6 @@ class AltinnServiceTest {
     @Test
     fun `cache entry settes`() = runTest {
         val altinnRedisClient = FakeRedisClient()
-        val altinn2Client = FakeAltinn2Client {
-            Altinn2Tilganger(
-                isError = false,
-                orgNrTilTjenester = mapOf(
-                    "910825496" to listOf(
-                        Altinn2Tjeneste(
-                            serviceCode = "4936",
-                            serviceEdition = "1"
-                        )
-                    )
-                )
-            )
-        }
         val altinn3Client = FakeAltinn3Client(resourceOwner_AuthorizedPartiesHandler = {
             listOf(
                 AuthorizedParty(
@@ -59,7 +43,7 @@ class AltinnServiceTest {
             }
         }
 
-        val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, resourceRegistry)
+        val altinnService = AltinnService(altinn3Client, altinnRedisClient, resourceRegistry)
 
         val fnr = "16120101181"
         val cacheKey = "$fnr-${AltinnService.CACHE_VERSION}"
@@ -76,7 +60,7 @@ class AltinnServiceTest {
                         AltinnTilgang(
                             orgnr = "910825496",
                             altinn3Tilganger = setOf("test-fager"),
-                            altinn2Tilganger = setOf("4936:1"),
+                            altinn2Tilganger = emptySet(),
                             roller = emptySet(),
                             tilgangspakker = emptySet(),
                             underenheter = listOf(),
@@ -90,7 +74,6 @@ class AltinnServiceTest {
         )
 
         assertEquals(altinn3Client.getCallCountWithArgs(altinn3Client::resourceOwner_AuthorizedParties.name, fnr), 1)
-        assertEquals(altinn2Client.getCallCountWithArgs(altinn2Client::hentAltinn2Tilganger.name, fnr), 1)
     }
 
 
@@ -118,19 +101,6 @@ class AltinnServiceTest {
                 )
             )
         )
-        val altinn2Client = FakeAltinn2Client {
-            Altinn2Tilganger(
-                isError = false,
-                orgNrTilTjenester = mapOf(
-                    "910825496" to listOf(
-                        Altinn2Tjeneste(
-                            serviceCode = "4936",
-                            serviceEdition = "1"
-                        )
-                    )
-                )
-            )
-        }
         val altinn3Client = FakeAltinn3Client(resourceOwner_AuthorizedPartiesHandler = {
             listOf(
                 AuthorizedParty(
@@ -158,7 +128,7 @@ class AltinnServiceTest {
             }
         }
 
-        val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, resourceRegistry)
+        val altinnService = AltinnService(altinn3Client, altinnRedisClient, resourceRegistry)
 
         altinnService.hentTilganger(fnr, Filter.empty)
 
@@ -166,39 +136,13 @@ class AltinnServiceTest {
         assertEquals(0, altinnRedisClient.getCallCount(altinnRedisClient::set.name))
 
         assertEquals(0, altinn3Client.getCallCount(altinn3Client::resourceOwner_AuthorizedParties.name))
-        assertEquals(0, altinn2Client.getCallCount(altinn2Client::hentAltinn2Tilganger.name))
     }
 
     @Test
-    fun `cache entry settes ikke på grunn av feil i altinn2 respons`() = runTest {
+    fun `cache entry settes ikke på grunn av feil i altinn3 respons`() = runTest {
         val altinnRedisClient = FakeRedisClient()
-        val altinn2Client = FakeAltinn2Client {
-            Altinn2Tilganger(
-                isError = true,
-                orgNrTilTjenester = mapOf(
-                    "910825496" to listOf(
-                        Altinn2Tjeneste(
-                            serviceCode = "4936",
-                            serviceEdition = "1"
-                        )
-                    )
-                )
-            )
-        }
         val altinn3Client = FakeAltinn3Client(resourceOwner_AuthorizedPartiesHandler = {
-            listOf(
-                AuthorizedParty(
-                    name = "SLEMMESTAD OG STAVERN REGNSKAP",
-                    organizationNumber = "910825496",
-                    authorizedResources = setOf("test-fager"),
-                    authorizedRoles = setOf(),
-                    authorizedAccessPackages = setOf(),
-                    subunits = listOf(),
-                    unitType = "BEDR",
-                    type = "Business",
-                    isDeleted = false,
-                )
-            )
+            throw RuntimeException("Altinn 3 error")
         })
         val resourceRegistry = ResourceRegistry(FakeAltinn3Client(), RedisConfig.local(), null).also {
             it.updatePolicySubjectsForKnownResources {
@@ -212,7 +156,7 @@ class AltinnServiceTest {
             }
         }
 
-        val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, resourceRegistry)
+        val altinnService = AltinnService(altinn3Client, altinnRedisClient, resourceRegistry)
 
         val fnr = "16120101181"
         val cacheKey = "$fnr-${AltinnService.CACHE_VERSION}"
@@ -222,25 +166,11 @@ class AltinnServiceTest {
         assertEquals(0, altinnRedisClient.getCallCount(altinnRedisClient::set.name))
 
         assertEquals(1, altinn3Client.getCallCountWithArgs(altinn3Client::resourceOwner_AuthorizedParties.name, fnr))
-        assertEquals(1, altinn2Client.getCallCountWithArgs(altinn2Client::hentAltinn2Tilganger.name, fnr))
     }
 
     @Test
     fun `cache treffes men ikke på tvers av fnr`() = runTest {
         val altinnRedisClient = FakeRedisClient()
-        val altinn2Client = FakeAltinn2Client {
-            Altinn2Tilganger(
-                isError = false,
-                orgNrTilTjenester = mapOf(
-                    "910825496" to listOf(
-                        Altinn2Tjeneste(
-                            serviceCode = "4936",
-                            serviceEdition = "1"
-                        )
-                    )
-                )
-            )
-        }
         val altinn3Client = FakeAltinn3Client(resourceOwner_AuthorizedPartiesHandler = {
             listOf(
                 AuthorizedParty(
@@ -268,7 +198,7 @@ class AltinnServiceTest {
             }
         }
 
-        val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, resourceRegistry)
+        val altinnService = AltinnService(altinn3Client, altinnRedisClient, resourceRegistry)
 
         val fnr1 = "16120101181"
         val fnr2 = "26903848935"
@@ -289,12 +219,6 @@ class AltinnServiceTest {
     @Test
     fun `Beriker mappede altinn 2 tjenester fra altinn 3 ressurs`() = runTest {
         val altinnRedisClient = FakeRedisClient()
-        val altinn2Client = FakeAltinn2Client {
-            Altinn2Tilganger(
-                isError = false,
-                orgNrTilTjenester = emptyMap()
-            )
-        }
 
         val altinn3Client = FakeAltinn3Client(resourceOwner_AuthorizedPartiesHandler = {
             listOf(
@@ -323,7 +247,7 @@ class AltinnServiceTest {
             }
         }
 
-        val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, resourceRegistry)
+        val altinnService = AltinnService(altinn3Client, altinnRedisClient, resourceRegistry)
 
         val fnr = "16120101181"
         val tilganger = altinnService.hentTilganger(fnr, Filter.empty)
@@ -335,21 +259,8 @@ class AltinnServiceTest {
 
 
     @Test
-    fun `Altinn 2 tilganger inkluderes sammen med tilganger mappet fra altinn 3 ressurser`() = runTest {
+    fun `Altinn 3 ressurser berikes med mappede altinn 2 tjenester`() = runTest {
         val altinnRedisClient = FakeRedisClient()
-        val altinn2Client = FakeAltinn2Client {
-            Altinn2Tilganger(
-                isError = false,
-                orgNrTilTjenester = mapOf(
-                    "910825496" to listOf(
-                        Altinn2Tjeneste(
-                            serviceCode = "4936",
-                            serviceEdition = "1"
-                        )
-                    )
-                )
-            )
-        }
         val altinn3Client = FakeAltinn3Client(resourceOwner_AuthorizedPartiesHandler = {
             listOf(
                 AuthorizedParty(
@@ -416,14 +327,14 @@ class AltinnServiceTest {
 
 
         val fnr = "16120101181"
-        val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, resourceRegistry)
+        val altinnService = AltinnService(altinn3Client, altinnRedisClient, resourceRegistry)
 
         val tilganger = altinnService.hentTilganger(fnr, Filter.empty)
         assertEquals(3, tilganger.altinnTilganger.size)
 
         tilganger.altinnTilganger.first { it.orgnr == "910825496" }.let { slemmestad ->
-            // 4936:1 fra altinn2, 5810:1 fra altinn3 resource basert på altinn3 til altinn 2 mapping
-            assertEquals(setOf("4936:1", "5810:1"), slemmestad.altinn2Tilganger)
+            // 5810:1 fra altinn3 resource basert på altinn3 til altinn 2 mapping
+            assertEquals(setOf("5810:1"), slemmestad.altinn2Tilganger)
         }
 
         tilganger.altinnTilganger.first { it.orgnr == "111111111" }.let { annet ->
@@ -448,25 +359,6 @@ class AltinnServiceTest {
     @Test
     fun `filter fungerer med og uten cache hit`() = runTest {
         val altinnRedisClient = FakeRedisClient()
-        val altinn2Client = FakeAltinn2Client {
-            Altinn2Tilganger(
-                isError = false,
-                orgNrTilTjenester = mapOf(
-                    "2.1" to listOf(
-                        Altinn2Tjeneste(
-                            serviceCode = "4936",
-                            serviceEdition = "1"
-                        )
-                    ),
-                    "3.1" to listOf(
-                        Altinn2Tjeneste(
-                            serviceCode = "2896",
-                            serviceEdition = "87"
-                        )
-                    )
-                )
-            )
-        }
         val altinn3Client = FakeAltinn3Client(resourceOwner_AuthorizedPartiesHandler = {
             listOf(
                 AuthorizedParty(
@@ -502,7 +394,7 @@ class AltinnServiceTest {
                         AuthorizedParty(
                             name = "2.1",
                             organizationNumber = "2.1",
-                            authorizedResources = setOf(),
+                            authorizedResources = setOf("nav_foreldrepenger_inntektsmelding"),
                             authorizedRoles = setOf(),
                             authorizedAccessPackages = setOf(),
                             subunits = listOf(),
@@ -525,7 +417,7 @@ class AltinnServiceTest {
                         AuthorizedParty(
                             name = "3.1",
                             organizationNumber = "3.1",
-                            authorizedResources = setOf(),
+                            authorizedResources = setOf("nav_utbetaling_endre-kontonummer-refusjon-arbeidsgiver"),
                             authorizedRoles = setOf(),
                             authorizedAccessPackages = setOf(),
                             subunits = listOf(),
@@ -546,7 +438,7 @@ class AltinnServiceTest {
             }
         }
 
-        val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, resourceRegistry)
+        val altinnService = AltinnService(altinn3Client, altinnRedisClient, resourceRegistry)
 
         val fnr = "42"
         val tilganger = altinnService.hentTilganger(fnr, Filter(setOf("4936:1")))
@@ -556,8 +448,8 @@ class AltinnServiceTest {
 
         val tilganger2 = altinnService.hentTilganger(fnr, Filter(setOf("4936:1")))
         assertEquals(1, tilganger2.altinnTilganger.size)
-        assertEquals("2", tilganger.altinnTilganger.first().orgnr)
-        assertEquals("2.1", tilganger.altinnTilganger.first().underenheter.first().orgnr)
+        assertEquals("2", tilganger2.altinnTilganger.first().orgnr)
+        assertEquals("2.1", tilganger2.altinnTilganger.first().underenheter.first().orgnr)
     }
 
 }
