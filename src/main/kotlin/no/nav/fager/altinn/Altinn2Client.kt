@@ -23,6 +23,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
 import no.nav.fager.infrastruktur.NaisEnvironment
+import no.nav.fager.infrastruktur.basedOnEnv
 import no.nav.fager.infrastruktur.defaultHttpClient
 import no.nav.fager.infrastruktur.logger
 import no.nav.fager.infrastruktur.rethrowIfCancellation
@@ -288,14 +289,19 @@ private class Altinn2TjenesteDefinisjon(
  *
  * GET https://altinn.no/api/metadata?language=1033&$top=2000&$filter=ServiceOwnerCode eq 'NAV'
  */
-private val tjenester = listOf(
-    // nærmeste leder migreres 15 juni
-    Altinn2TjenesteDefinisjon(
-        serviceCode = "4596",
-        serviceEdition = "1",
-        serviceName = "Sykmelding - Oppgi nærmeste leder med personalansvar",
-        serviceEditionName = "Sykmelding - oppgi leder",
-    ),
+private val tjenester = basedOnEnv(
+    prod = {
+        listOf(
+            // nærmeste leder migreres 15 juni
+            Altinn2TjenesteDefinisjon(
+                serviceCode = "4596",
+                serviceEdition = "1",
+                serviceName = "Sykmelding - Oppgi nærmeste leder med personalansvar",
+                serviceEditionName = "Sykmelding - oppgi leder",
+            ),
+        )
+    },
+    other = { listOf() }
 )
 
 internal val Altinn2Tjenester = tjenester.map { "${it.serviceCode}:${it.serviceEdition}" }
