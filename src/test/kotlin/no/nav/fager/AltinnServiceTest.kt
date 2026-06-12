@@ -61,7 +61,7 @@ class AltinnServiceTest {
 
         val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, resourceRegistry)
 
-        val fnr = "16120101181"
+        val fnr = "42"
         val cacheKey = "$fnr-${AltinnService.CACHE_VERSION}"
 
         altinnService.hentTilganger(fnr, Filter.empty)
@@ -96,7 +96,7 @@ class AltinnServiceTest {
 
     @Test
     fun `cache entry eksisterer, klienter kalles ikke`() = runTest {
-        val fnr = "16120101181"
+        val fnr = "42"
         val cacheKey = "$fnr-${AltinnService.CACHE_VERSION}"
         val altinnRedisClient = FakeRedisClient(
             mutableMapOf(
@@ -214,7 +214,7 @@ class AltinnServiceTest {
 
         val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, resourceRegistry)
 
-        val fnr = "16120101181"
+        val fnr = "42"
         val cacheKey = "$fnr-${AltinnService.CACHE_VERSION}"
         altinnService.hentTilganger(fnr, Filter.empty)
 
@@ -270,7 +270,7 @@ class AltinnServiceTest {
 
         val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, resourceRegistry)
 
-        val fnr1 = "16120101181"
+        val fnr1 = "42"
         val fnr2 = "26903848935"
 
         val cacheKey1 = "$fnr1-${AltinnService.CACHE_VERSION}"
@@ -325,7 +325,7 @@ class AltinnServiceTest {
 
         val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, resourceRegistry)
 
-        val fnr = "16120101181"
+        val fnr = "42"
         val tilganger = altinnService.hentTilganger(fnr, Filter.empty)
 
         assertEquals(1, tilganger.altinnTilganger.count())
@@ -415,7 +415,7 @@ class AltinnServiceTest {
         }
 
 
-        val fnr = "16120101181"
+        val fnr = "42"
         val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, resourceRegistry)
 
         val tilganger = altinnService.hentTilganger(fnr, Filter.empty)
@@ -442,6 +442,124 @@ class AltinnServiceTest {
             assertEquals(setOf("4936:1"), endaAnnet.altinn2Tilganger)
             // fra accessRightPackage via resource mapping
             assertEquals(setOf("nav_foreldrepenger_inntektsmelding"), endaAnnet.altinn3Tilganger)
+        }
+    }
+
+    @Test
+    fun `filter på nav_sykepenger_inntektsmelding returnerer organisasjon med tilgang via accesspackage`() = runTest {
+        val altinnRedisClient = FakeRedisClient()
+        val altinn2Client = FakeAltinn2Client {
+            Altinn2Tilganger(
+                isError = false,
+                orgNrTilTjenester = emptyMap()
+            )
+        }
+        val altinn3Client = FakeAltinn3Client(resourceOwner_AuthorizedPartiesHandler = {
+            listOf(
+                AuthorizedParty(
+                    name = "ORGANISASJON MED TILGANGSPAKKE",
+                    organizationNumber = "333333333",
+                    authorizedResources = emptySet(),
+                    authorizedRoles = emptySet(),
+                    authorizedAccessPackages = setOf("sykepenger-inntektsmelding"),
+                    subunits = emptyList(),
+                    unitType = "BEDR",
+                    type = "Business",
+                    isDeleted = false,
+                ),
+                AuthorizedParty(
+                    name = "ACME AS",
+                    organizationNumber = "123",
+                    authorizedResources = emptySet(),
+                    authorizedRoles = emptySet(),
+                    authorizedAccessPackages = setOf(),
+                    subunits = listOf(
+                        AuthorizedParty(
+                            name = "ACME SUBUNIT",
+                            organizationNumber = "321",
+                            authorizedResources = emptySet(),
+                            authorizedRoles = emptySet(),
+                            authorizedAccessPackages = setOf("sykepenger-inntektsmelding"),
+                            subunits = emptyList(),
+                            unitType = "BEDR",
+                            type = "Business",
+                            isDeleted = false,
+                        ),
+                    ),
+                    unitType = "AS",
+                    type = "Business",
+                    isDeleted = false,
+                ),
+            )
+        })
+        val resourceRegistry = ResourceRegistry(FakeAltinn3Client(), RedisConfig.local(), null).also {
+            it.updatePolicySubjectsForKnownResources { resourceId ->
+                when (resourceId) {
+                    "nav_sykepenger_inntektsmelding" ->
+                        listOf(
+                            PolicySubject(
+                                urn = "urn:altinn:accesspackage:sykepenger-inntektsmelding",
+                                type = "urn:altinn:accesspackage",
+                                value = "sykepenger-inntektsmelding",
+                            )
+                        )
+
+                    else -> listOf()
+                }
+            }
+        }
+
+        val altinnService = AltinnService(altinn2Client, altinn3Client, altinnRedisClient, resourceRegistry)
+        altinnService.hentTilganger(
+            fnr = "42",
+            filter = Filter(
+                altinn3Tilganger = setOf("nav_sykepenger_inntektsmelding")
+            )
+        ).let { tilganger ->
+            assertEquals(2, tilganger.altinnTilganger.size)
+            tilganger.altinnTilganger.first().let { tilgang ->
+                assertEquals("333333333", tilgang.orgnr)
+                assertEquals(setOf("nav_sykepenger_inntektsmelding"), tilgang.altinn3Tilganger)
+                assertEquals(setOf("sykepenger-inntektsmelding"), tilgang.tilgangspakker)
+            }
+            tilganger.altinnTilganger.last().let { tilgang ->
+                assertEquals("123", tilgang.orgnr)
+                assertEquals(setOf(), tilgang.altinn3Tilganger)
+                assertEquals(setOf(), tilgang.tilgangspakker)
+                tilgang.underenheter.first().let { underenhet ->
+                    assertEquals("321", underenhet.orgnr)
+                    assertEquals(setOf("nav_sykepenger_inntektsmelding"), underenhet.altinn3Tilganger)
+                    assertEquals(setOf("sykepenger-inntektsmelding"), underenhet.tilgangspakker)
+                }
+            }
+        }
+
+        altinnService.hentTilganger(
+            fnr = "42",
+            filter = Filter(
+                altinn3Tilganger = setOf("test-fager")
+            )
+        ).let { tilganger ->
+            assertEquals(0, tilganger.altinnTilganger.size)
+        }
+
+        altinnService.hentTilganger(
+            fnr = "42",
+            filter = Filter(
+                altinn3Tilganger = setOf("nav_sykepenger_inntektsmelding"),
+                altinn2Tilganger = setOf("4936:1")
+            )
+        ).let { tilganger ->
+            assertEquals(2, tilganger.altinnTilganger.size)
+        }
+
+        altinnService.hentTilganger(
+            fnr = "42",
+            filter = Filter(
+                altinn2Tilganger = setOf("4936:1")
+            )
+        ).let { tilganger ->
+            assertEquals(2, tilganger.altinnTilganger.size)
         }
     }
 
