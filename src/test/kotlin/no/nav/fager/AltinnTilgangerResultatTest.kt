@@ -134,6 +134,44 @@ class AltinnTilgangerResultatTest {
     }
 
     @Test
+    fun `Filter on nav_sykepenger_inntektsmelding inkluderer organisasjon med tilgang via accesspackage`() {
+        AltinnTilgangerResultat(
+            isError = false,
+            altinnTilganger = listOf(
+                AltinnTilgang(
+                    orgnr = "1",
+                    altinn3Tilganger = setOf("nav_sykepenger_inntektsmelding"),
+                    altinn2Tilganger = emptySet(),
+                    roller = emptySet(),
+                    tilgangspakker = setOf("sykepenger-inntektsmelding"),
+                    underenheter = emptyList(),
+                    navn = "EN ORGANISASJON",
+                    organisasjonsform = "BEDR",
+                    erSlettet = false
+                ),
+                AltinnTilgang(
+                    orgnr = "2",
+                    altinn3Tilganger = setOf("nav_foreldrepenger_inntektsmelding"),
+                    altinn2Tilganger = emptySet(),
+                    roller = emptySet(),
+                    tilgangspakker = setOf("sykepenger-inntektsmelding"),
+                    underenheter = emptyList(),
+                    navn = "ANNEN ORGANISASJON",
+                    organisasjonsform = "BEDR",
+                    erSlettet = false
+                )
+            )
+        ).filter(
+            Filter(
+                altinn3Tilganger = setOf("nav_sykepenger_inntektsmelding")
+            )
+        ).let {
+            assertEquals(listOf("1"), it.altinnTilganger.map { tilgang -> tilgang.orgnr })
+            assertEquals(setOf("sykepenger-inntektsmelding"), it.altinnTilganger.first().tilgangspakker)
+        }
+    }
+
+    @Test
     fun `Filter on sample from dev works as expected`() {
         val sample = Json.decodeFromString<AltinnTilgangerResultat>(sampleJSON)
 
