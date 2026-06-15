@@ -65,15 +65,11 @@ info:
     
     Du kontakter oss i [slack kanalen #team-fager](https://nav-it.slack.com/archives/C01V9FFEHEK).
     
-    ## Litt om migrering fra altinn 2 til altinn 3
+    ## Litt om altinn 2 tjenestekoder i responsen
     
-    I Altinn 2 styres tilganger av servicecode og serviceedition. I altinn 3 er det ressurser som styrer tilganger.
-    Dersom dere allerede har en altinn 2 tilgang og skal migrere denne, så kan dette apiet også lette overgangen.
-
+    I Altinn 2 ble tilganger styrt av servicecode og serviceedition. I Altinn 3 er det ressurser som styrer tilganger.
     Internt i applikasjonen er det en oversikt over hvilke altinn 3 ressurser som erstatter hvilke altinn 2 tilganger.
-    For disse ressursene vil vi returnere altinn 2 tilgangen i tillegg til altinn 3 ressursen. 
-    På denne måten står man litt mer frikoblet fra "turn-key" migreringen i altinn. 
-    Med andre ord vil de som hadde tilgang til for eksempel notifikasjoner for en altinn 2 tjeneste ikke miste disse på grunn av migrering av tjenesten fra altinn 2 servicecode til altinn 3 ressurs.
+    For disse ressursene returnerer vi altinn 2 tjenestekoden i tillegg til altinn 3 ressursen, slik at konsumenter som fortsatt filtrerer på altinn 2 tjenestekoder ikke mister funksjonalitet.
 
     Dersom det ikke er ønskelig at vi returnerer altinn 2 tilganger i tillegg til altinn 3 ressursene, så kan vi enkelt gjøre unntak for enkelte tjenester. Bare gi oss beskjed. 
   
@@ -216,7 +212,7 @@ paths:
                 value:
                   fnr: "11123456789"
                   filter:
-                    altinn2Tilganger: [ "4936:1" ]
+                    altinn2Tilganger: [ "5810:1" ]
               filter_altinn3:
                 summary: filtrer på en eller flere altinn 3 ressurser
                 value:
@@ -228,7 +224,7 @@ paths:
                 value:
                   fnr: "11123456789"
                   filter:
-                    altinn2Tilganger: [ "4936:1" ]
+                    altinn2Tilganger: [ "5810:1" ]
                     altinn3Tilganger: [ "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger" ]
       responses:
         '200':
@@ -299,7 +295,7 @@ paths:
                 summary: filtrer på en eller flere altinn 2 tjenester
                 value:
                   filter:
-                    altinn2Tilganger: [ "4936:1" ]
+                    altinn2Tilganger: [ "5810:1" ]
               filter_altinn3:
                 summary: filtrer på en eller flere altinn 3 ressurser
                 value:
@@ -309,7 +305,7 @@ paths:
                 summary: filtrer på en eller flere altinn 2 tjenester og en eller flere altinn 3 ressurser
                 value:
                   filter:
-                    altinn2Tilganger: [ "4936:1" ]
+                    altinn2Tilganger: [ "5810:1" ]
                     altinn3Tilganger: [ "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger" ]
         required: false
       responses:

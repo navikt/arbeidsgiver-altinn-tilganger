@@ -119,11 +119,6 @@ class AltinnTilgangerTest {
                 """.trimIndent(), ContentType.Application.Json
             )
         }
-
-        app.altinn2Response(Get, "/api/serviceowner/reportees") {
-            call.respondText("[]", ContentType.Application.Json)
-        }
-
         val assertResponse: (AltinnTilgangerResponse) -> Unit = {
             assertEquals(false, it.isError)
             assertEquals(3, it.hierarki[0].underenheter.size)
@@ -285,10 +280,6 @@ class AltinnTilgangerTest {
                 """.trimIndent(), ContentType.Application.Json
             )
         }
-        app.altinn2Response(Get, "/api/serviceowner/reportees") {
-            call.respondText("[]", ContentType.Application.Json)
-        }
-
         val assertResponse: (AltinnTilgangerResponse) -> Unit = {
             assertEquals(false, it.isError)
             assertEquals(2, it.hierarki[0].underenheter.size)
@@ -966,44 +957,6 @@ class AltinnTilgangerTest {
                 """.trimIndent(), ContentType.Application.Json
             )
         }
-        val altinn2Responses = listOf(
-            //language=json
-            """
-            [
-                {
-                    "Name": "SLEMMESTAD OG STAVERN REGNSKAP",
-                    "Type": "Business",
-                    "OrganizationNumber": "910825496",
-                    "ParentOrganizationNumber": "810825472",
-                    "OrganizationForm": "BEDR",
-                    "Status": "Active"
-                }
-            ]
-            """,
-            //language=json
-            """
-            [
-                {
-                    "Name": "SLEMMESTAD OG STAVERN REGNSKAP SLETTET",
-                    "Type": "Business",
-                    "OrganizationNumber": "910825554",
-                    "ParentOrganizationNumber": "810825472",
-                    "OrganizationForm": "BEDR",
-                    "Status": "Inactive"
-                }
-            ]
-            """,
-        )
-
-        app.altinn2Response(Get, "/api/serviceowner/reportees") {
-            if (call.request.queryParameters["serviceCode"] == "4936") {
-                call.request.queryParameters["${'$'}skip"]?.toIntOrNull()?.let {
-                    call.respondText(
-                        altinn2Responses.getOrNull(it) ?: "[]", ContentType.Application.Json
-                    )
-                }
-            }
-        }
 
         val assertResponse: (AltinnTilgangerResponse) -> Unit = {
             assertEquals(1, it.hierarki[0].underenheter.size)
@@ -1062,10 +1015,6 @@ class AltinnTilgangerTest {
                 """.trimIndent(), ContentType.Application.Json
             )
         }
-        app.altinn2Response(Get, "/api/serviceowner/reportees") {
-            call.respondText("[]", ContentType.Application.Json)
-        }
-
         client.post("/altinn-tilganger") {
             header("Authorization", "Bearer idporten-loa-high:${fnr.next()}")
             contentType(ContentType.Application.Json)
@@ -1158,10 +1107,6 @@ class AltinnTilgangerTest {
                 """.trimIndent(), ContentType.Application.Json
             )
         }
-        app.altinn2Response(Get, "/api/serviceowner/reportees") {
-            call.respondText("[]", ContentType.Application.Json)
-        }
-
         val assertResponse: (AltinnTilgangerResponse) -> Unit = {
             assertEquals(false, it.isError)
             assertEquals(1, it.hierarki.size)
@@ -1252,10 +1197,6 @@ class AltinnTilgangerTest {
                 """.trimIndent(), ContentType.Application.Json
             )
         }
-        app.altinn2Response(Get, "/api/serviceowner/reportees") {
-            call.respondText("[]", ContentType.Application.Json)
-        }
-
         val assertResponse: (AltinnTilgangerResponse) -> Unit = {
             assertFalse(it.isError)
             assertEquals(1, it.hierarki.size)
@@ -1345,10 +1286,6 @@ class AltinnTilgangerTest {
                 """.trimIndent(), ContentType.Application.Json
             )
         }
-        app.altinn2Response(Get, "/api/serviceowner/reportees") {
-            call.respondText("[]", ContentType.Application.Json)
-        }
-
         val assertResponse: (AltinnTilgangerResponse) -> Unit = {
             assertFalse(it.isError)
             assertEquals(1, it.hierarki.size)

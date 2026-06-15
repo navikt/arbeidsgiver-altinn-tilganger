@@ -51,13 +51,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import no.nav.fager.AltinnTilgangerResponse.Companion.toResponse
-import no.nav.fager.altinn.Altinn2ClientImpl
-import no.nav.fager.altinn.Altinn2Config
 import no.nav.fager.altinn.Altinn3ClientImpl
 import no.nav.fager.altinn.Altinn3Config
 import no.nav.fager.altinn.AltinnService
@@ -80,7 +76,6 @@ import no.nav.fager.texas.TexasAuthConfig
 import org.slf4j.event.Level
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.time.Duration.Companion.hours
 
 
 val backgroundScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -97,7 +92,6 @@ fun main() {
 
         ktorConfig(
             altinn3Config = Altinn3Config.nais(),
-            altinn2Config = Altinn2Config.nais(),
             texasAuthConfig = TexasAuthConfig.nais(),
             redisConfig = RedisConfig.nais(),
         )
@@ -112,7 +106,6 @@ fun main() {
 
 fun Application.ktorConfig(
     altinn3Config: Altinn3Config,
-    altinn2Config: Altinn2Config,
     texasAuthConfig: TexasAuthConfig,
     redisConfig: RedisConfig,
 ) {
@@ -215,17 +208,6 @@ fun Application.ktorConfig(
         json()
     }
 
-    val altinn2Client = Altinn2ClientImpl(
-        altinn2Config = altinn2Config,
-        texasAuthConfig = texasAuthConfig,
-    ).also {
-        backgroundScope.launch {
-            while (!Health.terminating && isActive) {
-                it.validerKjenteTjenesterFinnesIMetadata()
-                delay(2.hours)
-            }
-        }
-    }
 
     val altinn3Client = Altinn3ClientImpl(
         altinn3Config = altinn3Config,
@@ -253,7 +235,6 @@ fun Application.ktorConfig(
     ).also { Health.register(it) }
 
     val altinnService = AltinnService(
-        altinn2Client = altinn2Client,
         altinn3Client = altinn3Client,
         resourceRegistry = resourceRegistry,
         redisClient = AltinnTilgangerRedisClientImpl(redisConfig),

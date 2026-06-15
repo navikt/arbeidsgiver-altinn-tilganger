@@ -21,7 +21,7 @@ class FakeAltinn3Client(
 
     override suspend fun resourceOwner_AuthorizedParties(fnr: String): Result<List<AuthorizedParty>> {
         addFunctionCall(this::resourceOwner_AuthorizedParties.name, fnr)
-        return Result.success(resourceOwner_AuthorizedPartiesHandler())
+        return runCatching { resourceOwner_AuthorizedPartiesHandler() }
     }
 
     override suspend fun resourceRegistry_PolicySubjects(resourceId: String): Result<List<PolicySubject>> {

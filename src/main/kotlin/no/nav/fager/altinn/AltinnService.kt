@@ -1,7 +1,6 @@
 package no.nav.fager.altinn
 
 import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
@@ -14,14 +13,13 @@ import no.nav.fager.redis.AltinnTilgangerRedisClient
 
 
 class AltinnService(
-    private val altinn2Client: Altinn2Client,
     private val altinn3Client: Altinn3Client,
     private val redisClient: AltinnTilgangerRedisClient,
     private val resourceRegistry: ResourceRegistry,
 ) {
     companion object {
         // Endre versjon for å invalidere eksisterende cache
-        const val CACHE_VERSION = "v1"
+        const val CACHE_VERSION = "v2"
     }
 
     private val timer = Metrics.meterRegistry.timer("altinnservice.hentTilgangerFraAltinn")
@@ -55,11 +53,7 @@ class AltinnService(
     internal suspend fun hentTilgangerFraAltinn(fnr: String) =
         timer.coRecord {
             coroutineScope {
-                val altinn2TilgangerJob = async { altinn2Client.hentAltinn2Tilganger(fnr) }
-                val altinn3TilgangerJob = async { altinn3Client.resourceOwner_AuthorizedParties(fnr) }
-
-                val altinn2Tilganger = altinn2TilgangerJob.await()
-                val altinn3TilgangerResult = altinn3TilgangerJob.await()
+                val altinn3TilgangerResult = altinn3Client.resourceOwner_AuthorizedParties(fnr)
                 val altinn3Tilganger = altinn3TilgangerResult.fold(
                     onSuccess = { altinn3tilganger ->
                         altinn3tilganger.addAuthorizedResourcesRecursive { party ->
@@ -75,7 +69,6 @@ class AltinnService(
                     onFailure = { emptyList() }
                 )
 
-
                 val orgnrTilAltinn2Mapped = altinn3Tilganger.flatMap {
                     flatten(it) { party ->
                         if (party.organizationNumber == null || party.unitType == null) {
@@ -87,23 +80,19 @@ class AltinnService(
                         }
                     }
                 }.associate {
-                    it.first to it.second + (altinn2Tilganger.orgNrTilTjenester[it.first] ?: emptyList())
+                    it.first to it.second
                 }
 
                 AltinnTilgangerResultat(
-                    altinn2Tilganger.isError || altinn3TilgangerResult.isFailure,
+                    altinn3TilgangerResult.isFailure,
                     mapToHierarchy(
                         altinn3Tilganger,
-                        Altinn2Tilganger(
-                            altinn2Tilganger.isError,
-                            orgnrTilAltinn2Mapped
-                        )
+                        orgnrTilAltinn2Mapped
                     )
                 ).also {
                     teamLogger.info(
-                        "Hentet Altinn-tilganger for fnr={}, altinn2Tilganger={}, altinn3TilgangerResult={}, altinn3Tilganger={}, resultat={}",
+                        "Hentet Altinn-tilganger for fnr={}, altinn3TilgangerResult={}, altinn3Tilganger={}, resultat={}",
                         fnr,
-                        altinn2Tilganger,
                         altinn3TilgangerResult.fold(
                             onSuccess = { r -> r },
                             onFailure = { "failure" }
@@ -117,7 +106,7 @@ class AltinnService(
 
     private fun mapToHierarchy(
         authorizedParties: List<AuthorizedParty>,
-        altinn2Tilganger: Altinn2Tilganger
+        orgnrTilAltinn2Tjenester: Map<String, List<String>>
     ): List<AltinnTilgang> {
 
         return authorizedParties
@@ -126,16 +115,15 @@ class AltinnService(
                     null
                 } else {
                     AltinnTilgang(
-                        orgnr = party.organizationNumber, // alle orgnr finnes i altinn3 pga includeAltinn2=true
+                        orgnr = party.organizationNumber,
                         navn = party.name,
                         organisasjonsform = party.unitType,
                         altinn3Tilganger = party.authorizedResources,
-                        altinn2Tilganger = altinn2Tilganger.orgNrTilTjenester[party.organizationNumber]?.map {
-                            """${it.serviceCode}:${it.serviceEdition}"""
-                        }?.toSet() ?: emptySet(),
+                        altinn2Tilganger = orgnrTilAltinn2Tjenester[party.organizationNumber]
+                            ?.toSet() ?: emptySet(),
                         roller = party.authorizedRoles,
                         tilgangspakker = party.authorizedAccessPackages,
-                        underenheter = mapToHierarchy(party.subunits, altinn2Tilganger),
+                        underenheter = mapToHierarchy(party.subunits, orgnrTilAltinn2Tjenester),
                         erSlettet = party.isDeleted
                     )
                 }

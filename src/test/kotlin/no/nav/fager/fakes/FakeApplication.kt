@@ -19,7 +19,6 @@ import io.ktor.server.response.respondText
 import io.ktor.server.routing.RoutingContext
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
-import no.nav.fager.altinn.Altinn2Config
 import no.nav.fager.altinn.Altinn3Config
 import no.nav.fager.altinn.KnownResourceIds
 import no.nav.fager.infrastruktur.Health
@@ -219,7 +218,6 @@ class FakeApplication(
             call.respondText(rolesResponse, ContentType.Application.Json)
         }
     }
-    private val fakeAltinn2Api = FakeApi()
     private val fakeTexas = FakeApi().also {
         it.stubs[Post to "/token"] = {
             val contentType = call.request.contentType()
@@ -286,10 +284,6 @@ class FakeApplication(
                     baseUrl = "http://localhost:${fakeAltinn3Api.port}",
                     ocpApimSubscriptionKey = "someSubscriptionKey",
                 ),
-                altinn2Config = Altinn2Config(
-                    baseUrl = "http://localhost:${fakeAltinn2Api.port}",
-                    apiKey = "someApiKey",
-                ),
                 redisConfig = RedisConfig.local(),
                 texasAuthConfig = TexasAuthConfig.fake(fakeTexas),
             )
@@ -302,7 +296,6 @@ class FakeApplication(
         Health.requiredServices.clear()
         fakeTexas.start()
         fakeAltinn3Api.start()
-        fakeAltinn2Api.start()
 
         server.start(wait) // waits until killed
     }
@@ -316,7 +309,6 @@ class FakeApplication(
         testContext!!.body()
         fakeTexas.assertNoErrors()
         fakeAltinn3Api.assertNoErrors()
-        fakeAltinn2Api.assertNoErrors()
     }
 
     fun altinn3Response(
@@ -328,14 +320,6 @@ class FakeApplication(
         fakeAltinn3Api.errors.clear()
     }
 
-    fun altinn2Response(
-        httpMethod: HttpMethod,
-        path: String,
-        handlePost: (suspend RoutingContext.(Any) -> Unit)
-    ) {
-        fakeAltinn2Api.stubs[httpMethod to path] = handlePost
-        fakeAltinn2Api.errors.clear()
-    }
 
     fun texasResponse(
         httpMethod: HttpMethod,
@@ -363,7 +347,6 @@ class FakeApplication(
         server.stop()
         fakeTexas.stop()
         fakeAltinn3Api.stop()
-        fakeAltinn2Api.stop()
     }
 }
 
