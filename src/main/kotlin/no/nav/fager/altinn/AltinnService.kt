@@ -135,31 +135,75 @@ class AltinnService(
         val isError: Boolean,
         val altinnTilganger: List<AltinnTilgang>
     ) {
-        fun filter(filter: Filter): AltinnTilgangerResultat =
-            AltinnTilgangerResultat(
+        fun filter(filter: Filter): AltinnTilgangerResultat {
+            if (filter.isEmpty) return this
+
+            // Reverse map: Altinn 2-tjenestekode -> alle Altinn 3-ressurser som peker på koden
+            val altinn2ToAltinn3: Map<String, Set<String>> = KnownResources
+                .flatMap { resource -> resource.altinn2Tjeneste.map { it to resource.resourceId } }
+                .groupBy({ it.first }, { it.second })
+                .mapValues { it.value.toSet() }
+
+            // Altinn 3-ressurser i filteret + ressurser som mapper til Altinn 2-koder i filteret (1-til-mange)
+            val effectiveAltinn3 = filter.altinn3Tilganger +
+                filter.altinn2Tilganger.flatMap { altinn2ToAltinn3[it].orEmpty() }
+
+            // Altinn 2-koder i filteret + koder som Altinn 3-ressursene i filteret mapper til
+            val effectiveAltinn2 = filter.altinn2Tilganger +
+                filter.altinn3Tilganger.flatMap { resourceId ->
+                    KnownResources.filter { it.resourceId == resourceId }.flatMap { it.altinn2Tjeneste }
+                }
+
+            return AltinnTilgangerResultat(
                 isError,
-                altinnTilganger.filterRecursive(filter)
+                altinnTilganger.filterRecursive(
+                    inkluderSlettede = filter.inkluderSlettede,
+                    filterAltinn2 = filter.altinn2Tilganger,
+                    filterAltinn3 = filter.altinn3Tilganger,
+                    effectiveAltinn2 = effectiveAltinn2,
+                    effectiveAltinn3 = effectiveAltinn3,
+                )
             )
+        }
     }
 }
 
 /**
  * Filtrerer rekursivt basert på angitt filter.
+ *
+ * Inklusjon (hvilke noder som beholdes) avgjøres av de opprinnelige filterverdiene.
+ * Innholdet (`altinn2Tilganger`/`altinn3Tilganger`) på beholdte noder begrenses til de
+ * effektive settene, som inkluderer kryssreferanser mellom Altinn 2 og Altinn 3.
  */
-private fun List<AltinnTilgang>.filterRecursive(filter: Filter): List<AltinnTilgang> =
+private fun List<AltinnTilgang>.filterRecursive(
+    inkluderSlettede: Boolean,
+    filterAltinn2: Set<String>,
+    filterAltinn3: Set<String>,
+    effectiveAltinn2: Set<String>,
+    effectiveAltinn3: Set<String>,
+): List<AltinnTilgang> =
     mapNotNull { tilgang ->
-        if (!filter.inkluderSlettede && tilgang.erSlettet) return@mapNotNull null
+        if (!inkluderSlettede && tilgang.erSlettet) return@mapNotNull null
 
-        val filtrerteUnderenheter = tilgang.underenheter.filterRecursive(filter)
+        val filtrerteUnderenheter = tilgang.underenheter.filterRecursive(
+            inkluderSlettede = inkluderSlettede,
+            filterAltinn2 = filterAltinn2,
+            filterAltinn3 = filterAltinn3,
+            effectiveAltinn2 = effectiveAltinn2,
+            effectiveAltinn3 = effectiveAltinn3,
+        )
         tilgang.copy(underenheter = filtrerteUnderenheter)
     }.filter { tilgang ->
-        if (filter.isEmpty) return@filter true
-
-        val matcherAltinn2 = tilgang.altinn2Tilganger.intersects(filter.altinn2Tilganger)
-        val matcherAltinn3 = tilgang.altinn3Tilganger.intersects(filter.altinn3Tilganger)
+        val matcherAltinn2 = tilgang.altinn2Tilganger.intersects(filterAltinn2)
+        val matcherAltinn3 = tilgang.altinn3Tilganger.intersects(filterAltinn3)
         val harUnderenheter = tilgang.underenheter.isNotEmpty()
 
         harUnderenheter || matcherAltinn2 || matcherAltinn3
+    }.map { tilgang ->
+        tilgang.copy(
+            altinn2Tilganger = tilgang.altinn2Tilganger intersect effectiveAltinn2,
+            altinn3Tilganger = tilgang.altinn3Tilganger intersect effectiveAltinn3,
+        )
     }
 
 private fun AuthorizedParty.addAuthorizedResourcesRecursive(
