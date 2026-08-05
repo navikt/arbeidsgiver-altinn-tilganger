@@ -6,6 +6,7 @@ import io.ktor.client.engine.cio.CIO
 import io.ktor.client.engine.cio.CIOEngineConfig
 import io.ktor.client.network.sockets.ConnectTimeoutException
 import io.ktor.client.plugins.HttpRequestRetry
+import io.ktor.client.plugins.HttpRequestRetryConfig
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.plugins.logging.LoggingConfig
@@ -21,9 +22,11 @@ import javax.net.ssl.SSLHandshakeException
 fun defaultHttpClient(
     customizeLogging: LoggingConfig.() -> Unit = { },
     customizeMetrics: HttpClientMetricsFeature.Config.() -> Unit = {},
+    customizeRetry: HttpRequestRetryConfig.() -> Unit = { },
     configure: HttpClientConfig<CIOEngineConfig>.() -> Unit = {}
 ) = HttpClient(CIO) {
     expectSuccess = true
+
     install(HttpRequestRetry) {
         retryOnServerErrors(3)
         retryOnExceptionIf(3) { _, cause ->
@@ -40,6 +43,8 @@ fun defaultHttpClient(
         }
 
         delayMillis { 250L }
+
+        customizeRetry()
     }
 
     install(ContentNegotiation) {
