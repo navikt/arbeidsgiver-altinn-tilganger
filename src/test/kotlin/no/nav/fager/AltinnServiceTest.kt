@@ -9,8 +9,12 @@ import no.nav.fager.altinn.ResourceRegistry
 import no.nav.fager.fakes.clients.FakeAltinn3Client
 import no.nav.fager.fakes.clients.FakeRedisClient
 import no.nav.fager.redis.RedisConfig
+import java.io.ByteArrayOutputStream
+import java.io.PrintStream
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class AltinnServiceTest {
     @Test
@@ -564,4 +568,46 @@ class AltinnServiceTest {
         assertEquals("2.1", tilganger2.altinnTilganger.first().underenheter.first().orgnr)
     }
 
+    @Test
+    fun `feil fra altinn3 logges som error uten fnr og gir isError uten å kaste`() = runTest {
+        val altinnRedisClient = FakeRedisClient()
+        val altinn3Client = FakeAltinn3Client(resourceOwner_AuthorizedPartiesHandler = {
+            throw RuntimeException("boom fra altinn 3")
+        })
+        val resourceRegistry = ResourceRegistry(FakeAltinn3Client(), RedisConfig.local(), null).also {
+            it.updatePolicySubjectsForKnownResources { listOf() }
+        }
+
+        val altinnService = AltinnService(altinn3Client, altinnRedisClient, resourceRegistry)
+
+        val fnr = "26903848935"
+        lateinit var resultat: AltinnTilgangerResultat
+        val stdout = captureStdout {
+            resultat = altinnService.hentTilganger(fnr, Filter.empty)
+        }
+
+        assertEquals(true, resultat.isError)
+        assertTrue(resultat.altinnTilganger.isEmpty())
+
+        val errorLines = stdout.lines().filter { it.contains("Klarte ikke hente authorizedParties fra Altinn 3") }
+        assertEquals(1, errorLines.size, "forventet nøyaktig én error-logglinje")
+        assertTrue(stdout.contains("boom fra altinn 3"), "forventet at exception-meldingen logges")
+        assertFalse(stdout.contains(fnr), "fnr skal ikke forekomme i loggen")
+    }
+
+}
+
+private inline fun captureStdout(block: () -> Unit): String {
+    val originalOut = System.out
+    val captured = try {
+        val byteArrayOutputStream = ByteArrayOutputStream()
+        val printStream = PrintStream(byteArrayOutputStream, true)
+        System.setOut(printStream)
+        block()
+        byteArrayOutputStream.toString()
+    } finally {
+        System.setOut(originalOut)
+    }
+    print(captured)
+    return captured
 }

@@ -8,6 +8,7 @@ import no.nav.fager.AltinnTilgang
 import no.nav.fager.Filter
 import no.nav.fager.infrastruktur.Metrics
 import no.nav.fager.infrastruktur.coRecord
+import no.nav.fager.infrastruktur.logger
 import no.nav.fager.infrastruktur.teamLogger
 import no.nav.fager.redis.AltinnTilgangerRedisClient
 
@@ -25,6 +26,7 @@ class AltinnService(
     private val timer = Metrics.meterRegistry.timer("altinnservice.hentTilgangerFraAltinn")
     private val cacheCount = Metrics.counter("altinnservice.cache")
     private val altinnCount = Metrics.counter("altinnservice.altinn")
+    private val log = logger()
     private val teamLogger = teamLogger()
 
     suspend fun hentTilganger(
@@ -66,7 +68,10 @@ class AltinnService(
                             }).toSet()
                         }
                     },
-                    onFailure = { emptyList() }
+                    onFailure = { e ->
+                        log.error("Klarte ikke hente authorizedParties fra Altinn 3", e)
+                        emptyList()
+                    }
                 )
 
                 val orgnrTilAltinn2Mapped = altinn3Tilganger.flatMap {
