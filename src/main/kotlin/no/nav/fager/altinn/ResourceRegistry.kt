@@ -177,6 +177,14 @@ val KnownResources = listOfNotNull(
         resourceId = "nav_medlemskap-lovvalg_soknad",
         altinn2Tjeneste = listOf(),
     ),
+    Resource(
+        resourceId = "nav_sykepenger_sykmelding",
+        altinn2Tjeneste = listOf(),
+    ),
+    Resource(
+        resourceId = "nav_sykepenger_soeknad",
+        altinn2Tjeneste = listOf(),
+    ),
 ).filter {
     basedOnEnv(
         prod = { it.availableInProduction },
