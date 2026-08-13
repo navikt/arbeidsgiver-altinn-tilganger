@@ -178,7 +178,7 @@ paths:
 
             - ikke er utgått
 
-            - har `acr`-claim med `Level4` eller `idporten-loa-high`
+            - har `acr`-claim med `Level4`, `Level3`, `idporten-loa-high` eller `idporten-loa-substantial`
 
             - har riktig audience og issuer (`aud` og `iss`)
           headers: { }
@@ -244,7 +244,7 @@ paths:
 
             - ikke er utgått
 
-            - har `acr`-claim med `Level4` eller `idporten-loa-high`
+            - har `acr`-claim med `Level4`, `Level3`, `idporten-loa-high` eller `idporten-loa-substantial`
 
             - har riktig audience og issuer (`aud` og `iss`)
           headers: { }
@@ -264,7 +264,7 @@ paths:
 
             - ikke er utgått
 
-            - har `acr`-claim med `Level4` eller `idporten-loa-high`
+            - har `acr`-claim med `Level4`, `Level3`, `idporten-loa-high` eller `idporten-loa-substantial`
 
             - har riktig audience og issuer (`aud` og `iss`)
           headers: { }
@@ -326,7 +326,7 @@ paths:
 
             - ikke er utgått
 
-            - har `acr`-claim med `Level4` eller `idporten-loa-high`
+            - har `acr`-claim med `Level4`, `Level3`, `idporten-loa-high` eller `idporten-loa-substantial`
 
             - har riktig audience og issuer (`aud` og `iss`)
           headers: { }
