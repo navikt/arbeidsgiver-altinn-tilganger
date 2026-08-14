@@ -2,6 +2,7 @@ package no.nav.fager.texas
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.ResponseException
 import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.request.bearerAuth
@@ -123,8 +124,18 @@ data class TexasAuthConfig(
 class AuthClient(
     private val config: TexasAuthConfig,
     private val provider: IdentityProvider,
-    private val httpClient: HttpClient = defaultHttpClient(),
+    private val timeoutMillis: Long = 1_000
 ) {
+
+    private val httpClient: HttpClient = defaultHttpClient(
+        customizeRetry = { retryOnServerErrors(0) },
+    ) {
+        install(HttpTimeout) {
+            requestTimeoutMillis = timeoutMillis
+            connectTimeoutMillis = timeoutMillis
+            socketTimeoutMillis = timeoutMillis
+        }
+    }
 
     suspend fun token(target: String): TokenResponse = try {
         withTimer("texas_auth_token").coRecord {

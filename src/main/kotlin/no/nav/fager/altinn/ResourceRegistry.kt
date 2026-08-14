@@ -23,7 +23,6 @@ import kotlin.time.toJavaDuration
 val KnownResources = listOfNotNull(
     Resource(
         resourceId = "test-fager",
-        altinn2Tjeneste = listOf(),
         availableInProduction = false,
     ),
     Resource(
@@ -36,19 +35,13 @@ val KnownResources = listOfNotNull(
     ),
     Resource(
         resourceId = "nav_forebygge-og-redusere-sykefravar_sykefravarsstatistikk", //OBS! DENNE HAR SERVICE EDITION 2 I PROD
-        altinn2Tjeneste = listOf("3403:2"),
-        availableInOther = false,
-        availableInProduction = true,
-    ),
-    Resource(
-        resourceId = "nav_forebygge-og-redusere-sykefravar_sykefravarsstatistikk", //OBS! DENNE HAR SERVICE EDITION 2 I PROD
-        altinn2Tjeneste = listOf("3403:1"),
-        availableInProduction = false,
-        availableInOther = true,
+        altinn2Tjeneste = basedOnEnv(
+            prod = { listOf("3403:2") },
+            other = { listOf("3403:1") },
+        )
     ),
     Resource(
         resourceId = "nav_forebygge-og-redusere-sykefravar_ia-samarbeid",
-        altinn2Tjeneste = listOf(),
     ),
     Resource(
         resourceId = "nav_utbetaling_endre-kontonummer-refusjon-arbeidsgiver",
@@ -99,7 +92,6 @@ val KnownResources = listOfNotNull(
     ),
     Resource(
         resourceId = "nav_tiltak_firearig-lonnstilskudd",
-        altinn2Tjeneste = listOf(),
     ),
     Resource(
         resourceId = "nav_tiltak_tilskuddsbrev",
@@ -143,23 +135,18 @@ val KnownResources = listOfNotNull(
     ),
     Resource(
         resourceId = "nav_rekruttering_stillingsannonser",
-        altinn2Tjeneste = listOf(),
     ),
     Resource(
         resourceId = "nav_syfo_dialogmote",
-        altinn2Tjeneste = listOf(),
     ),
     Resource(
         resourceId = "nav_syfo_oppfolgingsplan",
-        altinn2Tjeneste = listOf(),
     ),
     Resource(
         resourceId = "nav_syfo_oppgi-narmesteleder",
-        altinn2Tjeneste = listOf(),
     ),
     Resource(
         resourceId = "nav_kontroll_kontoopplysninger",
-        altinn2Tjeneste = listOf(),
     ),
     Resource(
         resourceId = "nav_rekruttering_kandidater",
@@ -171,11 +158,16 @@ val KnownResources = listOfNotNull(
     ),
     Resource(
         resourceId = "nav_hjelpemidler_behovsmelding",
-        altinn2Tjeneste = listOf(), // migrert fra 5614:1, men ingen saker på dette i notifikasjonslpattformen
+        altinn2Tjeneste = listOf(), // migrert fra 5614:1, men ingen saker på dette i notifikasjonsplattformen
     ),
     Resource(
         resourceId = "nav_medlemskap-lovvalg_soknad",
-        altinn2Tjeneste = listOf(),
+    ),
+    Resource(
+        resourceId = "nav_sykepenger_sykmelding",
+    ),
+    Resource(
+        resourceId = "nav_sykepenger_soeknad",
     ),
 ).filter {
     basedOnEnv(
@@ -373,7 +365,7 @@ class ResourceRegistry(
 
 data class Resource(
     val resourceId: ResourceId,
-    val altinn2Tjeneste: List<String>,
+    val altinn2Tjeneste: List<String> = emptyList(),
     val availableInProduction: Boolean = true,
     val availableInOther: Boolean = true,
 )
