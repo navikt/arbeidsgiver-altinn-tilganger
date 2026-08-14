@@ -48,3 +48,21 @@ lokalt med dev-gcp-oppsett):
    ```shell
       mvn clean test
    ```
+
+## Kjøre tester med nav-pilot i cplt-sandboxen
+nav-pilot kjører i en isolert `cplt`-sandbox som blokkerer nettverkstilgang som standard.
+Testene starter fake-servere på localhost og krever en kjørende Redis. For at testene skal
+kunne kjøres i sandboxen må derfor følgende være på plass først:
+
+1. Tillat localhost-tilgang i sandboxen:
+   ```shell
+      cplt config set sandbox.allow_localhost_any true
+   ```
+2. Start Redis via docker compose (må kjøre før testene):
+   ```shell
+      docker compose up -d
+   ```
+3. Kjør testene:
+   ```shell
+      mvn clean test
+   ```

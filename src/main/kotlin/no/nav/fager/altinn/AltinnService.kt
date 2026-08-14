@@ -141,7 +141,8 @@ class AltinnService(
         val altinnTilganger: List<AltinnTilgang>
     ) {
         fun filter(filter: Filter): AltinnTilgangerResultat {
-            if (filter.isEmpty) return this
+            // Ingenting å gjøre: verken innhold å strippe eller slettede enheter å fjerne.
+            if (filter.isEmpty && filter.inkluderSlettede) return this
 
             // Reverse map: Altinn 2-tjenestekode -> alle Altinn 3-ressurser som peker på koden
             val altinn2ToAltinn3: Map<String, Set<String>> = KnownResources
@@ -162,6 +163,7 @@ class AltinnService(
             return AltinnTilgangerResultat(
                 isError,
                 altinnTilganger.filterRecursive(
+                    filterErTomt = filter.isEmpty,
                     inkluderSlettede = filter.inkluderSlettede,
                     filterAltinn2 = filter.altinn2Tilganger,
                     filterAltinn3 = filter.altinn3Tilganger,
@@ -181,6 +183,7 @@ class AltinnService(
  * effektive settene, som inkluderer kryssreferanser mellom Altinn 2 og Altinn 3.
  */
 private fun List<AltinnTilgang>.filterRecursive(
+    filterErTomt: Boolean,
     inkluderSlettede: Boolean,
     filterAltinn2: Set<String>,
     filterAltinn3: Set<String>,
@@ -191,6 +194,7 @@ private fun List<AltinnTilgang>.filterRecursive(
         if (!inkluderSlettede && tilgang.erSlettet) return@mapNotNull null
 
         val filtrerteUnderenheter = tilgang.underenheter.filterRecursive(
+            filterErTomt = filterErTomt,
             inkluderSlettede = inkluderSlettede,
             filterAltinn2 = filterAltinn2,
             filterAltinn3 = filterAltinn3,
@@ -199,13 +203,16 @@ private fun List<AltinnTilgang>.filterRecursive(
         )
         tilgang.copy(underenheter = filtrerteUnderenheter)
     }.filter { tilgang ->
+        if (filterErTomt) return@filter true
+
         val matcherAltinn2 = tilgang.altinn2Tilganger.intersects(filterAltinn2)
         val matcherAltinn3 = tilgang.altinn3Tilganger.intersects(filterAltinn3)
         val harUnderenheter = tilgang.underenheter.isNotEmpty()
 
         harUnderenheter || matcherAltinn2 || matcherAltinn3
     }.map { tilgang ->
-        tilgang.copy(
+        if (filterErTomt) tilgang
+        else tilgang.copy(
             altinn2Tilganger = tilgang.altinn2Tilganger intersect effectiveAltinn2,
             altinn3Tilganger = tilgang.altinn3Tilganger intersect effectiveAltinn3,
         )
