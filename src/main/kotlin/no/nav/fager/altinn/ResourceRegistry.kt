@@ -169,6 +169,15 @@ val KnownResources = listOfNotNull(
     Resource(
         resourceId = "nav_sykepenger_soeknad",
     ),
+    Resource(
+        resourceId = "nav_utbetaling_oppgjorsrapport-refusjon-arbeidsgiver",
+    ),
+    Resource(
+        resourceId = "nav_utbetaling_oppgjorsrapport-trekkhendelser",
+    ),
+    Resource(
+        resourceId = "nav_utbetaling_oppgjorsrapport-trekkoppgjor",
+    ),
 ).filter {
     basedOnEnv(
         prod = { it.availableInProduction },
