@@ -304,6 +304,119 @@ class AltinnTilgangerResultatTest {
         assertTrue(sample.altinnTilganger.flatten { it.roller }.all { it.isEmpty() })
         assertTrue(sample.altinnTilganger.flatten { it.tilgangspakker }.all { it.isEmpty() })
     }
+
+    @Test
+    fun `Altinn 2 filter expands to related Altinn 3 resources`() {
+        AltinnTilgangerResultat(
+            isError = false,
+            altinnTilganger = listOf(
+                AltinnTilgang(
+                    orgnr = "1",
+                    altinn3Tilganger = setOf(
+                        "nav_sykepenger_inntektsmelding",
+                        "nav_foreldrepenger_inntektsmelding"
+                    ),
+                    altinn2Tilganger = setOf("4936:1"),
+                    underenheter = emptyList(),
+                    navn = "EN ORGANISASJON",
+                    organisasjonsform = "BEDR",
+                    erSlettet = false
+                )
+            )
+        ).filter(
+            Filter(altinn2Tilganger = setOf("4936:1"))
+        ).let {
+            val org = it.altinnTilganger.single()
+            assertEquals(
+                setOf("nav_sykepenger_inntektsmelding", "nav_foreldrepenger_inntektsmelding"),
+                org.altinn3Tilganger
+            )
+            assertEquals(setOf("4936:1"), org.altinn2Tilganger)
+        }
+    }
+
+    @Test
+    fun `Altinn 3 filter includes mapped Altinn 2 but not sibling Altinn 3`() {
+        AltinnTilgangerResultat(
+            isError = false,
+            altinnTilganger = listOf(
+                AltinnTilgang(
+                    orgnr = "1",
+                    altinn3Tilganger = setOf(
+                        "nav_sykepenger_inntektsmelding",
+                        "nav_foreldrepenger_inntektsmelding"
+                    ),
+                    altinn2Tilganger = setOf("4936:1"),
+                    underenheter = emptyList(),
+                    navn = "EN ORGANISASJON",
+                    organisasjonsform = "BEDR",
+                    erSlettet = false
+                )
+            )
+        ).filter(
+            Filter(altinn3Tilganger = setOf("nav_sykepenger_inntektsmelding"))
+        ).let {
+            val org = it.altinnTilganger.single()
+            assertEquals(setOf("nav_sykepenger_inntektsmelding"), org.altinn3Tilganger)
+            assertEquals(setOf("4936:1"), org.altinn2Tilganger)
+        }
+    }
+
+    @Test
+    fun `Org excluded when it only has sibling Altinn 3 resource`() {
+        AltinnTilgangerResultat(
+            isError = false,
+            altinnTilganger = listOf(
+                AltinnTilgang(
+                    orgnr = "1",
+                    altinn3Tilganger = setOf("nav_foreldrepenger_inntektsmelding"),
+                    altinn2Tilganger = setOf("4936:1"),
+                    underenheter = emptyList(),
+                    navn = "EN ORGANISASJON",
+                    organisasjonsform = "BEDR",
+                    erSlettet = false
+                )
+            )
+        ).filter(
+            Filter(altinn3Tilganger = setOf("nav_sykepenger_inntektsmelding"))
+        ).let {
+            assertEquals(emptyList(), it.altinnTilganger.alleOrgn())
+        }
+    }
+
+    @Test
+    fun `Altinn 3 filter strips unrelated Altinn 2`() {
+        AltinnTilgangerResultat(
+            isError = false,
+            altinnTilganger = listOf(
+                AltinnTilgang(
+                    orgnr = "1",
+                    altinn3Tilganger = setOf(
+                        "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger",
+                        "nav_sykepenger_inntektsmelding"
+                    ),
+                    altinn2Tilganger = setOf("5810:1", "4936:1"),
+                    underenheter = emptyList(),
+                    navn = "EN ORGANISASJON",
+                    organisasjonsform = "BEDR",
+                    erSlettet = false
+                )
+            )
+        ).filter(
+            Filter(
+                altinn3Tilganger = setOf(
+                    "nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"
+                )
+            )
+        ).let {
+            val org = it.altinnTilganger.single()
+            assertEquals(
+                setOf("nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"),
+                org.altinn3Tilganger
+            )
+            assertEquals(setOf("5810:1"), org.altinn2Tilganger)
+        }
+    }
 }
 
 private fun List<AltinnTilgang>.alleOrgn(): List<String> = flatten { it.orgnr }

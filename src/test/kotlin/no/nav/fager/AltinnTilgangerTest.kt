@@ -280,7 +280,9 @@ class AltinnTilgangerTest {
                 """.trimIndent(), ContentType.Application.Json
             )
         }
-        val assertResponse: (AltinnTilgangerResponse) -> Unit = {
+        // Filter som dekker begge ressursene (altinn2=4936:1 utvider til nav_sykepenger, altinn3=nav_permittering
+        // utvider til 5810:1). Da beholdes hele innholdet på nodene.
+        val assertFulltInnhold: (AltinnTilgangerResponse) -> Unit = {
             assertEquals(false, it.isError)
             assertEquals(2, it.hierarki[0].underenheter.size)
             assertEquals(
@@ -316,6 +318,37 @@ class AltinnTilgangerTest {
             )
         }
 
+        // Filter som kun dekker nav_permittering (direkte eller via 5810:1). Innholdet på nodene strippes
+        // ned til nav_permittering / 5810:1 — nav_sykepenger og 4936:1 hører ikke til filteret.
+        val assertStrippetInnhold: (AltinnTilgangerResponse) -> Unit = {
+            assertEquals(false, it.isError)
+            assertEquals(2, it.hierarki[0].underenheter.size)
+            assertEquals(
+                setOf("nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"),
+                it.hierarki[0].underenheter[0].altinn3Tilganger
+            )
+            assertEquals(
+                setOf("5810:1"),
+                it.hierarki[0].underenheter[0].altinn2Tilganger
+            )
+            assertEquals(emptySet(), it.hierarki[0].underenheter[0].roller)
+            assertEquals(setOf("DAGL"), it.hierarki[0].underenheter[1].roller)
+            assertEquals(null, it.tilgangTilOrgNr["nav_sykepenger_inntektsmelding"])
+            assertEquals(null, it.tilgangTilOrgNr["4936:1"])
+            assertEquals(
+                setOf("910825496", "910825554"),
+                it.tilgangTilOrgNr["nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger"]
+            )
+            assertEquals(
+                setOf("nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger", "5810:1"),
+                it.orgNrTilTilganger["910825496"]
+            )
+            assertEquals(
+                setOf("nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger", "5810:1"),
+                it.orgNrTilTilganger["910825554"]
+            )
+        }
+
         repeat(2) {
             client.post("/altinn-tilganger") {
                 header("Authorization", "Bearer idporten-loa-high:11111111111")
@@ -333,7 +366,7 @@ class AltinnTilgangerTest {
                 )
             }.apply {
                 assertEquals(HttpStatusCode.OK, status)
-            }.body<AltinnTilgangerResponse>().also(assertResponse)
+            }.body<AltinnTilgangerResponse>().also(assertFulltInnhold)
 
             client.post("/m2m/altinn-tilganger") {
                 header("Authorization", "Bearer fakem2mtoken")
@@ -352,7 +385,7 @@ class AltinnTilgangerTest {
                 )
             }.apply {
                 assertEquals(HttpStatusCode.OK, status)
-            }.body<AltinnTilgangerResponse>().also(assertResponse)
+            }.body<AltinnTilgangerResponse>().also(assertFulltInnhold)
 
             client.post("/altinn-tilganger") {
                 header("Authorization", "Bearer idporten-loa-high:11111111111")
@@ -369,7 +402,7 @@ class AltinnTilgangerTest {
                 )
             }.apply {
                 assertEquals(HttpStatusCode.OK, status)
-            }.body<AltinnTilgangerResponse>().also(assertResponse)
+            }.body<AltinnTilgangerResponse>().also(assertStrippetInnhold)
 
             client.post("/m2m/altinn-tilganger") {
                 header("Authorization", "Bearer fakem2mtoken")
@@ -387,7 +420,7 @@ class AltinnTilgangerTest {
                 )
             }.apply {
                 assertEquals(HttpStatusCode.OK, status)
-            }.body<AltinnTilgangerResponse>().also(assertResponse)
+            }.body<AltinnTilgangerResponse>().also(assertStrippetInnhold)
 
             client.post("/altinn-tilganger") {
                 header("Authorization", "Bearer idporten-loa-high:11111111111")
@@ -404,7 +437,7 @@ class AltinnTilgangerTest {
                 )
             }.apply {
                 assertEquals(HttpStatusCode.OK, status)
-            }.body<AltinnTilgangerResponse>().also(assertResponse)
+            }.body<AltinnTilgangerResponse>().also(assertStrippetInnhold)
 
             client.post("/m2m/altinn-tilganger") {
                 header("Authorization", "Bearer fakem2mtoken")
@@ -422,7 +455,7 @@ class AltinnTilgangerTest {
                 )
             }.apply {
                 assertEquals(HttpStatusCode.OK, status)
-            }.body<AltinnTilgangerResponse>().also(assertResponse)
+            }.body<AltinnTilgangerResponse>().also(assertStrippetInnhold)
 
             client.post("/altinn-tilganger") {
                 header("Authorization", "Bearer idporten-loa-high:11111111111")
