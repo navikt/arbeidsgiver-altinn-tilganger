@@ -286,7 +286,7 @@ class AltinnTilgangerResultatTest {
 
         sample.filter(
             Filter(
-                altinn2Tilganger = setOf("5441:1"),
+                altinn2Tilganger = setOf("5810:1"),
                 altinn3Tilganger = setOf("nav_permittering-og-nedbemmaning_innsyn-i-alle-innsendte-meldinger")
             )
         ).apply {
@@ -659,7 +659,6 @@ private val sampleJSON = """
         "2896:87",
         "5516:3",
         "5516:5",
-        "5441:1",
         "5278:1",
         "5516:1",
         "5332:1",
@@ -683,7 +682,6 @@ private val sampleJSON = """
             "2896:87",
             "5516:3",
             "5516:5",
-            "5441:1",
             "5278:1",
             "5516:1",
             "5332:1",
@@ -711,7 +709,6 @@ private val sampleJSON = """
             "2896:87",
             "5516:3",
             "5516:5",
-            "5441:1",
             "5278:1",
             "5516:1",
             "5332:1",
@@ -738,7 +735,6 @@ private val sampleJSON = """
             "2896:87",
             "5516:3",
             "5516:5",
-            "5441:1",
             "5278:1",
             "5516:1",
             "5332:1",
