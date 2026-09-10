@@ -119,19 +119,19 @@ val KnownResources = listOfNotNull(
     ),
     Resource(
         resourceId = "nav_arbeidsforhold_aa-registeret-innsyn-arbeidsgiver",
-        altinn2Tjeneste = listOf(),
+        altinn2Tjeneste = listOf("5441:1"),
     ),
     Resource(
         resourceId = "nav_arbeidsforhold_aa-registeret-brukerstotte",
-        altinn2Tjeneste = listOf(),
+        altinn2Tjeneste = listOf("5441:2"),
     ),
     Resource(
         resourceId = "nav_arbeidsforhold_aa-registeret-sok-tilgang",
-        altinn2Tjeneste = listOf(),
+        altinn2Tjeneste = listOf("5719:1"),
     ),
     Resource(
         resourceId = "nav_arbeidsforhold_aa-registeret-oppslag-samarbeidspartnere",
-        altinn2Tjeneste = listOf(),
+        altinn2Tjeneste = listOf("5723:1"),
     ),
     Resource(
         resourceId = "nav_rekruttering_stillingsannonser",
