@@ -129,7 +129,7 @@ spec:
         - application: hm-roller
           namespace: teamdigihot
         - application: sokos-oppgjorsrapporter
-          namespace: oppgjorsrapporter          
+          namespace: oppgjorsrapporter
     outbound:
       external:
         - host: platform.tt02.altinn.no

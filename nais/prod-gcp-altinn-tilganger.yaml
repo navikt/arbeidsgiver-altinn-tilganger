@@ -124,6 +124,8 @@ spec:
           namespace: k9saksbehandling
         - application: hm-roller
           namespace: teamdigihot
+        - application: sokos-oppgjorsrapporter
+          namespace: oppgjorsrapporter
     outbound:
       external:
         - host: platform.altinn.no
