@@ -129,8 +129,6 @@ spec:
         - application: hm-roller
           namespace: teamdigihot
         - application: sokos-oppgjorsrapporter
-          namespace: oppgjorsrapporter          
-        - application: sokos-oppgjorsrapporter
           namespace: oppgjorsrapporter
     outbound:
       external:
