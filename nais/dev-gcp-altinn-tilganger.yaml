@@ -130,6 +130,8 @@ spec:
           namespace: teamdigihot
         - application: sokos-oppgjorsrapporter
           namespace: oppgjorsrapporter          
+        - application: sokos-oppgjorsrapporter
+          namespace: oppgjorsrapporter
     outbound:
       external:
         - host: platform.tt02.altinn.no
