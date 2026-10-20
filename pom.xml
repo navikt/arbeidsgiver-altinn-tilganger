@@ -15,9 +15,9 @@
         <kotlin.compiler.incremental>false</kotlin.compiler.incremental>
         <kotlin.code.style>official</kotlin.code.style>
 
-        <ktor_version>3.2.3</ktor_version>
-        <kotlin_version>2.1.21</kotlin_version>
-        <kotlinx_coroutines_version>1.10.2</kotlinx_coroutines_version>
+        <ktor_version>3.6.0</ktor_version>
+        <kotlin_version>2.4.21</kotlin_version>
+        <kotlinx_coroutines_version>1.11.0</kotlinx_coroutines_version>
     </properties>
 
     <dependencies>
@@ -132,22 +132,22 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>2.0.13</version>
+            <version>2.0.20</version>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>1.5.16</version>
+            <version>1.6.5</version>
         </dependency>
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>
-            <version>1.14.5</version>
+            <version>1.17.1</version>
         </dependency>
         <dependency>
             <groupId>io.valkey</groupId>
             <artifactId>valkey-java</artifactId>
-            <version>5.3.0</version>
+            <version>5.5.0</version>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlinx</groupId>
@@ -229,7 +229,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>3.4.2</version>
+                <version>3.5.1</version>
                 <configuration>
                     <archive>
                         <manifest>
@@ -243,7 +243,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.7.1</version>
+                <version>3.8.0</version>
                 <configuration>
                     <attach>false</attach>
                     <finalName>${project.artifactId}</finalName>
@@ -264,7 +264,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.13.0</version>
+                <version>3.16.0</version>
                 <configuration>
                     <source>21</source>
                     <target>21</target>
@@ -273,7 +273,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.5.2</version>
+                <version>3.6.0</version>
                 <configuration>
                     <failIfNoTests>true</failIfNoTests>
                 </configuration>
