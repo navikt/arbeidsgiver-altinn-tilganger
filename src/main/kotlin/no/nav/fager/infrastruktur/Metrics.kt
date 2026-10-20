@@ -64,6 +64,8 @@ suspend fun <T> Timer.coRecord(body: suspend () -> T): T {
         Timer.builder(this.id.name)
             .tags(this.id.tags)
             .tag("throwable", t.javaClass.canonicalName)
+            // must match the histogram config of the base timer, prometheus scrape fails on mixed summary/histogram under one name
+            .publishPercentileHistogram()
             .register(Metrics.meterRegistry)
             .record(Metrics.clock.monotonicTime() - start, TimeUnit.NANOSECONDS)
         throw t

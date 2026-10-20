@@ -21,9 +21,11 @@ import no.nav.fager.texas.TokenResponse
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFails
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
 
 class TexasTest {
@@ -115,9 +117,12 @@ class TexasTest {
         val texasAuthConfig = TexasAuthConfig.fake(fakeTexas)
         val authClient = AuthClient(texasAuthConfig, IdentityProvider.MASKINPORTEN, timeoutMs)
 
-        assertFailsWith<io.ktor.client.plugins.HttpRequestTimeoutException> {
-            authClient.token("1234")
-        }
+        // request- og socket-timeout er like, så hvilken som slår til først varierer
+        val e = assertFails { authClient.token("1234") }
+        assertTrue(
+            e is io.ktor.client.plugins.HttpRequestTimeoutException || e is java.net.SocketTimeoutException,
+            "forventet timeout, fikk $e",
+        )
     }
 
     @Test

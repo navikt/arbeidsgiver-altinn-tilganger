@@ -1,8 +1,11 @@
 package no.nav.fager.infrastruktur
 
+import io.micrometer.core.instrument.Timer
+import kotlinx.coroutines.test.runTest
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 class MetricsTest {
 
@@ -90,5 +93,18 @@ class MetricsTest {
 
         assertEquals(1.0, c1.count())
         assertEquals(1.0, c2.count())
+    }
+
+    @Test
+    fun `scrape fungerer etter at coRecord har feilet`() = runTest {
+        val timer = Timer.builder(metricName("timer").replace('.', '_'))
+            .publishPercentileHistogram()
+            .register(Metrics.meterRegistry)
+
+        assertFailsWith<IllegalStateException> {
+            timer.coRecord { error("boom") }
+        }
+
+        Metrics.meterRegistry.scrape()
     }
 }
