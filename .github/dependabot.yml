@@ -1,0 +1,20 @@
+version: 2
+
+updates:
+  # Kun minor- og patch-oppdateringer.
+  - package-ecosystem: maven
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Oslo
+    cooldown:
+      default-days: 3
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    groups:
+      maven:
+        patterns: ["*"]
+        update-types: [minor, patch]
