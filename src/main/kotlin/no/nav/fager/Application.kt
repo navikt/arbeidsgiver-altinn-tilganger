@@ -52,6 +52,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.slf4j.MDCContext
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import no.nav.fager.AltinnTilgangerResponse.Companion.toResponse
 import no.nav.fager.altinn.Altinn3ClientImpl
@@ -73,6 +75,7 @@ import no.nav.fager.texas.AuthClient
 import no.nav.fager.texas.IdentityProvider
 import no.nav.fager.texas.TexasAuth
 import no.nav.fager.texas.TexasAuthConfig
+import org.slf4j.MDC
 import org.slf4j.event.Level
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -170,6 +173,7 @@ fun Application.ktorConfig(
         }
         mdc("clientId") { call ->
             call.principal<InnloggetBrukerPrincipal>()?.clientId
+                ?: call.principal<AutentisertM2MPrincipal>()?.clientId
         }
         callIdMdc("x_correlation_id")
     }
@@ -294,14 +298,16 @@ fun Application.ktorConfig(
 
             post("/altinn-tilganger") {
                 val clientId = call.principal<AutentisertM2MPrincipal>()!!.clientId
-                val (fnr, filter) = call.receive<AltinnTilgangerM2MRequest>()
-                withTimer(clientId).coRecord {
-                    call.respond(
-                        altinnService.hentTilganger(
-                            fnr = fnr,
-                            filter = filter,
-                        ).toResponse()
-                    )
+                withClientIdMdc(clientId) {
+                    val (fnr, filter) = call.receive<AltinnTilgangerM2MRequest>()
+                    withTimer(clientId).coRecord {
+                        call.respond(
+                            altinnService.hentTilganger(
+                                fnr = fnr,
+                                filter = filter,
+                            ).toResponse()
+                        )
+                    }
                 }
             }
         }
@@ -329,25 +335,27 @@ fun Application.ktorConfig(
             post {
                 val fnr = call.principal<InnloggetBrukerPrincipal>()!!.fnr
                 val clientId = call.principal<InnloggetBrukerPrincipal>()!!.clientId
-                val filter = call.receiveText().let {
-                    /**
-                     * since filter is optional, and only parameter we need to support posts with empty body
-                     * receive<AltinnTilgangerRequest>() will throw if body is empty,
-                     * so we go via text and parse manually
-                     */
-                    if (it.isBlank()) {
-                        Filter.empty
-                    } else {
-                        Json.decodeFromString(AltinnTilgangerRequest.serializer(), it).filter
+                withClientIdMdc(clientId) {
+                    val filter = call.receiveText().let {
+                        /**
+                         * since filter is optional, and only parameter we need to support posts with empty body
+                         * receive<AltinnTilgangerRequest>() will throw if body is empty,
+                         * so we go via text and parse manually
+                         */
+                        if (it.isBlank()) {
+                            Filter.empty
+                        } else {
+                            Json.decodeFromString(AltinnTilgangerRequest.serializer(), it).filter
+                        }
                     }
-                }
-                withTimer(clientId).coRecord {
-                    call.respond(
-                        altinnService.hentTilganger(
-                            fnr = fnr,
-                            filter = filter,
-                        ).toResponse()
-                    )
+                    withTimer(clientId).coRecord {
+                        call.respond(
+                            altinnService.hentTilganger(
+                                fnr = fnr,
+                                filter = filter,
+                            ).toResponse()
+                        )
+                    }
                 }
             }
         }
@@ -362,5 +370,10 @@ private fun withTimer(clientId: String): Timer =
             .publishPercentileHistogram()
             .register(Metrics.meterRegistry)
     }
+
+// CallLogging evaluates MDC before route-scoped auth has set the principal,
+// so log lines written inside the handler would otherwise lack clientId.
+private suspend fun <T> withClientIdMdc(clientId: String, block: suspend CoroutineScope.() -> T): T =
+    withContext(MDCContext(MDC.getCopyOfContextMap().orEmpty() + ("clientId" to clientId)), block)
 
 
