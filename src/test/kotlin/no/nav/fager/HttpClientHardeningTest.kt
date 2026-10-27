@@ -9,6 +9,7 @@ import io.ktor.network.sockets.SocketTimeoutException
 import io.ktor.server.response.respondText
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 import no.nav.fager.fakes.FakeApi
 import no.nav.fager.infrastruktur.defaultHttpClient
 import java.util.concurrent.atomic.AtomicInteger
@@ -16,6 +17,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 class HttpClientHardeningTest {
 
@@ -63,10 +65,11 @@ class HttpClientHardeningTest {
     @Test
     fun `retryOnExceptionIf retryer fortsatt ved SocketTimeoutException`() = withFakeApi { fakeApi ->
         val calls = AtomicInteger(0)
-        val timeoutMs = 10L
+        // Høy nok timeout til at serveren rekker å telle hvert forsøk før klienten gir opp, også i CI.
+        val timeoutMs = 200L
         fakeApi.stubs[HttpMethod.Get to "/treg"] = {
             calls.incrementAndGet()
-            delay((timeoutMs + 10).milliseconds)
+            delay((timeoutMs * 5).milliseconds)
             call.respondText("omsider", status = HttpStatusCode.OK)
         }
 
@@ -79,6 +82,13 @@ class HttpClientHardeningTest {
 
         assertFailsWith<SocketTimeoutException> {
             runBlocking { client.get("http://localhost:${fakeApi.port}/treg") }
+        }
+
+        // Klienten kan kaste før serveren har registrert siste forsøk.
+        runBlocking {
+            withTimeoutOrNull(2.seconds) {
+                while (calls.get() < 4) delay(10.milliseconds)
+            }
         }
 
         assertEquals(4, calls.get(), "socket timeout skal gi 1 forsøk + 3 retries")
