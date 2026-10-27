@@ -37,6 +37,11 @@
             <artifactId>kotlinx-coroutines-reactive</artifactId>
             <version>${kotlinx_coroutines_version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlinx</groupId>
+            <artifactId>kotlinx-coroutines-slf4j</artifactId>
+            <version>${kotlinx_coroutines_version}</version>
+        </dependency>
 
         <!-- ktor server -->
         <dependency>
