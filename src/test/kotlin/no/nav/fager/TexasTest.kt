@@ -104,9 +104,10 @@ class TexasTest {
 
     @Test
     fun `AuthClient har request-timeout mot texas`() = testWithFakeApi { fakeTexas ->
-        val timeoutMs = 10L
+        // Høy nok timeout til at connect mot localhost rekker å gå gjennom, også i CI.
+        val timeoutMs = 200L
         fakeTexas.stubs[HttpMethod.Post to "/token"] = {
-            kotlinx.coroutines.delay((timeoutMs + 10).milliseconds)
+            kotlinx.coroutines.delay((timeoutMs * 5).milliseconds)
             call.respondText(
                 //language=json
                 """{"access_token": "sent", "expires_in": 3600}""",
@@ -117,10 +118,12 @@ class TexasTest {
         val texasAuthConfig = TexasAuthConfig.fake(fakeTexas)
         val authClient = AuthClient(texasAuthConfig, IdentityProvider.MASKINPORTEN, timeoutMs)
 
-        // request- og socket-timeout er like, så hvilken som slår til først varierer
+        // request-, connect- og socket-timeout er like, så hvilken som slår til først varierer
         val e = assertFails { authClient.token("1234") }
         assertTrue(
-            e is io.ktor.client.plugins.HttpRequestTimeoutException || e is java.net.SocketTimeoutException,
+            e is io.ktor.client.plugins.HttpRequestTimeoutException
+                    || e is java.net.SocketTimeoutException
+                    || e is io.ktor.client.network.sockets.ConnectTimeoutException,
             "forventet timeout, fikk $e",
         )
     }
