@@ -16,6 +16,7 @@ import io.micrometer.core.instrument.Timer
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.serialization.json.Json
 import java.io.EOFException
+import java.net.ConnectException
 import java.util.concurrent.ConcurrentHashMap
 import javax.net.ssl.SSLHandshakeException
 
@@ -33,6 +34,7 @@ fun defaultHttpClient(
             when (cause) {
                 is SocketTimeoutException,
                 is ConnectTimeoutException,
+                is ConnectException,
                 is EOFException,
                 is SSLHandshakeException,
                 is ClosedReceiveChannelException,

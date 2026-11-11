@@ -12,6 +12,8 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import no.nav.fager.fakes.FakeApi
 import no.nav.fager.infrastruktur.defaultHttpClient
+import java.net.ConnectException
+import java.net.ServerSocket
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -92,5 +94,21 @@ class HttpClientHardeningTest {
         }
 
         assertEquals(4, calls.get(), "socket timeout skal gi 1 forsøk + 3 retries")
+    }
+
+    @Test
+    fun `retryOnExceptionIf retryer ved ConnectException (connection refused)`() {
+        val ledigPort = ServerSocket(0).use { it.localPort }
+        val retries = AtomicInteger(0)
+
+        val client = defaultHttpClient(customizeRetry = {
+            modifyRequest { retries.set(retryCount) }
+        })
+
+        assertFailsWith<ConnectException> {
+            runBlocking { client.get("http://localhost:$ledigPort/") }
+        }
+
+        assertEquals(3, retries.get(), "connection refused skal gi 3 retries")
     }
 }
