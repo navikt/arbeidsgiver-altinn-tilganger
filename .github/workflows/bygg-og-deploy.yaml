@@ -39,7 +39,7 @@ jobs:
           name: ${{ github.sha }}.bom.json
           path: target/bom.json
 
-      - uses: nais/docker-build-push@d3a1f7e259ecc381a50435e1d4add9059429ebd7 # v0
+      - uses: nais/docker-build-push@588f76a6f45aeb1e75d5e8417ec6ef6d79b2b39f # v0
         id: gar-push
         with:
           team: fager
